@@ -20,8 +20,8 @@ class network_options():
 
         self.early_stopping = True
         self.early_stopping_threshold = inf
-        self.continue_training = False
-        self.experiment_name = 'CSD_testbed'
+        self.continue_training = True
+        self.experiment_name = 'CSD_main'
 
         
         #Computation related hyperparameters:

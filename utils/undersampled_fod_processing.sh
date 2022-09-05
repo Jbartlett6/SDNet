@@ -12,9 +12,9 @@ do
 	path=$data_path/$subject/T1w/Diffusion
 	echo $subject
 	echo $path
-
-
-	#Calculating the fully sampled response function and the fully sampled fod
+    mkdir $data_path/$subject/T1w/Diffusion/$folder_name
+	
+    #Calculating the fully sampled response function and the fully sampled fod
 	dwi2response dhollander $path/data.nii.gz $path/wm_response.txt $path/gm_response.txt $path/csf_response.txt -fslgrad $path/bvecs $path/bvals
 	dwi2fod -fslgrad $path/bvecs $path/bvals msmt_csd $path/data.nii.gz $path/wm_response.txt $path/wmfod.nii.gz $path/gm_response.txt $path/gm.nii.gz $path/csf_response.txt $path/csf.nii.gz 	
 	mrconvert $path/gt_fod.nii.gz -coord 3 0:44 $path/gt_wmfod.nii.gz
@@ -41,6 +41,7 @@ do
 	path=$data_path/$subject/T1w/Diffusion
 	echo $subject
 	echo $path
+    mkdir $data_path/$subject/T1w/Diffusion/$folder_name
 
 	#Calculating the fully sampled response function and the fully sampled fod
 	dwi2response dhollander $path/data.nii.gz $path/wm_response.txt $path/gm_response.txt $path/csf_response.txt -fslgrad $path/bvecs $path/bvals

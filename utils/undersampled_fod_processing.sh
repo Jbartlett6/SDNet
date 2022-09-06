@@ -19,7 +19,7 @@ do
 	dwi2fod -fslgrad $path/bvecs $path/bvals msmt_csd $path/data.nii.gz $path/wm_response.txt $path/wmfod.nii.gz $path/gm_response.txt $path/gm.nii.gz $path/csf_response.txt $path/csf.nii.gz 	
 	mrconvert $path/gt_fod.nii.gz -coord 3 0:44 $path/gt_wmfod.nii.gz
 
-    dwi2response dhollander data.nii.gz wm_response.txt gm_response.txt csf_response.txt -fslgrad bvecs bvals
+    dwi2response dhollander data.nii.gz wm_response.txt gm_response.txt csf_response.txt -fslgrad $path/bvecs $path/bvals
     #Undersampling the data.
     python dwi_undersample.py $data_path $subject $folder_name
 

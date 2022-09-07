@@ -241,7 +241,8 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
         #Loading the data into the data tensor
         print('Loading the signal data into RAM')
         for i, subject in enumerate(subject_list):
-            path = os.path.join('/media','duanj','F','joe','hcp_2',subject,'T1w','Diffusion','undersampled_fod','normalised_data.nii.gz')
+            #path = os.path.join('/media','duanj','F','joe','hcp_2',subject,'T1w','Diffusion','undersampled_fod','normalised_data.nii.gz')
+            path = os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', 'undersampled_fod', 'normalised_data.nii.gz')
             nifti = nib.load(path)
             #Shape = [62, 70, 80, :]
             self.data_tensor[i,4:66,4:74,4:84,:] = torch.tensor(np.array(nifti.dataobj))[13:75, 90:160, 44:124,:]
@@ -250,14 +251,16 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
         #Loading the ground truth data into RAM
         print('Loading the ground Truth FOD data into RAM')
         for i, subject in enumerate(subject_list):
-            path = os.path.join('/media','duanj','F','joe','hcp_2',subject,'T1w','Diffusion','undersampled_fod','gt_fod.nii.gz')
+            #path = os.path.join('/media','duanj','F','joe','hcp_2',subject,'T1w','Diffusion','undersampled_fod','gt_fod.nii.gz')
+            path = os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', 'undersampled_fod', 'gt_fod.nii.gz')
             nifti = nib.load(path)
             self.gt_tensor[i,4:66,4:74,4:84,:] = torch.tensor(np.array(nifti.dataobj))[13:75, 90:160, 44:124,:]
 
         #Loading the mask data into RAM
         print('Loading the mask data into RAM')
         for i, subject in enumerate(subject_list):
-            path = os.path.join('/media','duanj','F','joe','hcp_2',subject,'T1w','Diffusion','nodif_brain_mask.nii.gz')
+            #path = os.path.join('/media','duanj','F','joe','hcp_2',subject,'T1w','Diffusion','nodif_brain_mask.nii.gz')
+            path = os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', 'nodif_brain_mask.nii.gz')
             nifti = nib.load(path)
             self.mask_tensor[i,4:66,4:74,4:84] = torch.tensor(np.array(nifti.dataobj))[13:75, 90:160, 44:124]
 
@@ -265,15 +268,17 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
         print('Loading the Spherical Convolution co-ords into RAM')
         for i, subject in enumerate(subject_list):
             #Extracting bvectors from folders:
-            bvecs = util.bvec_extract(subject)
+            bvecs = util.bvec_extract(self.data_dir, subject, 'undersampled_fod')
             bvecs_sph = util.ss_sph_coords(bvecs)
             bvecs_sph[bvecs_sph[:,0]<0,0] = bvecs_sph[bvecs_sph[:,0]<0,0]+2*math.pi
             order = 8
 
             #Extracting bvalues:
             bvals = util.bval_extract(self.data_dir, subject, 'undersampled_fod')
+
             #White matter response function extraaction:
-            with open('/media/duanj/F/joe/hcp_2/100206/T1w/Diffusion/undersampled_fod/wm_response.txt', 'r') as txt:
+            with open(os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', 'undersampled_fod', 'wm_response.txt'), 'r') as txt:
+                
                 x = txt.read()
             x = x.split('\n')[2:-1]
             
@@ -282,12 +287,12 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
                 g_wm[j] = torch.tensor([float(resp) for resp in x[j].split(' ')])
 
             #Grey matter response function extraction:
-            with open('/media/duanj/F/joe/hcp_2/100206/T1w/Diffusion/undersampled_fod/gm_response.txt', 'r') as txt:
+            with open(os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', 'undersampled_fod', 'gm_response.txt'), 'r') as txt:
                 x = txt.read()
             g_gm = [float(resp) for resp in x.split('\n')[2:-1]]
 
             #CSF response function extraction:
-            with open('/media/duanj/F/joe/hcp_2/100206/T1w/Diffusion/undersampled_fod/csf_response.txt', 'r') as txt:
+            with open(os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', 'undersampled_fod', 'csf_response.txt'), 'r') as txt:
                 x = txt.read()
             g_csf = [float(resp) for resp in x.split('\n')[2:-1]]    
         
@@ -353,6 +358,7 @@ class UndersampleDataset(torch.utils.data.Dataset):
         image = nib.load(dwi_path)
         self.head = image.header
         self.aff = image.affine
+        print('Loading image data')
         self.image = torch.tensor(image.get_fdata())
         
         #os.mkdir(path = data_path+'/'+subject+'/T1w/Diffusion/undersampled_fod_resptest_1')
@@ -368,10 +374,12 @@ class UndersampleDataset(torch.utils.data.Dataset):
         When a constant sampling pattern is used the keep list and mask list can be defined at initalisation as they will be constant for every iteration. However if 
         some aspect of random sampling is used then the keep lists and mask lists will have to be defined in the get item function.
         '''
+        print('Saving data')
         im_usamp = nib.Nifti1Image(self.image[:,:,:,self.keep_list].float().detach().numpy(), affine=self.aff)
         save_path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion', 'undersampled_fod', 'data.nii.gz')
         #save_path = '/media/duanj/F/joe/Project_1_recon/FODNet/dataset/104820/LARDI_data/data_b1000_g32.nii.gz'
         nib.save(im_usamp, save_path)
+        print('Finished saving data')
 
     def all_save(self):
         self.data_save()
@@ -438,16 +446,17 @@ class UndersampleDataset(torch.utils.data.Dataset):
         Desc:
             A function to extract the bvalues from the file they are located in and to return them as a list of values.
         '''
-        
+        #print('Saving bvals')
         path = os.path.join(self.data_path, self.subject, 'T1w', 'Diffusion', 'bvals') 
         bvals = open(path, 'r')
         
         bvals_str = bvals.read()
         bvals = [int(b) for b in bvals_str.split()]
-        
+        #print('Finished saving bvals')
         return bvals
 
     def bvec_save(self):
+        print('Saving bvectors')
         #Undersampled bvector calculation.
         path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion', 'bvecs')
         with open(path ,'r') as temp:
@@ -474,6 +483,7 @@ class UndersampleDataset(torch.utils.data.Dataset):
         save_path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion', 'undersampled_fod', 'bvecs')
         with open(save_path, 'w') as temp:
             temp.write(bvecs_string)
+        print('Finished Saving bvectors')
 
     def bvec_target_save(self):
         '''
@@ -508,6 +518,7 @@ class UndersampleDataset(torch.utils.data.Dataset):
             temp.write(bvecs_string)
     
     def bval_save(self):
+        print('Saving bvals')
         ##Bvalues
         new_bvals = [str(self.bvals[ind]) for ind in self.keep_list]
         bvals_string = ' '.join(new_bvals)
@@ -515,3 +526,4 @@ class UndersampleDataset(torch.utils.data.Dataset):
         #save_path = '/media/duanj/F/joe/Project_1_recon/FODNet/dataset/104820/LARDI_data/data_b1000_g32.bvals'
         with open(save_path,'w') as temp:
             temp.write(bvals_string)
+        print('Finished saving bvals')

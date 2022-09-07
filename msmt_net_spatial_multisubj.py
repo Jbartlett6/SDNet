@@ -44,15 +44,14 @@ if __name__ == '__main__':
 
 
     criterion = torch.nn.MSELoss(reduction='mean')
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     param_list = [150]
     for alpha in param_list:
 
         print('Initialising Model')
-        net = csdnet.FCNet(device, opts.deep_reg, opts.neg_reg,alpha)
+        net = csdnet.FCNet(device, opts.deep_reg, opts.neg_reg,alpha,opts)
         P = net.P.to(device)
-        net = nn.DataParallel(net)
+        #net = nn.DataParallel(net)
         net = net.to(device)
         #Either loading the existing best model path, or creating the experiment directory depending on the continue training flag.
         model_save_path = os.path.join('checkpoints', opts.experiment_name, 'models')

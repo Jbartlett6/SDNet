@@ -54,7 +54,7 @@ def ACC(out,gt):
     return num/denum
 
    
-def bvec_extract(subject): 
+def bvec_extract(data_dir, subject, sub_dir): 
     '''
     Input:
         subj (str) - The subject whose bvectors you want to extract.
@@ -62,8 +62,12 @@ def bvec_extract(subject):
     Desc:
         A function to extract the bvectors from the file they are located in and to return them as a list of vectors.
     '''
-    path = '/media/duanj/F/joe/hcp_2/'+subject+'/T1w/Diffusion/undersampled_fod/bvecs'
-    
+    #path = '/media/duanj/F/joe/hcp_2/'+subject+'/T1w/Diffusion/undersampled_fod/bvecs'
+    if sub_dir == None:
+        path = os.path.join(data_dir, subject, 'T1w', 'Diffusion', 'bvecs')
+    else:
+        path = os.path.join(data_dir, subject, 'T1w', 'Diffusion', sub_dir,'bvecs')
+
     bvecs = open(path ,'r')
 
     bvecs_str = bvecs.read()

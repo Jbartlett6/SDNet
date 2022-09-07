@@ -36,7 +36,7 @@ class FCCascadeLayer(nn.Module):
         return self.casc(x)
 
 class FCNet(nn.Module):
-    def __init__(self, device, lambda_deep, lambda_neg,alpha):
+    def __init__(self, device, lambda_deep, lambda_neg,alpha, opts):
         super(FCNet, self).__init__()
 
         #Data consistency term parameters:
@@ -45,7 +45,8 @@ class FCNet(nn.Module):
         self.register_buffer('alpha', torch.tensor(alpha))
         #self.lambda_deep = torch.nn.Parameter(torch.tensor(0.5))
 
-        self.sampling_directions = torch.load('/home/jxb1336/code/Project_1: HARDI_Recon/FOD-REG_NET/300_predefined_directions.pt')
+        self.sampling_directions = torch.load(os.path.join('utils/300_predefined_directions.pt'))
+        
         self.order = 8 
         self.device = device
         P = util.construct_sh_basis(self.sampling_directions, self.order)

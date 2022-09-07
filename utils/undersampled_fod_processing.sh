@@ -4,8 +4,10 @@ folder_name=$2
 
 #subjectlist=hcp-folders-formatted.txt
 #subjectlist=/media/duanj/F/joe/data/hcp_metadata/hcp_test_subjects.txt
-traininglist=train_subjects.txt
-vallist=validation_subjects.txt
+#traininglist=train_subjects.txt
+#vallist=validation_subjects.txt
+traininglist=test.txt
+vallist=
 while read -r subject;
 do
 	echo Preparing the training data.
@@ -17,7 +19,6 @@ do
     #Calculating the fully sampled response function and the fully sampled fod
 	dwi2response dhollander $path/data.nii.gz $path/wm_response.txt $path/gm_response.txt $path/csf_response.txt -fslgrad $path/bvecs $path/bvals
 	dwi2fod -fslgrad $path/bvecs $path/bvals msmt_csd $path/data.nii.gz $path/wm_response.txt $path/wmfod.nii.gz $path/gm_response.txt $path/gm.nii.gz $path/csf_response.txt $path/csf.nii.gz 	
-	mrconvert $path/gt_fod.nii.gz -coord 3 0:44 $path/gt_wmfod.nii.gz
 
     #Undersampling the data.
     python dwi_undersample.py $data_path $subject $folder_name

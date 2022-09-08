@@ -15,7 +15,7 @@ import util
 import data
 import options
 #import FODCSDNet as csdnet
-import csdnet
+import Convcsdnet
 import argparse
 from torch.utils.tensorboard import SummaryWriter
 import torch.optim.lr_scheduler 
@@ -23,10 +23,7 @@ import yaml
 
 if __name__ == '__main__':
     opts = options.network_options()
-    
-    parser = argparse.ArgumentParser(description='Perform a training loop for the ')
 
-    args = parser.parse_args()
     #Initalising the tensorboard writer
     plt.switch_backend('agg')
 
@@ -49,7 +46,7 @@ if __name__ == '__main__':
     for alpha in param_list:
 
         print('Initialising Model')
-        net = csdnet.FCNet(device, opts.deep_reg, opts.neg_reg,alpha,opts)
+        net = Convcsdnet.FCNet(device, opts.deep_reg, opts.neg_reg,alpha,opts)
         P = net.P.to(device)
         net = nn.DataParallel(net)
         net = net.to(device)
@@ -149,10 +146,13 @@ if __name__ == '__main__':
                             val_loss += loss.item()
                             acc_loss += util.ACC(outputs,labels).mean()
                             non_neg += torch.sum((torch.matmul(P, outputs)<-0.01).squeeze(),axis = -1).float().mean()
-                            
+        
                     writer.add_scalar('Validation Loss', val_loss/10,(len(train_dataloader)*epoch)+i+plot_offset)
                     writer.add_scalar('Validation ACC', acc_loss/10 ,(len(train_dataloader)*epoch)+i+plot_offset)
                     writer.add_scalar('Validation Non-Negativity Tracker', (non_neg/10).detach().to('cpu').numpy() ,(len(train_dataloader)*epoch)+i+plot_offset)
+                    writer.add_scalar('Deep Regularisation Lambda', net.module.lambda_deep, (len(train_dataloader)*epoch)+i+plot_offset)
+                    writer.add_scalar('Non-negativity Regularisation Lambda', net.module.lambda_neg, (len(train_dataloader)*epoch)+i+plot_offset)
+                    writer.add_scalar('Sigmoid Slope', net.module.alpha, (len(train_dataloader)*epoch)+i+plot_offset)
 
                     #Keeping track of the best validation score and implementing early stopping.
                     print('Best Loss', best_loss)

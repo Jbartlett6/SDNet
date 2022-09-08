@@ -57,13 +57,13 @@ class FCNet(nn.Module):
         self.opts = opts
 
         if opts.learn_lambda == True:
-            self.lambda_deep = nn.Parameter(torch.tensor(self.opts.lambda_deep))
-            self.lambda_neg = nn.Parameter(torch.tensor(self.opts.lambda_neg))
+            self.lambda_deep = nn.Parameter(torch.tensor(self.opts.deep_reg))
+            self.lambda_neg = nn.Parameter(torch.tensor(self.opts.neg_reg))
             self.alpha = nn.Parameter(torch.tensor(self.opts.alpha).float())
         else:
             #Data consistency term parameters:
-            self.register_buffer('lambda_deep', torch.tensor(self.opts.lambda_deep))
-            self.register_buffer('lambda_neg', torch.tensor(self.opts.lambda_neg))
+            self.register_buffer('lambda_deep', torch.tensor(self.opts.deep_reg))
+            self.register_buffer('lambda_neg', torch.tensor(self.opts.neg_reg))
             self.register_buffer('alpha', torch.tensor(self.opts.alpha).float())
 
 

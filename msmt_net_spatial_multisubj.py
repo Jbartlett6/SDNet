@@ -81,6 +81,7 @@ if __name__ == '__main__':
 
 
     print(net)
+    print(f'The number of parameters in the model is: {sum(p.numel() for p in net.parameters() if p.requires_grad)}')
     optimizer = torch.optim.Adam(net.parameters(), lr = opts.lr, betas = (0.9,0.999), eps = 1e-8)
     #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
 

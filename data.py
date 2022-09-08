@@ -28,21 +28,21 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         #Loading the data into the data tensor
         print('Loading the signal data into RAM')
         for i, subject in enumerate(subject_list):
-            path = os.path.join('/media','duanj','F','joe','hcp_2',subject,'T1w','Diffusion','undersampled_fod','normalised_data.nii.gz')
+            path = os.path.join(self.data_dir, subject, 'T1w',' Diffusion', 'undersampled_fod', 'normalised_data.nii.gz')
             nifti = nib.load(path)
             self.data_tensor[i,:,:,:,:] = torch.tensor(np.array(nifti.dataobj))
         
         #Loading the ground truth data into RAM
         print('Loading the ground Truth FOD data into RAM')
         for i, subject in enumerate(subject_list):
-            path = os.path.join('/media','duanj','F','joe','hcp_2',subject,'T1w','Diffusion','undersampled_fod','gt_fod.nii.gz')
+            path = os.path.join(self.data_dir, subject,'T1w','Diffusion','undersampled_fod','gt_fod.nii.gz')
             nifti = nib.load(path)
             self.gt_tensor[i,:,:,:,:] = torch.tensor(np.array(nifti.dataobj))
 
         #Loading the mask data into RAM
         print('Loading the mask data into RAM')
         for i, subject in enumerate(subject_list):
-            path = os.path.join('/media','duanj','F','joe','hcp_2',subject,'T1w','Diffusion','nodif_brain_mask.nii.gz')
+            path = os.path.join(self.data_dir,subject,'T1w','Diffusion','nodif_brain_mask.nii.gz')
             nifti = nib.load(path)
             self.mask_tensor[i,:,:,:] = torch.tensor(np.array(nifti.dataobj))
 
@@ -50,7 +50,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         print('Loading the Spherical Convolution co-ords into RAM')
         for i, subject in enumerate(subject_list):
             #Extracting bvectors from folders:
-            bvecs = util.bvec_extract(subject)
+            bvecs = util.bvec_extract(self.data_dir, subject, 'undersampled_fod')
             bvecs_sph = util.ss_sph_coords(bvecs)
             bvecs_sph[bvecs_sph[:,0]<0,0] = bvecs_sph[bvecs_sph[:,0]<0,0]+2*math.pi
             order = 8
@@ -58,7 +58,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
             #Extracting bvalues:
             bvals = util.bval_extract(self.data_dir, subject, 'undersampled_fod')
             #White matter response function extraaction:
-            with open('/media/duanj/F/joe/hcp_2/100206/T1w/Diffusion/undersampled_fod/wm_response.txt', 'r') as txt:
+            with open(os.path.join(self.data_dir, subject,'T1w','Diffusion','undersampled_fod','wm_response.txt'), 'r') as txt:
                 x = txt.read()
             x = x.split('\n')[2:-1]
             
@@ -67,12 +67,12 @@ class DWIPatchDataset(torch.utils.data.Dataset):
                 g_wm[j] = torch.tensor([float(resp) for resp in x[j].split(' ')])
 
             #Grey matter response function extraction:
-            with open('/media/duanj/F/joe/hcp_2/100206/T1w/Diffusion/undersampled_fod/gm_response.txt', 'r') as txt:
+            with open(os.path.join(self.data_dir, subject,'T1w','Diffusion','undersampled_fod','gm_response.txt'), 'r') as txt:
                 x = txt.read()
             g_gm = [float(resp) for resp in x.split('\n')[2:-1]]
 
             #CSF response function extraction:
-            with open('/media/duanj/F/joe/hcp_2/100206/T1w/Diffusion/undersampled_fod/csf_response.txt', 'r') as txt:
+            with open(os.path.join(self.data_dir, subject,'T1w','Diffusion','undersampled_fod','csf_response.txt'), 'r') as txt:
                 x = txt.read()
             g_csf = [float(resp) for resp in x.split('\n')[2:-1]]    
         
@@ -133,21 +133,22 @@ class FODPatchDataset(torch.utils.data.Dataset):
         #Loading the data into the data tensor
         print('Loading the signal data into RAM')
         for i, subject in enumerate(subject_list):
-            path = os.path.join('/media','duanj','F','joe','hcp_2',subject,'T1w','Diffusion','undersampled_fod','undersampled_fod.nii.gz')
+            path = os.path.join(self.data_dir, subject,'T1w','Diffusion','undersampled_fod','undersampled_fod.nii.gz')
             nifti = nib.load(path)
             self.data_tensor[i,:,:,:,:] = torch.tensor(np.array(nifti.dataobj))
         
         #Loading the ground truth data into RAM
         print('Loading the ground Truth FOD data into RAM')
         for i, subject in enumerate(subject_list):
-            path = os.path.join('/media','duanj','F','joe','hcp_2',subject,'T1w','Diffusion','undersampled_fod','gt_fod.nii.gz')
+            path = os.path.join(self.data_dir, subject,'T1w','Diffusion','undersampled_fod','gt_fod.nii.gz')
             nifti = nib.load(path)
             self.gt_tensor[i,:,:,:,:] = torch.tensor(np.array(nifti.dataobj))
 
         #Loading the mask data into RAM
         print('Loading the mask data into RAM')
         for i, subject in enumerate(subject_list):
-            path = os.path.join('/media','duanj','F','joe','hcp_2',subject,'T1w','Diffusion','nodif_brain_mask.nii.gz')
+            path = os.path.join(self.data_dir,subject,'T1w','Diffusion','nodif_brain_mask.nii.gz')
+
             nifti = nib.load(path)
             self.mask_tensor[i,:,:,:] = torch.tensor(np.array(nifti.dataobj))
 
@@ -155,7 +156,7 @@ class FODPatchDataset(torch.utils.data.Dataset):
         print('Loading the Spherical Convolution co-ords into RAM')
         for i, subject in enumerate(subject_list):
             #Extracting bvectors from folders:
-            bvecs = util.bvec_extract(subject)
+            bvecs = util.bvec_extract(self.data_dir, subject, 'undersampled_fod')
             bvecs_sph = util.ss_sph_coords(bvecs)
             bvecs_sph[bvecs_sph[:,0]<0,0] = bvecs_sph[bvecs_sph[:,0]<0,0]+2*math.pi
             order = 8
@@ -163,7 +164,7 @@ class FODPatchDataset(torch.utils.data.Dataset):
             #Extracting bvalues:
             bvals = util.bval_extract(self.data_dir, subject, 'undersampled_fod')
             #White matter response function extraaction:
-            with open('/media/duanj/F/joe/hcp_2/100206/T1w/Diffusion/undersampled_fod/wm_response.txt', 'r') as txt:
+            with open(os.path.join(self.data_dir, subject,'T1w','Diffusion','undersampled_fod','wm_response.txt'), 'r') as txt:
                 x = txt.read()
             x = x.split('\n')[2:-1]
             
@@ -172,12 +173,12 @@ class FODPatchDataset(torch.utils.data.Dataset):
                 g_wm[j] = torch.tensor([float(resp) for resp in x[j].split(' ')])
 
             #Grey matter response function extraction:
-            with open('/media/duanj/F/joe/hcp_2/100206/T1w/Diffusion/undersampled_fod/gm_response.txt', 'r') as txt:
+            with open(os.path.join(self.data_dir, subject,'T1w','Diffusion','undersampled_fod','gm_response.txt'), 'r') as txt:
                 x = txt.read()
             g_gm = [float(resp) for resp in x.split('\n')[2:-1]]
 
             #CSF response function extraction:
-            with open('/media/duanj/F/joe/hcp_2/100206/T1w/Diffusion/undersampled_fod/csf_response.txt', 'r') as txt:
+            with open(os.path.join(self.data_dir, subject,'T1w','Diffusion','undersampled_fod','csf_response.txt'), 'r') as txt:
                 x = txt.read()
             g_csf = [float(resp) for resp in x.split('\n')[2:-1]]    
         

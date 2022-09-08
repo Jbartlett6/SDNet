@@ -19,6 +19,27 @@ class FCCascadeLayer(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.casc = nn.Sequential(nn.Conv3d(47, 80, 3, padding='same'),
+                                  #nn.BatchNorm1d(512),  
+                                  nn.ReLU(inplace=True),  
+                                  nn.Conv3d(80, 80, 3, padding='same'),
+                                  #nn.BatchNorm1d(512),
+                                  nn.ReLU(inplace=True),
+                                  nn.Conv3d(80, 80, 3, padding='same'),
+                                  #nn.BatchNorm1d(512),  
+                                  nn.ReLU(inplace=True),
+                                  nn.Conv3d(80, 80, 3, padding='same'),
+                                  nn.ReLU(inplace=True),
+                                  nn.Conv3d(80, 47, 3, padding='same')
+
+    def forward(self, x):
+        return self.casc(x)
+
+class ConvCascadeLayer(nn.Module):
+    """Cascade Layer"""
+
+    def __init__(self):
+        super().__init__()
         self.casc = nn.Sequential(nn.Linear(1269, 512),
                                   nn.BatchNorm1d(512),  
                                   nn.ReLU(inplace=True),  

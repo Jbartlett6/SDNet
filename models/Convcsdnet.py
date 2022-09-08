@@ -51,24 +51,25 @@ class ConvCascadeLayer(nn.Module):
 
 
 class FCNet(nn.Module):
-    def __init__(self, device, lambda_deep, lambda_neg,alpha, opts):
+    def __init__(self, opts):
         super(FCNet, self).__init__()
 
+        self.opts = opts
+
         if opts.learn_lambda == True:
-            self.lambda_deep = nn.Parameter(torch.tensor(lambda_deep))
-            self.lambda_neg = nn.Parameter(torch.tensor(lambda_neg))
-            self.alpha = nn.Parameter(torch.tensor(alpha).float())
+            self.lambda_deep = nn.Parameter(torch.tensor(self.opts.lambda_deep))
+            self.lambda_neg = nn.Parameter(torch.tensor(self.opts.lambda_neg))
+            self.alpha = nn.Parameter(torch.tensor(self.opts.alpha).float())
         else:
             #Data consistency term parameters:
-            self.register_buffer('lambda_deep', torch.tensor(lambda_deep))
-            self.register_buffer('lambda_neg', torch.tensor(lambda_neg))
-            self.register_buffer('alpha', torch.tensor(alpha).float())
+            self.register_buffer('lambda_deep', torch.tensor(self.opts.lambda_deep))
+            self.register_buffer('lambda_neg', torch.tensor(self.opts.lambda_neg))
+            self.register_buffer('alpha', torch.tensor(self.opts.alpha).float())
 
 
         self.sampling_directions = torch.load(os.path.join('utils/300_predefined_directions.pt'))
-        self.opts = opts
+        
         self.order = 8 
-        self.device = device
         P = util.construct_sh_basis(self.sampling_directions, self.order)
         P_temp = torch.zeros((300,2))
         self.register_buffer('P',torch.cat((P,P_temp),1))

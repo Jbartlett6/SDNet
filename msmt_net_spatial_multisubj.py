@@ -30,12 +30,12 @@ if __name__ == '__main__':
     #Initalising the tensorboard writer
     plt.switch_backend('agg')
 
-    # d_train = data.DWIPatchDataset(opts.data_dir, opts.train_subject_list, inference=False)
-    # d_val = data.DWIPatchDataset(opts.data_dir, opts.val_subject_list, inference=False)
+    d_train = data.DWIPatchDataset(opts.data_dir, opts.train_subject_list, inference=False)
+    d_val = data.DWIPatchDataset(opts.data_dir, opts.val_subject_list, inference=False)
 
     #Experimental
-    d_train = data.ExperimentPatchDataset(opts.data_dir, ['100206'], inference=False)
-    d_val = data.ExperimentPatchDataset(opts.data_dir, ['100307'], inference=False)
+    # d_train = data.ExperimentPatchDataset(opts.data_dir, ['100206'], inference=False)
+    # d_val = data.ExperimentPatchDataset(opts.data_dir, ['100307'], inference=False)
 
     train_dataloader = torch.utils.data.DataLoader(d_train, batch_size=opts.batch_size,
                                             shuffle=True, num_workers=opts.train_workers)
@@ -44,14 +44,14 @@ if __name__ == '__main__':
 
 
     criterion = torch.nn.MSELoss(reduction='mean')
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     param_list = [150]
     for alpha in param_list:
 
         print('Initialising Model')
         net = csdnet.FCNet(device, opts.deep_reg, opts.neg_reg,alpha,opts)
         P = net.P.to(device)
-        #net = nn.DataParallel(net)
+        net = nn.DataParallel(net)
         net = net.to(device)
         #Either loading the existing best model path, or creating the experiment directory depending on the continue training flag.
         model_save_path = os.path.join('checkpoints', opts.experiment_name, 'models')

@@ -57,13 +57,13 @@ class FCNet(nn.Module):
         self.opts = opts
 
         if opts.learn_lambda == True:
-            self.lambda_deep = nn.Parameter(torch.tensor(self.opts.deep_reg))
-            self.lambda_neg = nn.Parameter(torch.tensor(self.opts.neg_reg))
+            self.deep_reg = nn.Parameter(torch.tensor(self.opts.deep_reg))
+            self.neg_reg = nn.Parameter(torch.tensor(self.opts.neg_reg))
             self.alpha = nn.Parameter(torch.tensor(self.opts.alpha).float())
         else:
             #Data consistency term parameters:
-            self.register_buffer('lambda_deep', torch.tensor(self.opts.deep_reg))
-            self.register_buffer('lambda_neg', torch.tensor(self.opts.neg_reg))
+            self.register_buffer('deep_reg', torch.tensor(self.opts.deep_reg))
+            self.register_buffer('neg_reg', torch.tensor(self.opts.neg_reg))
             self.register_buffer('alpha', torch.tensor(self.opts.alpha).float())
 
 
@@ -144,11 +144,11 @@ class FCNet(nn.Module):
                 L_TL = torch.matmul(L.transpose(4,5),L).to(b.device)
             
                 # AQ_TAQ = [B, 47,47], L_TL = [B,X,Y,Z,47,47], AQ_Tb = [B,X,Y,Z,47,1], w = [B,X,Y,Z,47,1] ---> c = [B,X,Y,Z,47,1]
-                c = torch.linalg.solve(AQ_TAQ+(self.lambda_neg)*L_TL+self.lambda_deep*torch.eye(47).to(b.device),AQ_Tb[:,n:-n,n:-n,n:-n,:,:] + self.lambda_deep*w)
+                c = torch.linalg.solve(AQ_TAQ+(self.neg_reg)*L_TL+self.deep_reg*torch.eye(47).to(b.device),AQ_Tb[:,n:-n,n:-n,n:-n,:,:] + self.deep_reg*w)
 
         elif self.opts.dc_type == 'FOD_sig':
-            A_tmp = AQ_TAQ+self.lambda_deep*torch.matmul(self.P.transpose(0,1),self.P)
-            b_tmp = AQ_Tb[:,n:-n,n:-n,n:-n,:,:]+self.lambda_deep*torch.matmul(self.P.transpose(0,1),w)
+            A_tmp = AQ_TAQ+self.deep_reg*torch.matmul(self.P.transpose(0,1),self.P)
+            b_tmp = AQ_Tb[:,n:-n,n:-n,n:-n,:,:]+self.deep_reg*torch.matmul(self.P.transpose(0,1),w)
             c = torch.linalg.solve(A_tmp, b_tmp)
 
         return c

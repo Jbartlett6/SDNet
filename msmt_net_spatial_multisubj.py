@@ -70,7 +70,7 @@ if __name__ == '__main__':
         
         
     else:
-        assert not os.path.isdir(os.path.join('checkpoints', opts.experiment_name)), 'The experiment' + opts.experiment_name + 'already exists, please select another experiment name'
+        assert not os.path.isdir(os.path.join('checkpoints', opts.experiment_name)), f'The experiment {opts.experiment_name} already exists, please select another experiment name'
         os.mkdir(os.path.join('checkpoints', opts.experiment_name))
         os.mkdir(os.path.join('checkpoints', opts.experiment_name, 'models'))
         best_loss = math.inf
@@ -83,16 +83,11 @@ if __name__ == '__main__':
     print(net)
     optimizer = torch.optim.Adam(net.parameters(), lr = opts.lr, betas = (0.9,0.999), eps = 1e-8)
     #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
-
-    #Running the training loop,in this case for spatial deep reg
     early_stopping_counter = 0
-
+    #Running the training loop,in this case for spatial deep reg
+    
     for epoch in range(opts.epochs):  # loop over the dataset multiple times
         #Breaking out of this loop also if the inner loop has been broken out of due to early stopping.
-        if early_stopping_counter > opts.early_stopping_threshold:
-            break
-
-
         running_loss = 0.0
         #0 specifies 
         for i, data in enumerate(train_dataloader, 0):
@@ -151,13 +146,14 @@ if __name__ == '__main__':
                 writer.add_scalar('Validation Loss', val_loss/10,(len(train_dataloader)*epoch)+i+plot_offset)
                 writer.add_scalar('Validation ACC', acc_loss/10 ,(len(train_dataloader)*epoch)+i+plot_offset)
                 writer.add_scalar('Validation Non-Negativity Tracker', (non_neg/10).detach().to('cpu').numpy() ,(len(train_dataloader)*epoch)+i+plot_offset)
-                writer.add_scalar('Deep Regularisation Lambda', net.module.lambda_deep, (len(train_dataloader)*epoch)+i+plot_offset)
-                writer.add_scalar('Non-negativity Regularisation Lambda', net.module.lambda_neg, (len(train_dataloader)*epoch)+i+plot_offset)
+                writer.add_scalar('Deep Regularisation Lambda', net.module.deep_reg, (len(train_dataloader)*epoch)+i+plot_offset)
+                writer.add_scalar('Non-negativity Regularisation Lambda', net.module.neg_reg, (len(train_dataloader)*epoch)+i+plot_offset)
                 writer.add_scalar('Sigmoid Slope', net.module.alpha, (len(train_dataloader)*epoch)+i+plot_offset)
 
                 #Keeping track of the best validation score and implementing early stopping.
                 print('Best Loss', best_loss)
                 print('Early stopping counter', early_stopping_counter)
+
                 
                 if acc_loss/10 > best_val_ACC:
                     best_val_ACC = acc_loss/10
@@ -165,25 +161,24 @@ if __name__ == '__main__':
                 if val_loss/10 < best_loss:
                     
                     best_loss = val_loss/10
-                    early_stopping_counter = 0
                     save_path = os.path.join(model_save_path, 'best_model.pth')
                     torch.save(net.state_dict(), save_path)
 
                     training_details = {'epochs': epoch, 'minibatch': i, 'best loss': best_loss, 'best ACC': float(best_val_ACC), 'plot_step':(len(train_dataloader)*epoch)+i+plot_offset}
                     with open(os.path.join(model_save_path,'training_details.yml'), 'w') as file:
                         documents = yaml.dump(training_details, file)
+                
 
-                else:
-                    early_stopping_counter = early_stopping_counter+1
-                
-                
-                    
-                #Breaking out of the inner loop and posting final validation loss if early stopping doesn't occur
-                if early_stopping_counter > opts.early_stopping_threshold:
+        #Early stopping implementation.
+        current_loss = val_loss/10
+        if current_loss > previous_loss:
+            early_stopping_counter = early_stopping_counter+1
+        
+        if early_stopping_counter > opts.early_stopping_threshold:
                     print(f'Training stopped at epoch {global_epochs+epoch} due to Early stopping and minibatch {i}, the best validation loss achieved is: {best_loss}')
                     break
-
-        #scheduler.step()
+        
+        previous_loss = current_loss
 
         
     # with open('/media/duanj/F/joe/Project_1_recon/Experiments/csd_net/param_tuning1/results_2.txt', 'a') as txt:

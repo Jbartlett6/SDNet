@@ -1,20 +1,8 @@
-batch_size: 256
-size_3d_patch: 9
-verbose: True
-# Learning rate and GPU IDs
-lr: 0.0005
-gpu_ids: 0,1 
-init_type: 'xavier'
-num_threads: 8
-
-# Parameters for Checkpoint
-checkpoints_dir: ./checkpoints
-model: fodnet
-name: fodnet_real_o8_0005
-suffix: bothwmgm
-
-
-# Parameters for visualization and saving models
-print_freq: 25
-save_latest_freq: 50000
-save_epoch_freq: 25
+experiment_name: Conv_nolearn_CSDNet_exp
+dc_type: CSD
+continue_training: False
+learn_lambda: False
+early_stopping: True
+early_stopping_threshold: 5
+train_workers: 8
+val_workers: 8

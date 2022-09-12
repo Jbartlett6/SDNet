@@ -9,8 +9,8 @@ import argparse
 
 class network_options():
     def __init__(self):
-        self.lr = 1e-4
-        self.batch_size = 256
+        self.lr = 1e-5
+        self.batch_size = 128
         self.epochs = 10
 
         #Data consistency related hyperparameters
@@ -25,9 +25,9 @@ class network_options():
 
         
         #Computation related hyperparameters:
-        self.train_workers = 8
-        self.val_workers = 8
-        self.data_dir = '/media/duanj/F/joe/hcp_2'
+        self.train_workers = 16
+        self.val_workers = 16
+        self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp'
         self.train_subject_list = ['100206',
                     '100307',
                     '100408',
@@ -50,6 +50,7 @@ class network_options():
         self.val_subject_list = ['104416',
                         '104012',
                         '103818']
+        self.option_init()
 
         
 
@@ -83,7 +84,7 @@ class network_options():
         self.args = parser.parse_args()
 
     def config_file(self):
-        with open(self.args['config_path'], 'r') as f:
+        with open(self.args.config_path, 'r') as f:
             config = yaml.load(f, yaml.loader.SafeLoader)
         
         for key in config.keys():
@@ -93,8 +94,9 @@ class network_options():
 
 
     def option_init(self):
+        self.parse_arguments()
         self.config_file()
-        self.parse_arguments()    
+            
 
     def subject_text_reader(self, subject_path):
         with open(subject_path, 'r') as f:

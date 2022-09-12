@@ -2,29 +2,34 @@ from cmath import inf
 import yaml
 import os
 import argparse
+import torch
 
-# with open(os.path.join('config', 'fodnet_config.yml')) as f:
-#     config = yaml.load(f, yaml.loader.SafeLoader)
-# print(config)
+#with open(os.path.join('config', 'fodnet_config.yml')) as f:
+     #config = yaml.load(f, yaml.loader.SafeLoader)
+#print(config)
 
 class network_options():
     def __init__(self):
         self.lr = 1e-4
-        self.batch_size = 256
+        self.batch_size = 128
         self.epochs = 10
 
         #Data consistency related hyperparameters
         self.neg_reg = (0.7/0.1875)*0.25
         self.deep_reg = 0.25
+        self.dc_type = 'CSD' #'CSD' or 'FOD_sig'
+        self.alpha = 150
+        self.learn_lambda = True
 
 
         self.early_stopping = True
         self.early_stopping_threshold = inf
-        self.continue_training = True
-        self.experiment_name = 'CSD_main'
+        self.continue_training = False
+        self.experiment_name = 'CSD-Learnable_3'
 
         
         #Computation related hyperparameters:
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.train_workers = 8
         self.val_workers = 8
         self.data_dir = '/media/duanj/F/joe/hcp_2'
@@ -50,7 +55,11 @@ class network_options():
         self.val_subject_list = ['104416',
                         '104012',
                         '103818']
-
+        
+        
+        self.option_init()
+        if self.continue_training:
+            self.continue_training_init()
         
 
     def parse_arguments(self):
@@ -67,6 +76,10 @@ class network_options():
         #Data consistency related hyperparameters
         parser.add_argument('--deep_reg',type=float, help = 'The deep regularisation parameter which is used in the data consistency term')
         parser.add_argument('--neg_reg',type=float, help = 'The non-negativity regularisation parameter which is used in the data consistency term')
+        parser.add_argument('--dc_type',type=str, help = 'The type of data consistency used for the network.')
+        parser.add_argument('--learn_lambda',type=bool, help = 'Whether to learn the regularisation parameters in the data consistency layer or not.')
+        parser.add_argument('--alpha',type=float, help = 'The smoothing parameter in the network')
+
 
         #Config File path:
         parser.add_argument('--config_path', type=str, help = 'The path of the config file.')
@@ -80,21 +93,34 @@ class network_options():
         parser.add_argument('--train_workers',type=int, help = 'The number of workers for the training dataloader')
         parser.add_argument('--val_workers',type=int, help = 'The number of workers for the validation dataloader')
 
-        self.args = parser.parse_args()
+        self.parser_args = parser.parse_args()
+        
+        for key, value in vars(self.parser_args).items():
+            if value != None:
+                setattr(self, key, value)
 
     def config_file(self):
-        with open(self.args['config_path'], 'r') as f:
+        with open(self.parser_args.config_path, 'r') as f:
             config = yaml.load(f, yaml.loader.SafeLoader)
         
         for key in config.keys():
+
             setattr(self, key, config[key])
         
+    def continue_training_init(self):
+        with open(os.path.join('checkpoints', self.experiment_name, 'models', 'training_details.yml')) as f:
+            train_details = yaml.load(f, Loader = yaml.loader.SafeLoader)
+
+        for key in train_details.keys():
+            if hasattr(self, key):
+                setattr(self, key, train_details[key])
 
 
 
     def option_init(self):
+        self.parse_arguments()
         self.config_file()
-        self.parse_arguments()    
+            
 
     def subject_text_reader(self, subject_path):
         with open(subject_path, 'r') as f:

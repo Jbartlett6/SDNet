@@ -53,6 +53,7 @@ if __name__ == '__main__':
     #Either loading the existing best model path, or creating the experiment directory depending on the continue training flag.
     model_save_path = os.path.join('checkpoints', opts.experiment_name, 'models')
     plot_offset = 0
+    previous_loss = 0
     if opts.continue_training:
         assert os.path.isdir(os.path.join('checkpoints', opts.experiment_name)), 'The experiment ' + opts.experiment_name + ''' does not exist so model parameters cannot be loaded. 
                                                                             Either change continue training flag to create another experiment, or change the experiment name

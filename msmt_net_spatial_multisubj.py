@@ -23,6 +23,7 @@ import yaml
 
 if __name__ == '__main__':
     opts = options.network_options()
+    print(opts.__dict__)
 
     #Initalising the tensorboard writer
     plt.switch_backend('agg')
@@ -65,7 +66,7 @@ if __name__ == '__main__':
         plot_offset = training_details['plot_step']
         best_loss = training_details['best loss']
         best_val_ACC = training_details['best ACC']
-        global_epochs = training_details['epochs']
+        global_epochs = training_details['epochs_count']
         print('Plot offset is:'+str(plot_offset))
         
         
@@ -164,7 +165,17 @@ if __name__ == '__main__':
                     save_path = os.path.join(model_save_path, 'best_model.pth')
                     torch.save(net.state_dict(), save_path)
 
-                    training_details = {'epochs': epoch, 'minibatch': i, 'best loss': best_loss, 'best ACC': float(best_val_ACC), 'plot_step':(len(train_dataloader)*epoch)+i+plot_offset}
+                    training_details = {'epochs_count': epoch,
+                                        'batch_size':opts.batch_size, 
+                                        'minibatch': i, 
+                                        'lr': optimizer.state_dict()['param_groups'][0]['lr'],
+                                        'best loss': best_loss,
+                                        'best ACC': float(best_val_ACC),
+                                        'plot_step':(len(train_dataloader)*epoch)+i+plot_offset,
+                                        'deep_reg': float(net.module.deep_reg),
+                                        'neg_reg':float(net.module.neg_reg),
+                                        'alpha':float(net.module.alpha)}
+
                     with open(os.path.join(model_save_path,'training_details.yml'), 'w') as file:
                         documents = yaml.dump(training_details, file)
                 

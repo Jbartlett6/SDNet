@@ -21,11 +21,12 @@ class network_options():
         self.alpha = 150
         self.learn_lambda = True
 
+        self.loss_type = 'sig'
 
         self.early_stopping = True
         self.early_stopping_threshold = inf
         self.continue_training = False
-        self.experiment_name = 'CSD-Learnable_3'
+        self.experiment_name = 'tmp1'
 
         
         #Computation related hyperparameters:

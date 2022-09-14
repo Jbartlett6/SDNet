@@ -88,6 +88,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(net.parameters(), lr = opts.lr, betas = (0.9,0.999), eps = 1e-8)
     #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
     early_stopping_counter = 0
+    previous_loss = inf
     #Running the training loop,in this case for spatial deep reg
     
     for epoch in range(opts.epochs):  # loop over the dataset multiple times
@@ -105,7 +106,12 @@ if __name__ == '__main__':
             net.train()
             
             outputs = net(inputs, AQ)
-            mae_criterion = criterion(outputs.squeeze()[:,:45], labels[:,:45])
+            if opts.loss_type == 'sh':
+                mae_criterion = criterion(outputs.squeeze()[:,:45], labels[:,:45])
+            elif opts.loss_type == 'sig':
+                out_dir = torch.matmul(P,outputs).squeeze()
+                gt_dir = torch.matmul(P,labels.unsqueeze(2)).squeeze()
+                mae_criterion = criterion(out_dir, gt_dir)       
             
             loss = mae_criterion
             loss.backward()
@@ -177,14 +183,16 @@ if __name__ == '__main__':
                                         'plot_step':(len(train_dataloader)*epoch)+i+plot_offset,
                                         'deep_reg': float(net.module.deep_reg),
                                         'neg_reg':float(net.module.neg_reg),
-                                        'alpha':float(net.module.alpha)}
+                                        'alpha':float(net.module.alpha),
+                                        'loss_type':opts.loss_type,
+                                        'learn_lambda':opts.learn_lambda}
 
                     with open(os.path.join(model_save_path,'training_details.yml'), 'w') as file:
                         documents = yaml.dump(training_details, file)
                 
 
         #Early stopping implementation.
-        current_loss = val_loss/10
+        current_loss = best_loss
         if current_loss > previous_loss:
             early_stopping_counter = early_stopping_counter+1
         

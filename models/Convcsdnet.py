@@ -68,18 +68,18 @@ class LargeConvCascadeLayer(nn.Module):
                                     nn.ReLU(inplace=True),
                                     nn.Conv3d(500, 47, 3))
         else:
-            self.casc = nn.Sequential(nn.Conv3d(47, 500, 3, padding='same'), 
-                                    nn.BatchNorm3d(500), 
+            self.casc = nn.Sequential(nn.Conv3d(47, 1024, 3, padding='same'), 
+                                    nn.BatchNorm3d(1024), 
                                     nn.ReLU(inplace=True),  
-                                    nn.Conv3d(500, 500, 3, padding='same'),
-                                    nn.BatchNorm3d(500),
+                                    nn.Conv3d(1024, 1024, 3, padding='same'),
+                                    nn.BatchNorm3d(1024),
                                     nn.ReLU(inplace=True),
-                                    nn.Conv3d(500, 500, 3, padding='same'),
-                                    nn.BatchNorm3d(500),  
+                                    nn.Conv3d(1024, 1024, 3, padding='same'),
+                                    nn.BatchNorm3d(1024),  
                                     nn.ReLU(inplace=True),
-                                    nn.Conv3d(500, 500, 3, padding='same'),
+                                    nn.Conv3d(1024, 1024, 3, padding='same'),
                                     nn.ReLU(inplace=True),
-                                    nn.Conv3d(500, 300, 3))
+                                    nn.Conv3d(1024, 300, 3))
 
     def forward(self, x):
         return self.casc(x)

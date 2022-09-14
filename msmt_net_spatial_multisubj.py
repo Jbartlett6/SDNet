@@ -84,7 +84,8 @@ if __name__ == '__main__':
 
 
     print(net)
-    print(f'The number of parameters in the model is: {sum(p.numel() for p in net.parameters() if p.requires_grad)}')
+    param_num = sum(p.numel() for p in net.parameters() if p.requires_grad)
+    print(f'The number of parameters in the model is: {param_num}')
     optimizer = torch.optim.Adam(net.parameters(), lr = opts.lr, betas = (0.9,0.999), eps = 1e-8)
     #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
     early_stopping_counter = 0
@@ -185,7 +186,8 @@ if __name__ == '__main__':
                                         'neg_reg':float(net.module.neg_reg),
                                         'alpha':float(net.module.alpha),
                                         'loss_type':opts.loss_type,
-                                        'learn_lambda':opts.learn_lambda}
+                                        'learn_lambda':opts.learn_lambda,
+                                        'Number of Parameters':param_num}
 
                     with open(os.path.join(model_save_path,'training_details.yml'), 'w') as file:
                         documents = yaml.dump(training_details, file)

@@ -29,6 +29,7 @@ class network_options():
 
         
         #Computation related hyperparameters:
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.train_workers = 16
         self.val_workers = 16
         self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp'

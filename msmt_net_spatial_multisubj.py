@@ -28,17 +28,19 @@ if __name__ == '__main__':
     #Initalising the tensorboard writer
     plt.switch_backend('agg')
 
-    # d_train = data.DWIPatchDataset(opts.data_dir, opts.train_subject_list, inference=False)
-    # d_val = data.DWIPatchDataset(opts.data_dir, opts.val_subject_list, inference=False)
-
-    #Experimental
-    d_train = data.ExperimentPatchDataset(opts.data_dir, ['100206'], inference=False)
-    d_val = data.ExperimentPatchDataset(opts.data_dir, ['100307'], inference=False)
+    if opts.dataset_type == 'all':
+        d_train = data.DWIPatchDataset(opts.data_dir, opts.train_subject_list, inference=False)
+        d_val = data.DWIPatchDataset(opts.data_dir, opts.val_subject_list, inference=False)
+    elif opts.dataset_type == 'experiment':
+        d_train = data.ExperimentPatchDataset(opts.data_dir, ['100206'], inference=False)
+        d_val = data.ExperimentPatchDataset(opts.data_dir, ['100307'], inference=False)
 
     train_dataloader = torch.utils.data.DataLoader(d_train, batch_size=opts.batch_size,
-                                            shuffle=True, num_workers=opts.train_workers)
+                                            shuffle=True, num_workers=opts.train_workers, 
+                                            drop_last = True)
     val_dataloader = torch.utils.data.DataLoader(d_val, batch_size=opts.batch_size,
-                                            shuffle=True, num_workers=opts.val_workers)
+                                            shuffle=True, num_workers=opts.val_workers,
+                                            drop_last = True)
 
 
     criterion = torch.nn.MSELoss(reduction='mean')
@@ -182,7 +184,8 @@ if __name__ == '__main__':
                                         'neg_reg':float(net.module.neg_reg),
                                         'alpha':float(net.module.alpha),
                                         'loss_type':opts.loss_type,
-                                        'learn_lambda':opts.learn_lambda}
+                                        'learn_lambda':opts.learn_lambda,
+                                        'dataset_type':opts.dataset_type}
 
                     with open(os.path.join(model_save_path,'training_details.yml'), 'w') as file:
                         documents = yaml.dump(training_details, file)
@@ -190,7 +193,7 @@ if __name__ == '__main__':
 
         #Early stopping implementation.
         current_loss = best_loss
-        if current_loss > previous_loss:
+        if current_loss < previous_loss:
             early_stopping_counter = early_stopping_counter+1
         
         if early_stopping_counter > opts.early_stopping_threshold:

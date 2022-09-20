@@ -49,6 +49,40 @@ class ConvCascadeLayer(nn.Module):
     def forward(self, x):
         return self.casc(x)
 
+class LargeConvCascadeLayer(nn.Module):
+    """Cascade Layer"""
+    def __init__(self, dc):
+        super().__init__()
+        if dc=='CSD':
+            self.casc = nn.Sequential(nn.Conv3d(47, 1024, 3, padding='same'),  
+                                    nn.BatchNorm3d(1024),
+                                    nn.ReLU(inplace=True),  
+                                    nn.Conv3d(1024, 1024, 3, padding='same'),
+                                    nn.BatchNorm3d(1024),
+                                    nn.ReLU(inplace=True),
+                                    nn.Conv3d(1024, 1024, 3, padding='same'),
+                                    nn.BatchNorm3d(1024),  
+                                    nn.ReLU(inplace=True),
+                                    nn.Conv3d(1024, 1024, 3, padding='same'),
+                                    nn.ReLU(inplace=True),
+                                    nn.Conv3d(1024, 47, 3))
+        else:
+            self.casc = nn.Sequential(nn.Conv3d(47, 1024, 3, padding='same'), 
+                                    nn.BatchNorm3d(1024), 
+                                    nn.ReLU(inplace=True),  
+                                    nn.Conv3d(1024, 1024, 3, padding='same'),
+                                    nn.BatchNorm3d(1024),
+                                    nn.ReLU(inplace=True),
+                                    nn.Conv3d(1024, 1024, 3, padding='same'),
+                                    nn.BatchNorm3d(1024),  
+                                    nn.ReLU(inplace=True),
+                                    nn.Conv3d(1024, 1024, 3, padding='same'),
+                                    nn.ReLU(inplace=True),
+                                    nn.Conv3d(1024, 300, 3))
+
+    def forward(self, x):
+        return self.casc(x)
+
 
 class FCNet(nn.Module):
     def __init__(self, opts):
@@ -74,11 +108,17 @@ class FCNet(nn.Module):
         P_temp = torch.zeros((300,2))
         self.register_buffer('P',torch.cat((P,P_temp),1))
           
-        #Initialising the cascades for the network.
-        self.cascade_1 = ConvCascadeLayer(opts.dc_type)
-        self.cascade_2 = ConvCascadeLayer(opts.dc_type)
-        self.cascade_3 = ConvCascadeLayer(opts.dc_type)
-        self.cascade_4 = ConvCascadeLayer(opts.dc_type)
+       #Initialising the cascades for the network.
+        if self.opts.network_width == 'large':
+            self.cascade_1 = LargeConvCascadeLayer(opts.dc_type)
+            self.cascade_2 = LargeConvCascadeLayer(opts.dc_type)
+            self.cascade_3 = LargeConvCascadeLayer(opts.dc_type)
+            self.cascade_4 = LargeConvCascadeLayer(opts.dc_type)
+        elif self.opts.network_width == 'normal':
+            self.cascade_1 = ConvCascadeLayer(opts.dc_type)
+            self.cascade_2 = ConvCascadeLayer(opts.dc_type)
+            self.cascade_3 = ConvCascadeLayer(opts.dc_type)
+            self.cascade_4 = ConvCascadeLayer(opts.dc_type)
 
     def forward(self, b, AQ):
         #Initialise the estimate by solving for b using the first 16 signals and using some regularisation

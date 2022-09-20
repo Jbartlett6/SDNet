@@ -24,6 +24,8 @@ if __name__ == '__main__':
     subjects = os.listdir(inference_path)
     #Include all measures of accuracy in this loop and save them to the appropriate destination
     for subj in subjects:
+        print('Performing inference for the subject: ' + subj)
+        
         print('Performing accuracy measures for subject: '+ subj)
         
         print('Calculating ACC')
@@ -35,6 +37,8 @@ if __name__ == '__main__':
 
         print('Performing fixel based analysis')
         os.system('bash utils/FBA.sh ' + inf_wm_path + ' ' + subj +' '+save_path)
+        os.system('bash utils/MAE.sh ' + inf_wm_path + ' ' + subj +' '+save_path+' '+args.dataset_dir)
+
 
     with open(os.path.join(inference_path, 'all_stats.txt'), 'a') as f:
             #Writing the average stats for the ACC into a text file.
@@ -55,3 +59,9 @@ if __name__ == '__main__':
             f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wm_afde_stats.txt'))) + '\n')
             f.write('The mean afde in the whole brain is: \n')
             f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wb_afde_stats.txt'))) + '\n')
+
+            #Writing the average stats for the afde into a text file. 
+            f.write('The mae in the white matter is: \n')
+            f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wm_mae_stats.txt'))) + '\n')
+            f.write('The mae in the whole brain is: \n')
+            f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wb_mae_stats.txt'))) + '\n')

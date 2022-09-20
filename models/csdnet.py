@@ -30,7 +30,7 @@ class FCCascadeLayer(nn.Module):
                                   nn.ReLU(inplace=True),
                                   nn.Conv3d(80, 80, 3, padding='same'),
                                   nn.ReLU(inplace=True),
-                                  nn.Conv3d(80, 47, 3, padding='same')
+                                  nn.Conv3d(80, 47, 3, padding='same'))
 
     def forward(self, x):
         return self.casc(x)

@@ -4,9 +4,6 @@ subj=$2
 save_dir=$3
 
 fod2fixel -afd afd.mif -peak_amp peak_amp.mif $inf_im $save_dir/fixel_directory
-fixel2peaks $save_dir/fixel_directory tmp_dir.mif
-
-
 
 #Calculating the difference between the two fixel number images:
 cp $save_dir/fixel_directory/index.mif tmp0.mif

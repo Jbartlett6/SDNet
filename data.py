@@ -28,7 +28,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         #Loading the data into the data tensor
         print('Loading the signal data into RAM')
         for i, subject in enumerate(subject_list):
-            path = os.path.join(self.data_dir, subject, 'T1w',' Diffusion', 'undersampled_fod', 'normalised_data.nii.gz')
+            path = os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', 'undersampled_fod', 'normalised_data.nii.gz')
             nifti = nib.load(path)
             self.data_tensor[i,:,:,:,:] = torch.tensor(np.array(nifti.dataobj))
         

@@ -26,7 +26,7 @@ class network_options():
         self.early_stopping = False
         self.early_stopping_threshold = inf
         self.continue_training = False
-        self.experiment_name = 'tmp1'
+        self.experiment_name = 'FOD_sig_learn'
 
         
         #Computation related hyperparameters:
@@ -56,9 +56,12 @@ class network_options():
         self.val_subject_list = ['104416',
                         '104012',
                         '103818']
+
+        self.test_subject_list = ['145127','147737']
         self.dataset_type = 'all'
         self.model_name = 'best_model.pth'
         self.network_width = 'normal'
+        self.inference=False
         
         
         self.option_init()

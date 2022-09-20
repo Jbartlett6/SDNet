@@ -61,25 +61,27 @@ def per_subject_inference(subject, opts, data):
     for i , data in enumerate(dataloader):
         signal_data, _, AQ, coords = data
         signal_data, AQ, coords = signal_data.to(device), AQ.to(device), coords.to(device)
-
+        
         if i%20 == 19:
             print(i*256, '/', len(dataset))
 
         
         with torch.no_grad():
             out[coords[:,1], coords[:,2], coords[:,3], :] = net(signal_data, AQ).squeeze()
+    
 
     
     
     
     print('Saving the image in nifti format.')
-    os.mkdir(os.path.join(save_dir, str(subject), 'inf_fod.nii.gz'))
+    if os.path.isdir(os.path.join(save_dir, str(subject))) == False:
+        os.mkdir(os.path.join(save_dir, str(subject)))
     x = out.float()
     x = x.detach().to('cpu').numpy()
     im = nib.Nifti1Image(x, affine=dataset.aff)
     nib.save(im, os.path.join(save_dir, str(subject), 'inf_fod.nii.gz'))
     torch.save(out, os.path.join(save_dir, str(subject), 'inf_fod.pth'))
 
-    os.system('mrconvert' +' '+os.path.join(save_dir, str(subject), 'inf_fod.nii.gz')+ ' ' + '-coord 3 0:44' + ' '+ os.path.join(save_dir, str(subject), 'wm_inf_fod.nii.gz'))
+    os.system('mrconvert' +' '+os.path.join(save_dir, str(subject), 'inf_fod.nii.gz')+ ' ' + '-coord 3 0:44' + ' '+ os.path.join(save_dir, str(subject), 'inf_wm_fod.nii.gz'))
 
     #os.system('bash /home/jxb1336/code/postproc_funcs/ACC.sh'+ ' ' + str(args.save_path) + ' ' + str(gt_path))

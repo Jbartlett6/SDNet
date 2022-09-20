@@ -2,9 +2,8 @@ from genericpath import isdir
 import sys 
 import os
 sys.path.append(os.path.join(sys.path[0],'models'))
-# sys.path.append(os.path.join(sys.path[0],'..'))
+# sys.path.append(os.path.join(sys.path[0],))
 sys.path.append(os.path.join(sys.path[0],'utils'))
-print(sys.path)
 import options
 import torch 
 import torch.nn as nn

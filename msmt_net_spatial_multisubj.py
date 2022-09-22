@@ -15,7 +15,7 @@ import util
 import data
 import options
 #import FODCSDNet as csdnet
-import Convcsdnet
+import Convcsdcfrnet
 import argparse
 from torch.utils.tensorboard import SummaryWriter
 import torch.optim.lr_scheduler 
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     
 
     print('Initialising Model')
-    net = Convcsdnet.FCNet(opts)
+    net = Convcsdcfrnet.FCNet(opts)
     P = net.P.to(opts.device)
     net = nn.DataParallel(net)
     net = net.to(opts.device)

@@ -17,9 +17,8 @@ import data
 
 class ConvCascadeLayer(nn.Module):
     """Cascade Layer"""
-    def __init__(self, dc, P):
+    def __init__(self, dc):
         super().__init__()
-        self.P = P
         if dc=='CSD':
             
             self.casc = nn.Sequential(nn.Conv3d(47, 80, 3, padding='same'),  
@@ -35,7 +34,7 @@ class ConvCascadeLayer(nn.Module):
                                     nn.ReLU(inplace=True),
                                     nn.Conv3d(80, 47, 3))
         else:
-            self.casc = nn.Sequential(nn.Conv3d(300, 80, 3, padding='same'), 
+            self.casc = nn.Sequential(nn.Conv3d(47, 80, 3, padding='same'), 
                                     nn.BatchNorm3d(80), 
                                     nn.ReLU(inplace=True),  
                                     nn.Conv3d(80, 80, 3, padding='same'),
@@ -49,12 +48,7 @@ class ConvCascadeLayer(nn.Module):
                                     nn.Conv3d(80, 300, 3))
 
     def forward(self, x):
-        x = x.transpose(1,4)
-        print(x.shape)
-        print(self.P.shape)
-        c = torch.matmul(self.P, x.unsqueeze(-1)).squeeze()
-        c = c.transpose(1,4)
-        return self.casc(c)
+        return self.casc(x)
 
 class LargeConvCascadeLayer(nn.Module):
     """Cascade Layer"""
@@ -91,39 +85,7 @@ class LargeConvCascadeLayer(nn.Module):
         return self.casc(x)
 
 
-class LargeConvCascadeLayer(nn.Module):
-    """Cascade Layer"""
-    def __init__(self, dc):
-        super().__init__()
-        if dc=='CSD':
-            self.casc = nn.Sequential(nn.Conv3d(47, 1024, 3, padding='same'),  
-                                    nn.BatchNorm3d(1024),
-                                    nn.ReLU(inplace=True),  
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.BatchNorm3d(1024),
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.BatchNorm3d(1024),  
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 47, 3))
-        else:
-            self.casc = nn.Sequential(nn.Conv3d(47, 1024, 3, padding='same'), 
-                                    nn.BatchNorm3d(1024), 
-                                    nn.ReLU(inplace=True),  
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.BatchNorm3d(1024),
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.BatchNorm3d(1024),  
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 300, 3))
 
-    def forward(self, x):
-        return self.casc(x)
 
 class FCNet(nn.Module):
     def __init__(self, opts):
@@ -156,7 +118,6 @@ class FCNet(nn.Module):
             self.cascade_3 = LargeConvCascadeLayer(opts.dc_type)
             self.cascade_4 = LargeConvCascadeLayer(opts.dc_type)
         elif self.opts.network_width == 'normal':
-            print(self.P.shape)
             self.cascade_1 = ConvCascadeLayer(opts.dc_type)
             self.cascade_2 = ConvCascadeLayer(opts.dc_type)
             self.cascade_3 = ConvCascadeLayer(opts.dc_type)

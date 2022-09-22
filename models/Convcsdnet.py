@@ -17,9 +17,11 @@ import data
 
 class ConvCascadeLayer(nn.Module):
     """Cascade Layer"""
-    def __init__(self, dc):
+    def __init__(self, dc, P):
         super().__init__()
+        self.P = P
         if dc=='CSD':
+            
             self.casc = nn.Sequential(nn.Conv3d(47, 80, 3, padding='same'),  
                                     nn.BatchNorm3d(80),
                                     nn.ReLU(inplace=True),  
@@ -33,7 +35,7 @@ class ConvCascadeLayer(nn.Module):
                                     nn.ReLU(inplace=True),
                                     nn.Conv3d(80, 47, 3))
         else:
-            self.casc = nn.Sequential(nn.Conv3d(47, 80, 3, padding='same'), 
+            self.casc = nn.Sequential(nn.Conv3d(300, 80, 3, padding='same'), 
                                     nn.BatchNorm3d(80), 
                                     nn.ReLU(inplace=True),  
                                     nn.Conv3d(80, 80, 3, padding='same'),
@@ -47,7 +49,12 @@ class ConvCascadeLayer(nn.Module):
                                     nn.Conv3d(80, 300, 3))
 
     def forward(self, x):
-        return self.casc(x)
+        x = x.transpose(1,4)
+        print(x.shape)
+        print(self.P.shape)
+        c = torch.matmul(self.P, x.unsqueeze(-1)).squeeze()
+        c = c.transpose(1,4)
+        return self.casc(c)
 
 class LargeConvCascadeLayer(nn.Module):
     """Cascade Layer"""
@@ -115,6 +122,7 @@ class FCNet(nn.Module):
             self.cascade_3 = LargeConvCascadeLayer(opts.dc_type)
             self.cascade_4 = LargeConvCascadeLayer(opts.dc_type)
         elif self.opts.network_width == 'normal':
+            print(self.P.shape)
             self.cascade_1 = ConvCascadeLayer(opts.dc_type)
             self.cascade_2 = ConvCascadeLayer(opts.dc_type)
             self.cascade_3 = ConvCascadeLayer(opts.dc_type)
@@ -148,7 +156,7 @@ class FCNet(nn.Module):
         c_out = self.cascade_2(c_inp)
         c_hat = c_out.transpose(1,4)
         c_hat = c_hat.unsqueeze(5)
-        self.res_con(c_hat,c)
+        c_hat = self.res_con(c_hat,c)
 
         #Data Consistency Layer 2
         c = self.dc(c,c_hat, AQ_Tb, AQ_TAQ, b,2)
@@ -158,7 +166,7 @@ class FCNet(nn.Module):
         c_hat = c_out.transpose(1,4)
         c_hat = c_hat.unsqueeze(5)
 
-        self.res_con(c_hat,c)
+        c_hat = self.res_con(c_hat,c)
         #Pass the data through the final data consistency layer
         c = self.dc(c,c_hat, AQ_Tb, AQ_TAQ, b,3)
 
@@ -166,7 +174,7 @@ class FCNet(nn.Module):
         c_out = self.cascade_4(c_inp)
         c_hat = c_out.transpose(1,4)
         c_hat = c_hat.unsqueeze(5)
-        self.res_con(c_hat,c)
+        c_hat = self.res_con(c_hat,c)
         
         c = self.dc(c,c_hat, AQ_Tb, AQ_TAQ, b,4)
         
@@ -199,6 +207,8 @@ class FCNet(nn.Module):
             c_hat = F.relu(c_hat)
         elif self.opts.dc_type == 'CSD':
             c_hat = c_hat + c[:,1:-1,1:-1,1:-1,:,:]
+        
+        return c_hat
     
     def L_update(self, sampling_directions, c, tau,P, soft, alpha):
         '''

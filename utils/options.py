@@ -57,7 +57,7 @@ class network_options():
                         '104012',
                         '103818']
 
-        self.test_subject_list = ['145127','147737']
+        self.test_subject_list = ['147737','178849']
         self.dataset_type = 'all'
         self.model_name = 'best_model.pth'
         self.network_width = 'normal'

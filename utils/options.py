@@ -12,7 +12,7 @@ class network_options():
     def __init__(self):
         self.lr = 1e-4
         self.batch_size = 128
-        self.epochs = 10
+        self.epochs = 20
 
         #Data consistency related hyperparameters
         self.neg_reg = (0.7/0.1875)*0.25
@@ -23,7 +23,7 @@ class network_options():
 
         self.loss_type = 'sig'
 
-        self.early_stopping = True
+        self.early_stopping = False
         self.early_stopping_threshold = inf
         self.continue_training = False
         self.experiment_name = 'tmp1'
@@ -57,6 +57,7 @@ class network_options():
                         '104012',
                         '103818']
         
+        self.network_width = 'large'
         
         self.option_init()
         if self.continue_training:

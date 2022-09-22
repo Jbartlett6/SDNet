@@ -17,7 +17,7 @@ class network_options():
         #Data consistency related hyperparameters
         self.neg_reg = (0.7/0.1875)*0.25
         self.deep_reg = 0.25
-        self.dc_type = 'CSD' #'CSD' or 'FOD_sig'
+        self.dc_type = 'FOD_sig' #'CSD' or 'FOD_sig'
         self.alpha = 150
         self.learn_lambda = True
 
@@ -26,7 +26,7 @@ class network_options():
         self.early_stopping = False
         self.early_stopping_threshold = inf
         self.continue_training = False
-        self.experiment_name = 'tmp1'
+        self.experiment_name = 'FOD_sig_learn'
 
         
         #Computation related hyperparameters:
@@ -56,11 +56,18 @@ class network_options():
         self.val_subject_list = ['104416',
                         '104012',
                         '103818']
+
+        self.test_subject_list = ['147737','178849']
+        self.dataset_type = 'all'
+        self.model_name = 'best_model.pth'
+        self.network_width = 'normal'
+        self.inference=False
+        self.perform_inference=False
         
         self.network_width = 'large'
         
         self.option_init()
-        if self.continue_training:
+        if self.continue_training or self.inference:
             self.continue_training_init()
         
 
@@ -73,7 +80,7 @@ class network_options():
         parser.add_argument('--early_stopping',type=float, help = 'Tur or False option to indicate whether early stopping should take place.')
         parser.add_argument('--early_stopping_threshold',type=float, help = 'The number of ... which have to pass without improvment for early stopping to take place.')
         parser.add_argument('--continue_training',type=float, help = 'True or False option to indicate whether training should be continued from a previous model or not')
-        parser.add_argument('--experiment_name',type=float, help = 'The experiment name, this will be used to create the folder to save the model, as well as the tensorboard logs.')
+        parser.add_argument('--experiment_name',type=str, help = 'The experiment name, this will be used to create the folder to save the model, as well as the tensorboard logs.')
         parser.add_argument('--epochs',type=int, help = 'The number of epochs to train the model for')
         #Data consistency related hyperparameters
         parser.add_argument('--deep_reg',type=float, help = 'The deep regularisation parameter which is used in the data consistency term')
@@ -95,8 +102,16 @@ class network_options():
         parser.add_argument('--train_workers',type=int, help = 'The number of workers for the training dataloader')
         parser.add_argument('--val_workers',type=int, help = 'The number of workers for the validation dataloader')
 
-        self.parser_args = parser.parse_args()
         
+        parser.add_argument('--inference',type=bool, help = 'Whether the options are being used for inference or not.')
+        
+       
+        parser.add_argument('--subject', type=str, help = 'The path at which the model is saved')
+        parser.add_argument('--model_name', type=str, help = 'The path at which the model is saved')
+        parser.add_argument('--perform_inference', type=bool, help = 'The path at which the model is saved')
+
+        self.parser_args = parser.parse_args()
+
         for key, value in vars(self.parser_args).items():
             if value != None:
                 setattr(self, key, value)
@@ -121,7 +136,8 @@ class network_options():
 
     def option_init(self):
         self.parse_arguments()
-        self.config_file()
+        if self.parser_args.config_path!=None:
+            self.config_file()
             
 
     def subject_text_reader(self, subject_path):

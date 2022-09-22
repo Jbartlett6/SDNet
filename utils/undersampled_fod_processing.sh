@@ -7,7 +7,7 @@ folder_name=$2
 #traininglist=train_subjects.txt
 #vallist=validation_subjects.txt
 traininglist=test.txt
-vallist=
+vallist=validation_subjects.txt
 while read -r subject;
 do
 	echo Preparing the training data.
@@ -57,6 +57,9 @@ do
 	fod2fixel -afd afd.mif -peak_amp peak_amp.mif $path/wmfod.nii.gz $path/fixel_directory
 	fixel2voxel -number 11 $path/fixel_directory/peak_amp.mif none $path/fixel_directory/peak_amp_im.mif
 	fixel2voxel -number 11 $path/fixel_directory/afd.mif none $path/fixel_directory/afd_im.mif
+
+	fixel2peaks -number 11 $path/fixel_directory/fixel_directions.mif
+	mrconvert $path/fixel_directory/fixel_directions.mif $path/fixel_directory/fixel_directions.nii.gz 
 
 	#Undersampling the data:
 	python dwi_undersample.py $data_path $subject $folder_name

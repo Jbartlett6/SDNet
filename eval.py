@@ -2,6 +2,11 @@ import sys
 import os 
 import argparse
 import numpy as np
+sys.path.append(os.path.join(sys.path[0],'utils'))
+import options
+import inference
+import data
+import nibabel as nib
 
 def mrstats_interpreter(path):
     with open(path, 'r') as f:
@@ -14,27 +19,37 @@ def mrstats_interpreter(path):
 
 if __name__ == '__main__':
     
-    parser = argparse.ArgumentParser(description='Perform a training loop for the ')
-    parser.add_argument('experiment_name', type=str, help = 'The experiment name in the checkpoint directory')
-    parser.add_argument('dataset_dir', type=str, help = 'The location of the hcp data directory')
-    args = parser.parse_args()
+    print('Loading options')
+    opts = options.network_options()
+    print(opts.__dict__)
+    print('arguments loaded')
 
-    file_dir = args.experiment_name
+    file_dir = opts.experiment_name
     inference_path = os.path.join('.','checkpoints',file_dir,'inference')
     subjects = os.listdir(inference_path)
     #Include all measures of accuracy in this loop and save them to the appropriate destination
+    subjects = opts.test_subject_list
+    if opts.perform_inference:
+        for subj in subjects:
+            print('Performing inference for subject: '+subj)
+            inference.per_subject_inference(subj, opts, data)
+            print('Inference for subject: '+subj+' complete')
+          
+   
     for subj in subjects:
+        
         print('Performing accuracy measures for subject: '+ subj)
         
         print('Calculating ACC')
-        gt_fod_path = os.path.join(args.dataset_dir, subj, 'T1w', 'Diffusion', 'undersampled_fod', 'gt_wm_fod.nii.gz')
+        gt_fod_path = os.path.join(opts.data_dir, subj, 'T1w', 'Diffusion', 'undersampled_fod', 'gt_wm_fod.nii.gz')
         inf_wm_path = os.path.join(inference_path, subj, 'inf_wm_fod.nii.gz')
         save_path = os.path.join(inference_path, subj)
         os.system('bash utils/ACC.sh ' + gt_fod_path + ' ' + inf_wm_path +' '+save_path+' '+subj) 
-        os.system
 
         print('Performing fixel based analysis')
         os.system('bash utils/FBA.sh ' + inf_wm_path + ' ' + subj +' '+save_path)
+        os.system('bash utils/MAE.sh ' + inf_wm_path + ' ' + subj +' '+save_path+' '+opts.data_dir)
+
 
     with open(os.path.join(inference_path, 'all_stats.txt'), 'a') as f:
             #Writing the average stats for the ACC into a text file.
@@ -55,3 +70,9 @@ if __name__ == '__main__':
             f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wm_afde_stats.txt'))) + '\n')
             f.write('The mean afde in the whole brain is: \n')
             f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wb_afde_stats.txt'))) + '\n')
+
+            #Writing the average stats for the afde into a text file. 
+            f.write('The mae in the white matter is: \n')
+            f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wm_mae_stats.txt'))) + '\n')
+            f.write('The mae in the whole brain is: \n')
+            f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wb_mae_stats.txt'))) + '\n')

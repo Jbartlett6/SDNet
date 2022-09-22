@@ -28,9 +28,12 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         #Loading the data into the data tensor
         print('Loading the signal data into RAM')
         for i, subject in enumerate(subject_list):
-            path = os.path.join(self.data_dir,subject,'T1w','Diffusion','undersampled_fod','normalised_data.nii.gz')
+            path = os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', 'undersampled_fod', 'normalised_data.nii.gz')
             nifti = nib.load(path)
             self.data_tensor[i,:,:,:,:] = torch.tensor(np.array(nifti.dataobj))
+        if self.inference:
+            self.aff = nifti.affine
+            self.head = nifti.header
         
         #Loading the ground truth data into RAM
         print('Loading the ground Truth FOD data into RAM')
@@ -45,6 +48,8 @@ class DWIPatchDataset(torch.utils.data.Dataset):
             path = os.path.join(self.data_dir,subject,'T1w','Diffusion','nodif_brain_mask.nii.gz')
             nifti = nib.load(path)
             self.mask_tensor[i,:,:,:] = torch.tensor(np.array(nifti.dataobj))
+        
+        
 
         #Loading the spherical harmonic co-ords into RAM.
         print('Loading the Spherical Convolution co-ords into RAM')

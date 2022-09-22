@@ -19,6 +19,7 @@ class ConvCascadeLayer(nn.Module):
     """Cascade Layer"""
     def __init__(self, dc):
         super().__init__()
+        
         if dc=='CSD':
             
             self.casc = nn.Sequential(nn.Conv3d(47, 80, 3, padding='same'),  

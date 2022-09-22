@@ -32,7 +32,6 @@ class DWIPatchDataset(torch.utils.data.Dataset):
             nifti = nib.load(path)
             self.data_tensor[i,:,:,:,:] = torch.tensor(np.array(nifti.dataobj))
         if self.inference:
-            print('saving nifti image header and affine')
             self.aff = nifti.affine
             self.head = nifti.header
         

@@ -29,10 +29,11 @@ if __name__ == '__main__':
     subjects = os.listdir(inference_path)
     #Include all measures of accuracy in this loop and save them to the appropriate destination
     subjects = opts.test_subject_list
-    for subj in subjects:
-        print('Performing inference for subject: '+subj)
-        inference.per_subject_inference(subj, opts, data)
-        print('Inference for subject: '+subj+' complete')
+    if opts.perform_inference:
+        for subj in subjects:
+            print('Performing inference for subject: '+subj)
+            inference.per_subject_inference(subj, opts, data)
+            print('Inference for subject: '+subj+' complete')
           
    
     for subj in subjects:

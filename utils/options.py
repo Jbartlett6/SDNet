@@ -57,11 +57,12 @@ class network_options():
                         '104012',
                         '103818']
 
-        self.test_subject_list = ['145127','147737']
+        self.test_subject_list = ['147737','178849']
         self.dataset_type = 'all'
         self.model_name = 'best_model.pth'
         self.network_width = 'normal'
         self.inference=False
+        self.perform_inference=False
         
         
         self.option_init()
@@ -106,6 +107,7 @@ class network_options():
        
         parser.add_argument('--subject', type=str, help = 'The path at which the model is saved')
         parser.add_argument('--model_name', type=str, help = 'The path at which the model is saved')
+        parser.add_argument('--perform_inference', type=bool, help = 'The path at which the model is saved')
 
         self.parser_args = parser.parse_args()
 

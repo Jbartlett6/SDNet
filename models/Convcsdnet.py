@@ -35,7 +35,7 @@ class ConvCascadeLayer(nn.Module):
                                     nn.ReLU(inplace=True),
                                     nn.Conv3d(80, 47, 3))
         else:
-            self.casc = nn.Sequential(nn.Conv3d(300, 80, 3, padding='same'), 
+            self.casc = nn.Sequential(nn.Conv3d(47, 80, 3, padding='same'), 
                                     nn.BatchNorm3d(80), 
                                     nn.ReLU(inplace=True),  
                                     nn.Conv3d(80, 80, 3, padding='same'),
@@ -49,12 +49,7 @@ class ConvCascadeLayer(nn.Module):
                                     nn.Conv3d(80, 300, 3))
 
     def forward(self, x):
-        x = x.transpose(1,4)
-        print(x.shape)
-        print(self.P.shape)
-        c = torch.matmul(self.P, x.unsqueeze(-1)).squeeze()
-        c = c.transpose(1,4)
-        return self.casc(c)
+        return self.casc(x)
 
 class LargeConvCascadeLayer(nn.Module):
     """Cascade Layer"""

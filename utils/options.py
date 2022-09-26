@@ -57,7 +57,7 @@ class network_options():
                         '104012',
                         '103818']
 
-        self.test_subject_list = ['147737','178849']
+        self.test_subject_list = ['145127','147737','178849']
         self.dataset_type = 'all'
         self.model_name = 'best_model.pth'
         self.network_width = 'normal'
@@ -94,8 +94,10 @@ class network_options():
 
         #Data related hyperparameters:
         parser.add_argument('--data_path',type=str, help = 'The location of the hcp data, where the subject folders can be found')
-        parser.add_argument('--train_subject_list',type=str, help = 'The subject numbers which will be used to train the network')
-        parser.add_argument('--val_subject_list',type=str, help = 'The subject numbers which will be used to calculate the validation loss')
+        parser.add_argument('--train_subject_list',type=list, help = 'The subject numbers which will be used to train the network')
+        parser.add_argument('--val_subject_list',type=list, help = 'The subject numbers which will be used to calculate the validation loss')
+        parser.add_argument('--test_subject_list',type=list, help = 'The subject numbers which will be used to obtain test performance metrics at inference time')
+
 
         #Computation related hyperparameters:
         parser.add_argument('--train_workers',type=int, help = 'The number of workers for the training dataloader')

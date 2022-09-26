@@ -27,3 +27,5 @@ The directory structure of the data directory is as follows. The data directory 
                 └── sub_dir 
 ```
 
+Network options:
+    The network options are set up in a hierarchical manner - the default options are set in the options.py script - it is not recommended that the user interacts with this file and instead uses the two other methods to change the network options. The first method is to use the comman line options - each option can be input to the train or test script as a command line option. A config file/path can also be input to the script as an option, which can then have the options formatted as a yaml file - see the documentation for more details. Due to the nature of the nesting any options specified in the config file will overwrite the options input via the command line, and the command line overwrites any options already in the options script. 

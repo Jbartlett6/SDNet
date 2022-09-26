@@ -48,4 +48,4 @@ mrstats -mask /media/duanj/F/joe/hcp_2/$subj/T1w/white_matter_mask.mif $save_dir
 echo The average apparent fibre density error over all the voxels in the whole brain is:
 mrstats $save_dir/afde.mif
 echo $subj >> $save_dir/../wb_afde_stats.txt
-mrstats >> $save_dir/../wb_afde_stats.txt
+mrstats $save_dir/afde.mif >> $save_dir/../wb_afde_stats.txt

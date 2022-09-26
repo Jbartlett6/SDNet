@@ -66,6 +66,7 @@ class network_options():
         
         
         self.option_init()
+        
         if self.continue_training or self.inference:
             self.continue_training_init()
         

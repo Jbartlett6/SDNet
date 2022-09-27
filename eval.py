@@ -27,27 +27,26 @@ if __name__ == '__main__':
     inference_path = os.path.join('.','checkpoints',file_dir,'inference')
     subjects = os.listdir(inference_path)
     #Include all measures of accuracy in this loop and save them to the appropriate destination
-    # subjects = opts.test_subject_list
-    # if opts.perform_inference:
-    #     for subj in subjects:
-    #         print('Performing inference for subject: '+subj)
-    #         inference.per_subject_inference(subj, opts, data)
-    #         print('Inference for subject: '+subj+' complete')
-          
+    subjects = opts.test_subject_list
+    if opts.perform_inference:
+        for subj in subjects:
+            print('Performing inference for subject: '+subj)
+            inference.per_subject_inference(subj, opts, data)
+            print('Inference for subject: '+subj+' complete')
    
-    # for subj in subjects:
+    for subj in subjects:
         
-    #     print('Performing accuracy measures for subject: '+ subj)
+        print('Performing accuracy measures for subject: '+ subj)
         
-    #     print('Calculating ACC')
-    #     gt_fod_path = os.path.join(opts.data_dir, subj, 'T1w', 'Diffusion', 'undersampled_fod', 'gt_wm_fod.nii.gz')
-    #     inf_wm_path = os.path.join(inference_path, subj, 'inf_wm_fod.nii.gz')
-    #     save_path = os.path.join(inference_path, subj)
-    #     os.system('bash utils/ACC.sh ' + gt_fod_path + ' ' + inf_wm_path +' '+save_path+' '+subj) 
+        print('Calculating ACC')
+        gt_fod_path = os.path.join(opts.data_dir, subj, 'T1w', 'Diffusion', 'undersampled_fod', 'gt_wm_fod.nii.gz')
+        inf_wm_path = os.path.join(inference_path, subj, 'inf_wm_fod.nii.gz')
+        save_path = os.path.join(inference_path, subj)
+        os.system('bash utils/ACC.sh ' + gt_fod_path + ' ' + inf_wm_path +' '+save_path+' '+subj) 
 
-    #     print('Performing fixel based analysis')
-    #     os.system('bash utils/FBA.sh ' + inf_wm_path + ' ' + subj +' '+save_path)
-    #     os.system('bash utils/MAE.sh ' + inf_wm_path + ' ' + subj +' '+save_path+' '+opts.data_dir)
+        print('Performing fixel based analysis')
+        os.system('bash utils/FBA.sh ' + inf_wm_path + ' ' + subj +' '+save_path)
+        os.system('bash utils/MAE.sh ' + os.path.join(inference_path, subj, 'fixel_directory', 'fixel_directions.nii.gz') + ' ' + subj +' '+save_path+' '+opts.data_dir)
 
 
     with open(os.path.join(inference_path, 'all_stats.txt'), 'a') as f:
@@ -67,8 +66,8 @@ if __name__ == '__main__':
             #Writing the average stats for the afde into a text file. 
             f.write('The mean afde in the white matter is: \n')
             f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wm_afde_stats.txt'))) + '\n')
-            # f.write('The mean afde in the whole brain is: \n')
-            # f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wb_afde_stats.txt'))) + '\n')
+            f.write('The mean afde in the whole brain is: \n')
+            f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wb_afde_stats.txt'))) + '\n')
 
             # #Writing the average stats for the afde into a text file. 
             # f.write('The mae in the white matter is: \n')

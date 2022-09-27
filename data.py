@@ -110,7 +110,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         '''
         central_coords = self.coords[idx,:]       
         
-                #Obtains the signals and the target FOD. The signals which are kept are determined by the keep list.
+        #Obtains the signals and the target FOD. The signals which are kept are determined by the keep list.
         input_signals = self.data_tensor[central_coords[0],central_coords[1]-4:central_coords[1]+5, central_coords[2]-4:central_coords[2]+5, central_coords[3]-4:central_coords[3]+5, :]
         
         target_fod = self.gt_tensor[central_coords[0], central_coords[1], central_coords[2], central_coords[3], :]

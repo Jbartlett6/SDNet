@@ -52,12 +52,19 @@ class network_options():
                     '103111',
                     '103212',
                     '103414',
-                    '103515']
-        self.val_subject_list = ['104416',
-                        '104012',
-                        '103818']
+                    '103515',
+                    '104416']
+        self.val_subject_list = ['104012',
+                    '103818',
+                    '104820']
 
-        self.test_subject_list = ['145127','147737','178849']
+        self.test_subject_list = ['130821',
+                    '145127',
+                    '147737',
+                    '174437',
+                    '178849',
+                    '318637',
+                    '581450']
         self.dataset_type = 'all'
         self.model_name = 'best_model.pth'
         self.network_width = 'normal'

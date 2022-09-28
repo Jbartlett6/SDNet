@@ -18,11 +18,13 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         self.data_dir = data_dir
         self.inference = inference
         
+        pad_tens = (0,0,5,5,5,5,5,5)
+        print(pad_tens)
         #Creating the dummy variables for the data to be loaded into RAM:
-        self.data_tensor = torch.zeros((len(subject_list),145,174,145,30))
-        self.gt_tensor = torch.zeros((len(subject_list),145,174,145,47))
+        self.data_tensor = F.pad(torch.zeros((len(subject_list),145,174,145,30)),pad_tens, mode = 'constant')
+        self.gt_tensor = F.pad(torch.zeros((len(subject_list),145,174,145,47)),pad_tens, mode = 'constant')
         self.AQ_tensor = torch.zeros((len(subject_list),30,47))
-        self.mask_tensor = torch.zeros((len(subject_list),145,174,145))
+        self.mask_tensor = F.pad(torch.zeros((len(subject_list),145,174,145)),(5,5,5,5,5,5), mode = 'constant')
 
 
         #Loading the data into the data tensor
@@ -30,7 +32,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         for i, subject in enumerate(subject_list):
             path = os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', 'undersampled_fod', 'normalised_data.nii.gz')
             nifti = nib.load(path)
-            self.data_tensor[i,:,:,:,:] = torch.tensor(np.array(nifti.dataobj))
+            self.data_tensor[i,:,:,:,:] = F.pad(torch.tensor(np.array(nifti.dataobj)),pad_tens, mode = 'constant')
         if self.inference:
             self.aff = nifti.affine
             self.head = nifti.header
@@ -40,14 +42,15 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         for i, subject in enumerate(subject_list):
             path = os.path.join(self.data_dir,subject,'T1w','Diffusion','undersampled_fod','gt_fod.nii.gz')
             nifti = nib.load(path)
-            self.gt_tensor[i,:,:,:,:] = torch.tensor(np.array(nifti.dataobj))
+            self.gt_tensor[i,:,:,:,:] = F.pad(torch.tensor(np.array(nifti.dataobj)),pad_tens, mode = 'constant')
 
         #Loading the mask data into RAM
         print('Loading the mask data into RAM')
         for i, subject in enumerate(subject_list):
-            path = os.path.join(self.data_dir,subject,'T1w','Diffusion','nodif_brain_mask.nii.gz')
+            #path = os.path.join(self.data_dir,subject,'T1w','Diffusion','nodif_brain_mask.nii.gz')
+            path = os.path.join(self.data_dir,subject,'T1w','5ttgen.nii.gz')
             nifti = nib.load(path)
-            self.mask_tensor[i,:,:,:] = torch.tensor(np.array(nifti.dataobj))
+            self.mask_tensor[i,:,:,:] = F.pad(torch.tensor(np.array(nifti.dataobj))[:,:,:,2],(5,5,5,5,5,5), mode = 'constant')
         
         
 
@@ -110,9 +113,21 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         '''
         central_coords = self.coords[idx,:]       
         
-                #Obtains the signals and the target FOD. The signals which are kept are determined by the keep list.
+        #Obtains the signals and the target FOD. The signals which are kept are determined by the keep list.
         input_signals = self.data_tensor[central_coords[0],central_coords[1]-4:central_coords[1]+5, central_coords[2]-4:central_coords[2]+5, central_coords[3]-4:central_coords[3]+5, :]
         
+            
+        # if central_coords[3]-4 < 0:
+        #     input_signals = torch.zeros((9,9,9,30,1)) 
+        #     print(input_signals[:,:,4-central_coords[3]:,:,:].shape)
+        #     print(self.data_tensor[central_coords[0],central_coords[1]-4:central_coords[1]+5, central_coords[2]-4:central_coords[2]+5, 0:central_coords[3]+5, :,:].shape)
+        #     input_signals[:,:,4-central_coords[3]:,:,:] =  self.data_tensor[central_coords[0],central_coords[1]-4:central_coords[1]+5, central_coords[2]-4:central_coords[2]+5, 0:central_coords[3]+5, :,:]
+        # elif central_coords[3]+5 >= self.data_tensor.shape[3]:
+        #     input_signals = torch.zeros((9,9,9,30,1))
+        #     print(input_signals[:,:,:self.data_tensor.shape[3]-(central_coords[3]+5),:,:].shape)
+        #     print(self.data_tensor[central_coords[0],central_coords[1]-4:central_coords[1]+5, central_coords[2]-4:central_coords[2]+5, central_coords[3]-4:self.data_tensor.shape[3], :,:].shape)
+        #     input_signals[:,:,:self.data_tensor.shape[3]-(central_coords[3]+5),:,:] = self.data_tensor[central_coords[0],central_coords[1]-4:central_coords[1]+5, central_coords[2]-4:central_coords[2]+5, central_coords[3]-4:self.data_tensor.shape[3], :,:]
+
         target_fod = self.gt_tensor[central_coords[0], central_coords[1], central_coords[2], central_coords[3], :]
         
         AQ = self.AQ_tensor[central_coords[0],:,:]

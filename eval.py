@@ -11,8 +11,7 @@ import nibabel as nib
 def mrstats_interpreter(path):
     with open(path, 'r') as f:
         stats_txt = f.read()
-
-    mean_list = [float(x.split(' ')[12]) for x in stats_txt.split('\n')[2::3]]
+    mean_list = [float([i for i in y.split(' ') if i != '' ][3]) for y in stats_txt.split('\n')[2::3]]
     return np.mean(mean_list)
 
 
@@ -34,7 +33,6 @@ if __name__ == '__main__':
             print('Performing inference for subject: '+subj)
             inference.per_subject_inference(subj, opts, data)
             print('Inference for subject: '+subj+' complete')
-          
    
     for subj in subjects:
         
@@ -48,7 +46,7 @@ if __name__ == '__main__':
 
         print('Performing fixel based analysis')
         os.system('bash utils/FBA.sh ' + inf_wm_path + ' ' + subj +' '+save_path)
-        os.system('bash utils/MAE.sh ' + inf_wm_path + ' ' + subj +' '+save_path+' '+opts.data_dir)
+        os.system('bash utils/MAE.sh ' + os.path.join(inference_path, subj, 'fixel_directory', 'fixel_directions.nii.gz') + ' ' + subj +' '+save_path+' '+opts.data_dir)
 
 
     with open(os.path.join(inference_path, 'all_stats.txt'), 'a') as f:
@@ -71,8 +69,8 @@ if __name__ == '__main__':
             f.write('The mean afde in the whole brain is: \n')
             f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wb_afde_stats.txt'))) + '\n')
 
-            #Writing the average stats for the afde into a text file. 
-            f.write('The mae in the white matter is: \n')
-            f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wm_mae_stats.txt'))) + '\n')
-            f.write('The mae in the whole brain is: \n')
-            f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wb_mae_stats.txt'))) + '\n')
+            # #Writing the average stats for the afde into a text file. 
+            # f.write('The mae in the white matter is: \n')
+            # f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wm_mae_stats.txt'))) + '\n')
+            # f.write('The mae in the whole brain is: \n')
+            # f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wb_mae_stats.txt'))) + '\n')

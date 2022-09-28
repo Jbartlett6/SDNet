@@ -34,9 +34,9 @@ mrstats -mask /media/duanj/F/joe/hcp_2/$subj/T1w/white_matter_mask.mif $save_dir
 
 #Writing the whole brain pae to a text file
 echo The average peak amplitude error over all the voxels in the whole brain is:
-mrstats $save_dir/pae.mif
+mrstats -mask /media/duanj/F/joe/hcp_2/$subj/T1w/Diffusion/nodif_brain_mask.nii.gz $save_dir/pae.mif
 echo $subj >> $save_dir/../wb_pae_stats.txt
-mrstats $save_dir/pae.mif >> $save_dir/../wb_pae_stats.txt
+mrstats -mask /media/duanj/F/joe/hcp_2/$subj/T1w/Diffusion/nodif_brain_mask.nii.gz $save_dir/pae.mif >> $save_dir/../wb_pae_stats.txt
 
 #Writing the white matter afde to a text file
 echo The average apparent fibre density error over all the voxels in the white matter mask is:
@@ -46,6 +46,6 @@ mrstats -mask /media/duanj/F/joe/hcp_2/$subj/T1w/white_matter_mask.mif $save_dir
 
 #Writing the whole brain afde to a text file
 echo The average apparent fibre density error over all the voxels in the whole brain is:
-mrstats $save_dir/afde.mif
+mrstats -mask /media/duanj/F/joe/hcp_2/$subj/T1w/Diffusion/nodif_brain_mask.nii.gz $save_dir/afde.mif
 echo $subj >> $save_dir/../wb_afde_stats.txt
-mrstats >> $save_dir/../wb_afde_stats.txt
+mrstats -mask /media/duanj/F/joe/hcp_2/$subj/T1w/Diffusion/nodif_brain_mask.nii.gz $save_dir/afde.mif >> $save_dir/../wb_afde_stats.txt

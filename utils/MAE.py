@@ -8,10 +8,10 @@ import sys
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Perform a training loop for the ')
     
-    parser.add_argument('-inference_image',type=str, help = 'The path to the inference image')
-    parser.add_argument('-subject',type=str, help = 'The subject number')
-    parser.add_argument('-save_directory',type=str, help = 'The path to the inference image')
-    parser.add_argument('-data_path',type=str, help = 'The path to the data')
+    parser.add_argument('--inference_image',type=str, help = 'The path to the inference image')
+    parser.add_argument('--subject',type=str, help = 'The subject number')
+    parser.add_argument('--save_directory',type=str, help = 'The path to the inference image')
+    parser.add_argument('--data_path',type=str, help = 'The path to the data')
 
     args = parser.parse_args()
 
@@ -22,6 +22,7 @@ if __name__ == '__main__':
     gt_data = nft_gt.get_fdata()
 
     inter = np.zeros((im_data.shape[0],im_data.shape[1],im_data.shape[2],im_data.shape[3]))
+    print(im_data.shape)
     for i in range(im_data.shape[3]):
         inter[:,:,:,i] = im_data[:,:,:,i]*gt_data[:,:,:,i] 
 

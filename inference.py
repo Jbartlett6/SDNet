@@ -76,7 +76,7 @@ def per_subject_inference(subject, opts, data):
     print('Saving the image in nifti format.')
     if os.path.isdir(os.path.join(save_dir, str(subject))) == False:
         os.mkdir(os.path.join(save_dir, str(subject)))
-    x = out.float()
+    x = out[5:-5,5:-5,5:-5,:].float()
     x = x.detach().to('cpu').numpy()
     im = nib.Nifti1Image(x, affine=dataset.aff)
     nib.save(im, os.path.join(save_dir, str(subject), 'inf_fod.nii.gz'))

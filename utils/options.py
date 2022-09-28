@@ -53,9 +53,9 @@ class network_options():
                     '103212',
                     '103414',
                     '103515',
-                    '104416']
+                    '103818']
         self.val_subject_list = ['104012',
-                    '103818',
+                    '104416',
                     '104820']
 
         self.test_subject_list = ['130821',

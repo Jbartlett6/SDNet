@@ -188,7 +188,7 @@ if __name__ == '__main__':
                                         'alpha':float(net.module.alpha),
                                         'loss_type':opts.loss_type,
                                         'learn_lambda':opts.learn_lambda,
-                                        'Number of Parameters':param_num}
+                                        'Number of Parameters':param_num,
                                         'dataset_type':opts.dataset_type}
 
                     with open(os.path.join(model_save_path,'training_details.yml'), 'w') as file:

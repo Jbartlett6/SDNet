@@ -25,10 +25,9 @@ class network_options():
 
         self.early_stopping = False
         self.early_stopping_threshold = inf
-        self.continue_training = False
-        self.experiment_name = 'FOD_sig_learn'
+        self.continue_training = True
+        self.experiment_name = 'test'
 
-        
         #Computation related hyperparameters:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.train_workers = 16

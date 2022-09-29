@@ -15,7 +15,7 @@ import util
 import data
 import options
 #import FODCSDNet as csdnet
-import Convcsdcfrnet
+import Convcsdnet
 import argparse
 from torch.utils.tensorboard import SummaryWriter
 import torch.optim.lr_scheduler 
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     val_dataloader = torch.utils.data.DataLoader(d_val, batch_size=opts.batch_size,
                                             shuffle=True, num_workers=opts.val_workers,
                                             drop_last = True)
-
+    
 
     criterion = torch.nn.MSELoss(reduction='mean')
     
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     
 
     print('Initialising Model')
-    net = Convcsdcfrnet.FCNet(opts)
+    net = Convcsdnet.FCNet(opts)
     P = net.P.to(opts.device)
     net = nn.DataParallel(net)
     net = net.to(opts.device)

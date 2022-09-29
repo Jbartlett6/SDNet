@@ -24,7 +24,8 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         self.data_tensor = F.pad(torch.zeros((len(subject_list),145,174,145,30)),pad_tens, mode = 'constant')
         self.gt_tensor = F.pad(torch.zeros((len(subject_list),145,174,145,47)),pad_tens, mode = 'constant')
         self.AQ_tensor = torch.zeros((len(subject_list),30,47))
-        self.mask_tensor = F.pad(torch.zeros((len(subject_list),145,174,145)),(5,5,5,5,5,5), mode = 'constant')
+        self.ttgen_mask_tensor = F.pad(torch.zeros((len(subject_list),145,174,145)),(5,5,5,5,5,5), mode = 'constant')
+        self.wb_mask_tensor = F.pad(torch.zeros((len(subject_list),145,174,145)),(5,5,5,5,5,5), mode = 'constant')
 
 
         #Loading the data into the data tensor
@@ -36,22 +37,30 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         if self.inference:
             self.aff = nifti.affine
             self.head = nifti.header
-        
+        print(f'The shape of the data tensor is {self.data_tensor.shape}')
+
         #Loading the ground truth data into RAM
         print('Loading the ground Truth FOD data into RAM')
         for i, subject in enumerate(subject_list):
             path = os.path.join(self.data_dir,subject,'T1w','Diffusion','undersampled_fod','gt_fod.nii.gz')
             nifti = nib.load(path)
             self.gt_tensor[i,:,:,:,:] = F.pad(torch.tensor(np.array(nifti.dataobj)),pad_tens, mode = 'constant')
+        print(f'The shape of the ground truth tensor is {self.gt_tensor.shape}')
 
         #Loading the mask data into RAM
         print('Loading the mask data into RAM')
         for i, subject in enumerate(subject_list):
-            #path = os.path.join(self.data_dir,subject,'T1w','Diffusion','nodif_brain_mask.nii.gz')
-            path = os.path.join(self.data_dir,subject,'T1w','5ttgen.nii.gz')
-            nifti = nib.load(path)
-            self.mask_tensor[i,:,:,:] = F.pad(torch.tensor(np.array(nifti.dataobj))[:,:,:,2],(5,5,5,5,5,5), mode = 'constant')
-        
+            #Importing the whole brain mask
+            path_wb = os.path.join(self.data_dir,subject,'T1w','Diffusion','nodif_brain_mask.nii.gz')
+            nifti_wb = nib.load(path_wb)
+            self.wb_mask_tensor[i,:,:,:] = F.pad(torch.tensor(np.array(nifti_wb.dataobj)),(5,5,5,5,5,5), mode = 'constant')
+            
+            #Importing the 5ttgen mask
+            path_5ttgen = os.path.join(self.data_dir,subject,'T1w','5ttgen.nii.gz')
+            nifti_5ttgen = nib.load(path_5ttgen)
+            self.ttgen_mask_tensor[i,:,:,:] = F.pad(torch.tensor(np.array(nifti_5ttgen.dataobj))[:,:,:,2],(5,5,5,5,5,5), mode = 'constant')
+            
+        #print(f'The shape of the mask tensor is {self.mask_tensor.shape}')
         
 
         #Loading the spherical harmonic co-ords into RAM.
@@ -89,16 +98,16 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         
         print('Creating Co-ordinate grid')
         #Creating a meshgrid for the subject - a volume where each voxel is the x,y,z coordinate.
-        seq_0 = torch.tensor([i for i in range(self.mask_tensor.shape[0])])
-        seq_1 = torch.tensor([i for i in range(self.mask_tensor.shape[1])])
-        seq_2 = torch.tensor([i for i in range(self.mask_tensor.shape[2])])
-        seq_3 = torch.tensor([i for i in range(self.mask_tensor.shape[3])])
+        seq_0 = torch.tensor([i for i in range(self.wb_mask_tensor.shape[0])])
+        seq_1 = torch.tensor([i for i in range(self.wb_mask_tensor.shape[1])])
+        seq_2 = torch.tensor([i for i in range(self.wb_mask_tensor.shape[2])])
+        seq_3 = torch.tensor([i for i in range(self.wb_mask_tensor.shape[3])])
 
         grid_0, grid_1, grid_2, grid_3 = torch.meshgrid(seq_0, seq_1, seq_2, seq_3)
         grid = torch.stack((grid_0, grid_1, grid_2, grid_3), 4)
 
             #Making a vector containing the co-ordinates of only pixels which are in the brain mask.
-        self.coords = grid[self.mask_tensor.to(bool),:]
+        self.coords = grid[self.ttgen_mask_tensor.to(bool) & self.wb_mask_tensor.to(bool),:]
     
 
     def __len__(self):

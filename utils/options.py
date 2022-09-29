@@ -25,8 +25,8 @@ class network_options():
 
         self.early_stopping = False
         self.early_stopping_threshold = inf
-        self.continue_training = False
-        self.experiment_name = 'FOD_sig_learn'
+        self.continue_training = True
+        self.experiment_name = 'test'
 
         
         #Computation related hyperparameters:
@@ -72,10 +72,10 @@ class network_options():
         self.perform_inference=False
         
         
-        self.option_init()
+        #self.option_init()
         
-        if self.continue_training or self.inference:
-            self.continue_training_init()
+        # if self.continue_training or self.inference:
+        #     self.continue_training_init()
         
 
     def parse_arguments(self):

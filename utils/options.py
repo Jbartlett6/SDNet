@@ -28,7 +28,6 @@ class network_options():
         self.continue_training = True
         self.experiment_name = 'test'
 
-        
         #Computation related hyperparameters:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.train_workers = 8
@@ -72,10 +71,10 @@ class network_options():
         self.perform_inference=False
         
         
-        #self.option_init()
+        self.option_init()
         
-        # if self.continue_training or self.inference:
-        #     self.continue_training_init()
+        if self.continue_training or self.inference:
+            self.continue_training_init()
         
 
     def parse_arguments(self):

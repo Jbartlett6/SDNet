@@ -143,7 +143,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         if self.inference:
             return input_signals.float().unsqueeze(-1), target_fod.float(), AQ.float(), central_coords
         else:
-            return input_signals.float().unsqueeze(-1), target_fod.float(), AQ.float(), central_coords
+            return input_signals.float().unsqueeze(-1), target_fod.float(), AQ.float()
 
 class FODPatchDataset(torch.utils.data.Dataset):
     def __init__(self, data_dir, subject_list, inference):

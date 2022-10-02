@@ -42,7 +42,7 @@ if __name__ == '__main__':
                                             shuffle=True, num_workers=opts.val_workers,
                                             drop_last = True)
     
-
+    print(len(d_train))
     criterion = torch.nn.MSELoss(reduction='mean')
     
     param_list = [150]

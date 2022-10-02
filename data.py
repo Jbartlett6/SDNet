@@ -111,7 +111,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         if self.opts.inference == True:
             self.coords = grid[self.wb_mask_tensor.to(bool),:]
         else:
-            self.coords = grid[self.ttgen_mask_tensor[:,:,:,:,0].to(bool) & self.ttgen_mask_tensor[:,:,:,:,1].to(bool) & self.ttgen_mask_tensor[:,:,:,:,2].to(bool) & self.wb_mask_tensor.to(bool),:]
+            self.coords = grid[(self.ttgen_mask_tensor[:,:,:,:,0].to(bool) | self.ttgen_mask_tensor[:,:,:,:,1].to(bool) | self.ttgen_mask_tensor[:,:,:,:,2].to(bool)) & self.wb_mask_tensor.to(bool),:]
     
 
     def __len__(self):

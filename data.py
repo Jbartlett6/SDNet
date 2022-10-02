@@ -11,20 +11,21 @@ import util
 
 
 class DWIPatchDataset(torch.utils.data.Dataset):
-    def __init__(self, data_dir, subject_list, inference):
+    def __init__(self, data_dir, subject_list, inference, opts):
         
         #Initialising the parameters for the dataset class.
         self.subject_list = subject_list
         self.data_dir = data_dir
         self.inference = inference
-        
+        self.opts = opts
+
         pad_tens = (0,0,5,5,5,5,5,5)
         print(pad_tens)
         #Creating the dummy variables for the data to be loaded into RAM:
         self.data_tensor = F.pad(torch.zeros((len(subject_list),145,174,145,30)),pad_tens, mode = 'constant')
         self.gt_tensor = F.pad(torch.zeros((len(subject_list),145,174,145,47)),pad_tens, mode = 'constant')
         self.AQ_tensor = torch.zeros((len(subject_list),30,47))
-        self.ttgen_mask_tensor = F.pad(torch.zeros((len(subject_list),145,174,145)),(5,5,5,5,5,5), mode = 'constant')
+        self.ttgen_mask_tensor = F.pad(torch.zeros((len(subject_list),145,174,145,5)),pad=pad_tens, mode = 'constant')
         self.wb_mask_tensor = F.pad(torch.zeros((len(subject_list),145,174,145)),(5,5,5,5,5,5), mode = 'constant')
 
 
@@ -58,7 +59,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
             #Importing the 5ttgen mask
             path_5ttgen = os.path.join(self.data_dir,subject,'T1w','5ttgen.nii.gz')
             nifti_5ttgen = nib.load(path_5ttgen)
-            self.ttgen_mask_tensor[i,:,:,:] = F.pad(torch.tensor(np.array(nifti_5ttgen.dataobj))[:,:,:,2],(5,5,5,5,5,5), mode = 'constant')
+            self.ttgen_mask_tensor[i,:,:,:,:] = F.pad(torch.tensor(np.array(nifti_5ttgen.dataobj))[:,:,:,:],pad_tens, mode = 'constant')
             
         #print(f'The shape of the mask tensor is {self.mask_tensor.shape}')
         
@@ -107,7 +108,10 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         grid = torch.stack((grid_0, grid_1, grid_2, grid_3), 4)
 
             #Making a vector containing the co-ordinates of only pixels which are in the brain mask.
-        self.coords = grid[self.ttgen_mask_tensor.to(bool) & self.wb_mask_tensor.to(bool),:]
+        if self.opts.inference == True:
+            self.coords = grid[self.wb_mask_tensor.to(bool),:]
+        else:
+            self.coords = grid[self.ttgen_mask_tensor[:,:,:,:,0].to(bool) & self.ttgen_mask_tensor[:,:,:,:,1].to(bool) & self.ttgen_mask_tensor[:,:,:,:,2].to(bool) & self.wb_mask_tensor.to(bool),:]
     
 
     def __len__(self):

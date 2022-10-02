@@ -47,15 +47,15 @@ def per_subject_inference(subject, opts, data):
     #Initialising the infeence dataset for the given subject. A new dataset will be initialised for each subject in the eval loop.
     print('Initialising the inference dataset and dataloader')
     inf_tmp = [subject]
-    dataset =  data.DWIPatchDataset(opts.data_dir, inf_tmp, True)
+    dataset =  data.DWIPatchDataset(opts.data_dir, inf_tmp, True, opts)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=256,
-                                            shuffle=True, num_workers=8)
+                                            shuffle=False, num_workers=8)
 
 
     
     #Initialising the output
     print('Initialising the output image')
-    out = torch.zeros((145,174,145,47)).to(device)
+    out = F.pad(torch.zeros((145,174,145,47)),(0,0,5,5,5,5,5,5), mode='constant').to(device)
 
     print('Performing the inference loop')
     for i , data in enumerate(dataloader):

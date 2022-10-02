@@ -29,8 +29,8 @@ if __name__ == '__main__':
     plt.switch_backend('agg')
 
     if opts.dataset_type == 'all':
-        d_train = data.DWIPatchDataset(opts.data_dir, opts.train_subject_list, inference=False)
-        d_val = data.DWIPatchDataset(opts.data_dir, opts.val_subject_list, inference=False)
+        d_train = data.DWIPatchDataset(opts.data_dir, opts.train_subject_list, inference=False, opts=opts)
+        d_val = data.DWIPatchDataset(opts.data_dir, opts.val_subject_list, inference=False, opts=opts)
     elif opts.dataset_type == 'experiment':
         d_train = data.ExperimentPatchDataset(opts.data_dir, ['100206'], inference=False)
         d_val = data.ExperimentPatchDataset(opts.data_dir, ['100307'], inference=False)

@@ -92,6 +92,28 @@ class LargeConvCascadeLayer(nn.Module):
     def forward(self, x):
         return self.casc(x)
 
+class SHConvCascadeLayer(nn.Module):
+    """Cascade Layer"""
+    def __init__(self):
+        super().__init__()
+        
+        self.casc = nn.Sequential(nn.Conv3d(47, 64, 3, padding='same'),  
+                                nn.BatchNorm3d(64),
+                                nn.ReLU(inplace=True),  
+                                nn.Conv3d(64, 128, 3, padding='same'),
+                                nn.BatchNorm3d(128),
+                                nn.ReLU(inplace=True),
+                                nn.Conv3d(128, 256, 3, padding='same'),
+                                nn.BatchNorm3d(256),  
+                                nn.ReLU(inplace=True),
+                                nn.Conv3d(256, 512, 3),
+                                nn.ReLU(inplace=True),
+                                nn.Conv3d(512, 94, 1, padding = 'same'))
+    
+
+    def forward(self, x):
+        return self.casc(x)
+
 
 class FCNet(nn.Module):
     def __init__(self, opts):
@@ -117,22 +139,27 @@ class FCNet(nn.Module):
         P_temp = torch.zeros((300,2))
         self.register_buffer('P',torch.cat((P,P_temp),1))
           
-       #Initialising the cascades for the network.
-        if self.opts.network_width == 'large':
-            self.cascade_1 = LargeConvCascadeLayer(opts.dc_type)
-            self.cascade_2 = LargeConvCascadeLayer(opts.dc_type)
-            self.cascade_3 = LargeConvCascadeLayer(opts.dc_type)
-            self.cascade_4 = LargeConvCascadeLayer(opts.dc_type)
-        elif self.opts.network_width == 'normal':
-            self.cfrcascade_1 = ConvCascadeLayer('FOD_sig', self.P)
-            self.cfrcascade_2 = ConvCascadeLayer('FOD_sig', self.P)
-            self.cfrcascade_3 = ConvCascadeLayer('FOD_sig', self.P)
-            self.cfrcascade_4 = ConvCascadeLayer('FOD_sig', self.P)
+    #    #Initialising the cascades for the network.
+    #     if self.opts.network_width == 'large':
+    #         self.cascade_1 = LargeConvCascadeLayer(opts.dc_type)
+    #         self.cascade_2 = LargeConvCascadeLayer(opts.dc_type)
+    #         self.cascade_3 = LargeConvCascadeLayer(opts.dc_type)
+    #         self.cascade_4 = LargeConvCascadeLayer(opts.dc_type)
+    #     elif self.opts.network_width == 'normal':
+    #         self.cfrcascade_1 = ConvCascadeLayer('FOD_sig', self.P)
+    #         self.cfrcascade_2 = ConvCascadeLayer('FOD_sig', self.P)
+    #         self.cfrcascade_3 = ConvCascadeLayer('FOD_sig', self.P)
+    #         self.cfrcascade_4 = ConvCascadeLayer('FOD_sig', self.P)
 
-            self.csdcascade_1 = ConvCascadeLayer('CSD',self.P)
-            self.csdcascade_2 = ConvCascadeLayer('CSD',self.P)
-            self.csdcascade_3 = ConvCascadeLayer('CSD',self.P)
-            self.csdcascade_4 = ConvCascadeLayer('CSD',self.P)
+    #         self.csdcascade_1 = ConvCascadeLayer('CSD',self.P)
+    #         self.csdcascade_2 = ConvCascadeLayer('CSD',self.P)
+    #         self.csdcascade_3 = ConvCascadeLayer('CSD',self.P)
+    #         self.csdcascade_4 = ConvCascadeLayer('CSD',self.P)
+
+        self.csdcascade_1 = SHConvCascadeLayer()
+        self.csdcascade_2 = SHConvCascadeLayer()
+        self.csdcascade_3 = SHConvCascadeLayer()
+        self.csdcascade_4 = SHConvCascadeLayer()
             
 
     def forward(self, b, AQ):
@@ -152,58 +179,64 @@ class FCNet(nn.Module):
         c[:,:,:,:,45:,:] = c_hat[:,:,:,:,16:,:]
         
         c_inp = c.transpose(1,4).squeeze()
-        c_cfr = self.cfrcascade_1(c_inp)
+        #c_cfr = self.cfrcascade_1(c_inp)
         c_csd = self.csdcascade_1(c_inp)
-        c_cfr, c_csd = c_cfr.transpose(1,4).unsqueeze(5), c_csd.transpose(1,4).unsqueeze(5)
-        
+        # c_cfr, c_csd = c_cfr.transpose(1,4).unsqueeze(5), c_csd.transpose(1,4).unsqueeze(5)
+        c_csd = c_csd.transpose(1,4).unsqueeze(5)
+        c_csd = torch.mul(c_csd[:,:,:,:,:47,:], F.sigmoid(c_csd[:,:,:,:,47:,:]))
        
        #Data Consistency layer 1
-        c = self.dc(c,c_cfr, c_csd, AQ_Tb, AQ_TAQ, b,1)
+        c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,1)
 
         c_inp = c.transpose(1,4).squeeze()
-        c_cfr = self.cfrcascade_2(c_inp)
+        #c_cfr = self.cfrcascade_2(c_inp)
         c_csd = self.csdcascade_2(c_inp)
-        c_cfr, c_csd = c_cfr.transpose(1,4).unsqueeze(5), c_csd.transpose(1,4).unsqueeze(5)
-        c_cfr, c_csd = self.res_con(c_cfr,c_csd,c)
+        #c_cfr, c_csd = c_cfr.transpose(1,4).unsqueeze(5), c_csd.transpose(1,4).unsqueeze(5)
+        c_csd = c_csd.transpose(1,4).unsqueeze(5)
+        c_csd = self.res_con(c_csd,c)
 
         #Data Consistency Layer 2
-        c = self.dc(c,c_cfr, c_csd, AQ_Tb, AQ_TAQ, b,2)
+        c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,2)
         
         c_inp = c.transpose(1,4).squeeze()
-        c_cfr = self.cfrcascade_3(c_inp)
+        #c_cfr = self.cfrcascade_3(c_inp)
         c_csd = self.csdcascade_3(c_inp)
-        c_cfr, c_csd = c_cfr.transpose(1,4).unsqueeze(5), c_csd.transpose(1,4).unsqueeze(5)
-        c_cfr, c_csd = self.res_con(c_cfr,c_csd,c)
+        #c_cfr, c_csd = c_cfr.transpose(1,4).unsqueeze(5), c_csd.transpose(1,4).unsqueeze(5)
+        c_csd = c_csd.transpose(1,4).unsqueeze(5)
+        c_csd = self.res_con(c_csd,c)
         #Pass the data through the final data consistency layer
-        c = self.dc(c,c_cfr, c_csd, AQ_Tb, AQ_TAQ, b,3)
+        c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,3)
 
         c_inp = c.transpose(1,4).squeeze()
-        c_cfr = self.cfrcascade_4(c_inp)
+        #c_cfr = self.cfrcascade_4(c_inp)
         c_csd = self.csdcascade_4(c_inp)
-        c_cfr, c_csd = c_cfr.transpose(1,4).unsqueeze(5), c_csd.transpose(1,4).unsqueeze(5)
-        c_cfr, c_csd = self.res_con(c_cfr,c_csd,c)
+        #c_cfr, c_csd = c_cfr.transpose(1,4).unsqueeze(5), c_csd.transpose(1,4).unsqueeze(5)
+        c_csd = c_csd.transpose(1,4).unsqueeze(5)
+        c_csd = self.res_con(c_csd,c)
         
-        c = self.dc(c,c_cfr, c_csd, AQ_Tb, AQ_TAQ, b,4)
+        c = self.dc(c,c_csd, AQ_Tb, AQ_TAQ, b,4)
         
 
         return c
 
-    def dc(self, c, c_cfr,c_csd, AQ_Tb, AQ_TAQ, b,n): 
+    def dc(self, c, c_csd, AQ_Tb, AQ_TAQ, b,n): 
         c = c[:,1:-1,1:-1,1:-1,:,:]
         
-        A_tmp = AQ_TAQ+self.neg_reg*torch.matmul(self.P.transpose(0,1),self.P)+self.deep_reg*torch.eye(47).to(c_csd.device)
-        b_tmp = AQ_Tb[:,n:-n,n:-n,n:-n,:,:]+self.neg_reg*torch.matmul(self.P.transpose(0,1),c_cfr)+self.deep_reg*c_csd
+        # A_tmp = AQ_TAQ+self.neg_reg*torch.matmul(self.P.transpose(0,1),self.P)+self.deep_reg*torch.eye(47).to(c_csd.device)
+        # b_tmp = AQ_Tb[:,n:-n,n:-n,n:-n,:,:]+self.neg_reg*torch.matmul(self.P.transpose(0,1),c_cfr)+self.deep_reg*c_csd
+        A_tmp = AQ_TAQ+self.deep_reg*torch.eye(47).to(c_csd.device)
+        b_tmp = AQ_Tb[:,n:-n,n:-n,n:-n,:,:]+self.deep_reg*c_csd
         c = torch.linalg.solve(A_tmp, b_tmp)
 
         return c
 
-    def res_con(self,c_cfr,c_csd, c):
+    def res_con(self,c_csd, c):
         if self.opts.dc_type == 'FOD_sig':
-            c_cfr = c_cfr+torch.matmul(self.P, c[:,1:-1,1:-1,1:-1,:,:])
-            c_cfr = F.relu(c_cfr)
-            c_csd = c_csd + c[:,1:-1,1:-1,1:-1,:,:]
+            #c_cfr = c_cfr+torch.matmul(self.P, c[:,1:-1,1:-1,1:-1,:,:])
+            #c_cfr = F.relu(c_cfr)
+            c_csd = c[:,1:-1,1:-1,1:-1,:,:] + torch.mul(c_csd[:,:,:,:,:47,:], F.sigmoid(c_csd[:,:,:,:,47:,:]))
 
-        return c_cfr, c_csd
+        return c_csd
     
     def L_update(self, sampling_directions, c, tau,P, soft, alpha):
         '''

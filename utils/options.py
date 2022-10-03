@@ -104,6 +104,7 @@ class network_options():
         parser.add_argument('--train_subject_list',type=list, help = 'The subject numbers which will be used to train the network')
         parser.add_argument('--val_subject_list',type=list, help = 'The subject numbers which will be used to calculate the validation loss')
         parser.add_argument('--test_subject_list',type=list, help = 'The subject numbers which will be used to obtain test performance metrics at inference time')
+        parser.add_argument('--dataset_type',type=str, help = 'Whetehr to use the full dataset or the experimental dataset')
 
 
         #Computation related hyperparameters:
@@ -130,7 +131,6 @@ class network_options():
             config = yaml.load(f, yaml.loader.SafeLoader)
         
         for key in config.keys():
-
             setattr(self, key, config[key])
         
     def continue_training_init(self):

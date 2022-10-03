@@ -117,6 +117,7 @@ class network_options():
         parser.add_argument('--subject', type=str, help = 'The path at which the model is saved')
         parser.add_argument('--model_name', type=str, help = 'The path at which the model is saved')
         parser.add_argument('--perform_inference', type=bool, help = 'The path at which the model is saved')
+        parser.add_argument('--network_width', type=str, help = 'The path at which the model is saved')
 
         self.parser_args = parser.parse_args()
 

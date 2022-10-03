@@ -70,8 +70,6 @@ class network_options():
         self.inference=False
         self.perform_inference=False
         
-        self.network_width = 'large'
-        
         self.option_init()
         
         if self.continue_training or self.inference:

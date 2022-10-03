@@ -56,36 +56,34 @@ class LargeConvCascadeLayer(nn.Module):
     def __init__(self, dc):
         super().__init__()
         if dc=='CSD':
-            self.casc = nn.Sequential(nn.Conv3d(47, 1024, 3, padding='same'),  
-                                    nn.BatchNorm3d(1024),
+            self.casc = nn.Sequential(nn.Conv3d(47, 256, 3, padding='same'),  
+                                    nn.BatchNorm3d(256),
                                     nn.ReLU(inplace=True),  
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.BatchNorm3d(1024),
+                                    nn.Conv3d(256, 256, 3, padding='same'),
+                                    nn.BatchNorm3d(256),
                                     nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.BatchNorm3d(1024),  
+                                    nn.Conv3d(256, 256, 3, padding='same'),
+                                    nn.BatchNorm3d(256),  
                                     nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
+                                    nn.Conv3d(256, 256, 3, padding='same'),
                                     nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 47, 3))
+                                    nn.Conv3d(256, 47, 3))
         else:
-            self.casc = nn.Sequential(nn.Conv3d(47, 1024, 3, padding='same'), 
-                                    nn.BatchNorm3d(1024), 
+            self.casc = nn.Sequential(nn.Conv3d(47, 256, 3, padding='same'), 
+                                    nn.BatchNorm3d(256), 
                                     nn.ReLU(inplace=True),  
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.BatchNorm3d(1024),
+                                    nn.Conv3d(256, 256, 3, padding='same'),
+                                    nn.BatchNorm3d(256),
                                     nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.BatchNorm3d(1024),  
+                                    nn.Conv3d(256, 256, 3, padding='same'),
+                                    nn.BatchNorm3d(256),  
                                     nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
+                                    nn.Conv3d(256, 256, 3, padding='same'),
                                     nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 300, 3))
+                                    nn.Conv3d(256, 300, 3))
 
     def forward(self, x):
         return self.casc(x)
-
-
 
 
 class FCNet(nn.Module):

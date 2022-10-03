@@ -50,6 +50,8 @@ class ConvCascadeLayer(nn.Module):
 
     def forward(self, x):
         return self.casc(x)
+    
+class SHNormCascadeLayer(nn.module):
 
 class LargeConvCascadeLayer(nn.Module):
     """Cascade Layer"""

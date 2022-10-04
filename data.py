@@ -371,7 +371,7 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
             return input_signals.float().unsqueeze(-1), target_fod.float(), AQ.float()
 
 class UndersampleDataset(torch.utils.data.Dataset):
-    def __init__(self, subject, data_path, normalised = False, sample_pattern = 'uniform', patch_size = 3, undersample_val = 6):
+    def __init__(self, subject, data_path, normalised = False, sample_pattern = 'uniform', patch_size = 3, undersample_val = 6, T7 = False, save_folder = 'undersampled_fod'):
         
         #Initialising the parameters for the dataset class.
         self.normalised = normalised
@@ -381,12 +381,17 @@ class UndersampleDataset(torch.utils.data.Dataset):
         self.data_path = data_path
         self.patch_size = patch_size
         self.undersample_val = undersample_val
+        self.T7 = T7
+        self.save_folder=save_folder
 
         #Calculating the mask list and keep lists (using this function here will only work when a constant undersampling pattern is used)
         self.mask_list, self.keep_list= self.sample_lists()
 
         #Creating the data path and the mask path.
-        dwi_path = os.path.join(data_path, self.subject, 'T1w', 'Diffusion', 'data.nii.gz')
+        if self.T7 == True:
+            dwi_path = os.path.join(data_path, self.subject, 'T1w', 'Diffusion_7T', 'data.nii.gz')
+        else:
+            dwi_path = os.path.join(data_path, self.subject, 'T1w', 'Diffusion', 'data.nii.gz')
         
         #Loading the data for the subject
         image = nib.load(dwi_path)
@@ -410,7 +415,10 @@ class UndersampleDataset(torch.utils.data.Dataset):
         '''
         print('Saving data')
         im_usamp = nib.Nifti1Image(self.image[:,:,:,self.keep_list].float().detach().numpy(), affine=self.aff)
-        save_path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion', 'undersampled_fod', 'data.nii.gz')
+        if self.T7 == True:
+            save_path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion_7T', self.save_folder, 'data.nii.gz')
+        else:
+            save_path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion', self.save_folder, 'data.nii.gz')
         #save_path = '/media/duanj/F/joe/Project_1_recon/FODNet/dataset/104820/LARDI_data/data_b1000_g32.nii.gz'
         nib.save(im_usamp, save_path)
         print('Finished saving data')
@@ -428,46 +436,74 @@ class UndersampleDataset(torch.utils.data.Dataset):
         '''
 
         self.bvals = self.bval_extract()
-    
-        b0_list = []
-        b1000_list = []
-        b2000_list = []
-        b3000_list = []
-    
-        for i in range(len(self.bvals)):
-            if self.bvals[i] <20:
-                b0_list.append(i)
-            elif 980<self.bvals[i]<1020:
-                b1000_list.append(i)
-            elif 1980<self.bvals[i]<2020:
-                b2000_list.append(i)
-            elif 2980<self.bvals[i]<3020:
-                b3000_list.append(i)
+        if self.T7 == True:
+            b0_list = []
+            b1000_list = []
+            b2000_list = []
 
-        #per_shell_undersample = int(torch.floor(torch.tensor(self.undersample_num)/3))
-        #b1000_mask_list = random.sample(b1000_list,per_shell_undersample)
-        #b2000_mask_list = random.sample(b2000_list,per_shell_undersample)
-        #b3000_mask_list = random.sample(b3000_list,per_shell_undersample)
+            for i in range(len(self.bvals)):
+                if self.bvals[i] <100:
+                    b0_list.append(i)
+                elif 960<self.bvals[i]<1040:
+                    b1000_list.append(i)
+                elif 1960<self.bvals[i]<2040:
+                    b2000_list.append(i)
 
-        mask_list = []
-        keep_list = []
-        #Just a test for undersampling - need to construct a better way of undersampling.
-        for i in range(len(b1000_list)):
-                if i>=self.undersample_val:
-                    mask_list.append(i)
-                else:
-                    keep_list.append(i)
+            mask_list = []
+            keep_list = []
+
+            for i in range(len(b1000_list)):
+                    if i>=self.undersample_val:
+                        mask_list.append(i)
+                    else:
+                        keep_list.append(i)
+            
+            keep_list = torch.tensor([b1000_list[i]for i in keep_list] +
+                                    [b2000_list[i]for i in keep_list] +
+                                    b0_list[:4])
+
+
         
+        else:
+            b0_list = []
+            b1000_list = []
+            b2000_list = []
+            b3000_list = []
         
-        mask_list = torch.tensor([b1000_list[i] for i in mask_list])
+            for i in range(len(self.bvals)):
+                if self.bvals[i] <20:
+                    b0_list.append(i)
+                elif 980<self.bvals[i]<1020:
+                    b1000_list.append(i)
+                elif 1980<self.bvals[i]<2020:
+                    b2000_list.append(i)
+                elif 2980<self.bvals[i]<3020:
+                    b3000_list.append(i)
 
-        #Uncomment this for the multi-shell version 
-        keep_list = torch.tensor([b1000_list[i]for i in keep_list] +
-                                [b2000_list[i]for i in keep_list] +
-                                [b3000_list[i]for i in keep_list] +
-                                b0_list[:3])
+            #per_shell_undersample = int(torch.floor(torch.tensor(self.undersample_num)/3))
+            #b1000_mask_list = random.sample(b1000_list,per_shell_undersample)
+            #b2000_mask_list = random.sample(b2000_list,per_shell_undersample)
+            #b3000_mask_list = random.sample(b3000_list,per_shell_undersample)
 
-        mask_list = torch.tensor([])
+            mask_list = []
+            keep_list = []
+            #Just a test for undersampling - need to construct a better way of undersampling.
+            for i in range(len(b1000_list)):
+                    if i>=self.undersample_val:
+                        mask_list.append(i)
+                    else:
+                        keep_list.append(i)
+            
+            
+            mask_list = torch.tensor([b1000_list[i] for i in mask_list])
+
+            #Uncomment this for the multi-shell version 
+            keep_list = torch.tensor([b1000_list[i]for i in keep_list] +
+                                    [b2000_list[i]for i in keep_list] +
+                                    [b3000_list[i]for i in keep_list] +
+                                    b0_list[:3])
+
+            mask_list = torch.tensor([])
     
         return mask_list, keep_list
     
@@ -481,7 +517,11 @@ class UndersampleDataset(torch.utils.data.Dataset):
             A function to extract the bvalues from the file they are located in and to return them as a list of values.
         '''
         #print('Saving bvals')
-        path = os.path.join(self.data_path, self.subject, 'T1w', 'Diffusion', 'bvals') 
+        if self.T7 == True:
+            path = os.path.join(self.data_path, self.subject, 'T1w', 'Diffusion_7T', 'bvals') 
+        else:    
+            path = os.path.join(self.data_path, self.subject, 'T1w', 'Diffusion', 'bvals') 
+        
         bvals = open(path, 'r')
         
         bvals_str = bvals.read()
@@ -492,7 +532,11 @@ class UndersampleDataset(torch.utils.data.Dataset):
     def bvec_save(self):
         print('Saving bvectors')
         #Undersampled bvector calculation.
-        path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion', 'bvecs')
+        if self.T7 == True:
+            path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion_7T', 'bvecs')
+        else:
+            path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion', 'bvecs')
+        
         with open(path ,'r') as temp:
             bvecs = temp.read()
 
@@ -514,7 +558,11 @@ class UndersampleDataset(torch.utils.data.Dataset):
 
         bvecs_string = '\n'.join((xvals_str,yvals_str,zvals_str))
         #save_path = '/media/duanj/F/joe/Project_1_recon/FODNet/dataset/104820/LARDI_data/data_b1000_g32_bvecs'
-        save_path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion', 'undersampled_fod', 'bvecs')
+        if self.T7 == True:
+            save_path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion_7T', self.save_folder, 'bvecs')
+        else:
+            save_path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion', self.save_folder, 'bvecs')
+        
         with open(save_path, 'w') as temp:
             temp.write(bvecs_string)
         print('Finished Saving bvectors')
@@ -546,7 +594,7 @@ class UndersampleDataset(torch.utils.data.Dataset):
 
         bvecs_string = '\n'.join((xvals_str,yvals_str,zvals_str))
 
-        save_path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion', 'undersampled_fod', 'bvecs')
+        save_path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion', self.save_folder, 'bvecs')
         #save_path = '/media/duanj/F/joe/Project_1_recon/FODNet/dataset/104820/LARDI_data/data_b1000_g32_bvecs'
         with open(save_path, 'w') as temp:
             temp.write(bvecs_string)
@@ -556,7 +604,11 @@ class UndersampleDataset(torch.utils.data.Dataset):
         ##Bvalues
         new_bvals = [str(self.bvals[ind]) for ind in self.keep_list]
         bvals_string = ' '.join(new_bvals)
-        save_path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion', 'undersampled_fod', 'bvals')
+
+        if self.T7 == True:
+            save_path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion_7T', self.save_folder, 'bvals')
+        else:
+            save_path = os.path.join(self.img_dir, self.subject, 'T1w', 'Diffusion', self.save_folder, 'bvals')
         #save_path = '/media/duanj/F/joe/Project_1_recon/FODNet/dataset/104820/LARDI_data/data_b1000_g32.bvals'
         with open(save_path,'w') as temp:
             temp.write(bvals_string)

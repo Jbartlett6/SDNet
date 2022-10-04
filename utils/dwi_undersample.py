@@ -14,7 +14,7 @@ import data
 import argparse
 
 print('Running dwi_undersampled.py:')
-usamp = 9
+usamp = 13
 
 parser = argparse.ArgumentParser(description='''Script to undersampled the fully sampled DWI data of a given subject and save it in
                                                 the corresponding folder in the data directory''')
@@ -28,9 +28,9 @@ args = parser.parse_args()
 #usamp = int(sys.argv[1])
 #usamp = args.undersampling_rate
 
-#os.mkdir(os.path.join(args.data_path, args.subject,'T1w','Diffusion',args.save_folder))
+os.mkdir(os.path.join(args.data_path, args.subject,'T1w','Diffusion_7T',args.save_folder))
 print('Initialising dataset')
-d = data.UndersampleDataset(args.subject, args.data_path , undersample_val=usamp)
+d = data.UndersampleDataset(args.subject, args.data_path , undersample_val=usamp, T7=True, save_folder=args.save_folder)
 print('Dataset initialised')
 d.all_save()
     

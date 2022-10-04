@@ -52,7 +52,6 @@ class ConvCascadeLayer(nn.Module):
         return self.casc(x)
     
 
-
 class LargeConvCascadeLayer(nn.Module):
     """Cascade Layer"""
     def __init__(self, dc):

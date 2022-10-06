@@ -188,7 +188,7 @@ class FCNet(nn.Module):
                 L_TL = torch.matmul(L.transpose(4,5),L).to(b.device)
             
                 # AQ_TAQ = [B, 47,47], L_TL = [B,X,Y,Z,47,47], AQ_Tb = [B,X,Y,Z,47,1], w = [B,X,Y,Z,47,1] ---> c = [B,X,Y,Z,47,1]
-                c = torch.linalg.solve(AQ_TAQ+(self.neg_reg)*L_TL+self.deep_reg*torch.eye(47).to(b.device),AQ_Tb[:,n:-n,n:-n,n:-n,:,:] + self.deep_reg*w)
+                c = torch.linalg.solve(AQ_TAQ+self.neg_reg*L_TL+self.deep_reg*torch.eye(47).to(b.device),AQ_Tb[:,n:-n,n:-n,n:-n,:,:] + self.deep_reg*w)
 
         elif self.opts.dc_type == 'FOD_sig':
             A_tmp = AQ_TAQ+self.deep_reg*torch.matmul(self.P.transpose(0,1),self.P)

@@ -19,6 +19,7 @@ import argparse
 import csdnet
 import data
 import Convcsdnet
+import Convcsdcfrnet
 
 def per_subject_inference(subject, opts, data):
     '''
@@ -39,7 +40,7 @@ def per_subject_inference(subject, opts, data):
 
     #Loading the network
     print('Loading the network and the correct state')
-    net = Convcsdnet.FCNet(opts)
+    net = Convcsdcfrnet.FCNet(opts)
     net = nn.DataParallel(net)
     net.load_state_dict(torch.load(model_path))
     net = net.to(device)

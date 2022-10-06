@@ -33,8 +33,8 @@ if __name__ == '__main__':
         d_train = data.DWIPatchDataset(opts.data_dir, opts.train_subject_list, inference=False, opts=opts)
         d_val = data.DWIPatchDataset(opts.data_dir, opts.val_subject_list, inference=False, opts=opts)
     elif opts.dataset_type == 'experiment':
-        d_train = data.ExperimentPatchDataset(opts.data_dir, ['100206'], inference=False)
-        d_val = data.ExperimentPatchDataset(opts.data_dir, ['100307'], inference=False)
+        d_train = data.ExperimentPatchDataset(opts.data_dir, ['100206'], inference=False, opts=opts)
+        d_val = data.ExperimentPatchDataset(opts.data_dir, ['100307'], inference=False, opts=opts)
 
     train_dataloader = torch.utils.data.DataLoader(d_train, batch_size=opts.batch_size,
                                             shuffle=True, num_workers=opts.train_workers, 

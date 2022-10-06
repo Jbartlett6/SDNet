@@ -69,6 +69,8 @@ class network_options():
         self.network_width = 'normal'
         self.inference=False
         self.perform_inference=False
+        self.dwi_number = 21
+        self.dwi_folder_name = 'undersampled_21'
         
         self.option_init()
         

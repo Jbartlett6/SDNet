@@ -57,20 +57,22 @@ class network_options():
                     '104416',
                     '104820']
 
-        self.test_subject_list = ['130821',
-                    '145127',
-                    '147737',
-                    '174437',
-                    '178849',
-                    '318637',
-                    '581450']
+        # self.test_subject_list = ['130821',
+        #             '145127',
+        #             '147737',
+        #             '174437',
+        #             '178849',
+        #             '318637',
+        #             '581450']
+        self.test_subject_list = ['130821']
+        
         self.dataset_type = 'all'
         self.model_name = 'best_model.pth'
         self.network_width = 'normal'
         self.inference=False
         self.perform_inference=False
-        self.dwi_number = 21
-        self.dwi_folder_name = 'undersampled_21'
+        self.dwi_number = 30
+        self.dwi_folder_name = 'undersampled_fod'
         
         
         self.option_init()

@@ -50,7 +50,7 @@ if __name__ == '__main__':
     
 
     print('Initialising Model')
-    net = Convcsdnet.FCNet(opts)
+    net = Convcsdcfrnet.FCNet(opts)
     P = net.P.to(opts.device)
     net = nn.DataParallel(net)
     net = net.to(opts.device)

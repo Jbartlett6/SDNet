@@ -105,14 +105,19 @@ class SHConvCascadeLayer(nn.Module):
                                 nn.ReLU(inplace=True),
                                 nn.Conv3d(128, 192, 3, padding='same'),
                                 nn.BatchNorm3d(192),
+                                nn.ReLU(inplace=True),
                                 nn.Conv3d(192, 256, 3, padding='same'),
                                 nn.BatchNorm3d(256),
+                                nn.ReLU(inplace=True),
                                 nn.Conv3d(256, 320, 3, padding='same'),
                                 nn.BatchNorm3d(320),
+                                nn.ReLU(inplace=True),
                                 nn.Conv3d(320, 384, 3, padding='same'),
                                 nn.BatchNorm3d(384),
+                                nn.ReLU(inplace=True),
                                 nn.Conv3d(384, 448, 3, padding='same'),
                                 nn.BatchNorm3d(448),
+                                nn.ReLU(inplace=True),
                                 nn.Conv3d(448, 512, 3),   
                                 nn.ReLU(inplace=True),
                                 nn.Conv3d(512, 94, 1, padding = 'same'))
@@ -146,22 +151,6 @@ class FCNet(nn.Module):
         P_temp = torch.zeros((300,2))
         self.register_buffer('P',torch.cat((P,P_temp),1))
           
-    #    #Initialising the cascades for the network.
-    #     if self.opts.network_width == 'large':
-    #         self.cascade_1 = LargeConvCascadeLayer(opts.dc_type)
-    #         self.cascade_2 = LargeConvCascadeLayer(opts.dc_type)
-    #         self.cascade_3 = LargeConvCascadeLayer(opts.dc_type)
-    #         self.cascade_4 = LargeConvCascadeLayer(opts.dc_type)
-    #     elif self.opts.network_width == 'normal':
-    #         self.cfrcascade_1 = ConvCascadeLayer('FOD_sig', self.P)
-    #         self.cfrcascade_2 = ConvCascadeLayer('FOD_sig', self.P)
-    #         self.cfrcascade_3 = ConvCascadeLayer('FOD_sig', self.P)
-    #         self.cfrcascade_4 = ConvCascadeLayer('FOD_sig', self.P)
-
-    #         self.csdcascade_1 = ConvCascadeLayer('CSD',self.P)
-    #         self.csdcascade_2 = ConvCascadeLayer('CSD',self.P)
-    #         self.csdcascade_3 = ConvCascadeLayer('CSD',self.P)
-    #         self.csdcascade_4 = ConvCascadeLayer('CSD',self.P)
 
         self.csdcascade_1 = SHConvCascadeLayer()
         self.csdcascade_2 = SHConvCascadeLayer()
@@ -206,21 +195,17 @@ class FCNet(nn.Module):
         c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,2)
         
         c_inp = c.transpose(1,4).squeeze()
-        #c_cfr = self.cfrcascade_3(c_inp)
         c_csd = self.csdcascade_3(c_inp)
-        #c_cfr, c_csd = c_cfr.transpose(1,4).unsqueeze(5), c_csd.transpose(1,4).unsqueeze(5)
         c_csd = c_csd.transpose(1,4).unsqueeze(5)
         c_csd = self.res_con(c_csd,c)
-        #Pass the data through the final data consistency layer
         c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,3)
-
-        c_inp = c.transpose(1,4).squeeze()
-        #c_cfr = self.cfrcascade_4(c_inp)
+        
+        
+        #c = torch.cat((c,c_csd), dim = 4 )
+        c_inp = c.transpose(1,4).squeeze() 
         c_csd = self.csdcascade_4(c_inp)
-        #c_cfr, c_csd = c_cfr.transpose(1,4).unsqueeze(5), c_csd.transpose(1,4).unsqueeze(5)
         c_csd = c_csd.transpose(1,4).unsqueeze(5)
         c_csd = self.res_con(c_csd,c)
-        
         c = self.dc(c,c_csd, AQ_Tb, AQ_TAQ, b,4)
         
 
@@ -229,8 +214,6 @@ class FCNet(nn.Module):
     def dc(self, c, c_csd, AQ_Tb, AQ_TAQ, b,n): 
         c = c[:,1:-1,1:-1,1:-1,:,:]
         
-        # A_tmp = AQ_TAQ+self.neg_reg*torch.matmul(self.P.transpose(0,1),self.P)+self.deep_reg*torch.eye(47).to(c_csd.device)
-        # b_tmp = AQ_Tb[:,n:-n,n:-n,n:-n,:,:]+self.neg_reg*torch.matmul(self.P.transpose(0,1),c_cfr)+self.deep_reg*c_csd
         A_tmp = AQ_TAQ+self.deep_reg*torch.eye(47).to(c_csd.device)
         b_tmp = AQ_Tb[:,n:-n,n:-n,n:-n,:,:]+self.deep_reg*c_csd
         c = torch.linalg.solve(A_tmp, b_tmp)
@@ -239,8 +222,6 @@ class FCNet(nn.Module):
 
     def res_con(self,c_csd, c):
         if self.opts.dc_type == 'FOD_sig':
-            #c_cfr = c_cfr+torch.matmul(self.P, c[:,1:-1,1:-1,1:-1,:,:])
-            #c_cfr = F.relu(c_cfr)
             c_csd = c[:,1:-1,1:-1,1:-1,:,:] + torch.mul(c_csd[:,:,:,:,:47,:], F.sigmoid(c_csd[:,:,:,:,47:,:]))
 
         return c_csd

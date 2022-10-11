@@ -490,12 +490,14 @@ class UndersampleDataset(torch.utils.data.Dataset):
             keep_list = []
             #Just a test for undersampling - need to construct a better way of undersampling.
             for i in range(len(b1000_list)):
-                    if i>=self.undersample_val:
+                    if i >= self.undersample_val:
                         mask_list.append(i)
                     else:
                         keep_list.append(i)
             
+            keep_list = [i for i in range(9,18)]
             
+            print(keep_list)
             mask_list = torch.tensor([b1000_list[i] for i in mask_list])
 
             #Uncomment this for the multi-shell version 

@@ -57,14 +57,13 @@ class network_options():
                     '104416',
                     '104820']
 
-        # self.test_subject_list = ['130821',
-        #             '145127',
-        #             '147737',
-        #             '174437',
-        #             '178849',
-        #             '318637',
-        #             '581450']
-        self.test_subject_list = ['130821']
+        self.test_subject_list = ['130821',
+                    '145127',
+                    '147737',
+                    '174437',
+                    '178849',
+                    '318637',
+                    '581450']
         
         self.dataset_type = 'all'
         self.model_name = 'best_model.pth'

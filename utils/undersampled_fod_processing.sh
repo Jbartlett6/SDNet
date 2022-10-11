@@ -45,7 +45,7 @@ do
 	dwi2response dhollander $path/$folder_name/normalised_data.nii.gz $path/$folder_name/wm_response.txt $path/$folder_name/gm_response.txt $path/$folder_name/csf_response.txt -fslgrad $path/$folder_name/bvecs $path/$folder_name/bvals 
 	dwi2fod -fslgrad $path/$folder_name/bvecs $path/$folder_name/bvals msmt_csd $path/$folder_name/normalised_data.nii.gz $path/$folder_name/wm_response.txt $path/$folder_name/undersampled_wm_fod.nii.gz $path/$folder_name/gm_response.txt $path/$folder_name/undersampled_gm_fod.nii.gz $path/$folder_name/csf_response.txt $path/$folder_name/undersampled_csf_fod.nii.gz
 	mrcat -axis 3 $path/$folder_name/undersampled_wm_fod.nii.gz $path/$folder_name/undersampled_gm_fod.nii.gz $path/$folder_name/undersampled_csf_fod.nii.gz $path/$folder_name/$folder_name.nii.gz
-	mrcat -axis 3 $path/wmfod.nii.gz $path/gm.nii.gz $path/csf.nii.gz $path/$folder_name/gt_fod.nii.gz	
+	mrcat -axis 3 $path/wmfod.nii.gz $path/gm.nii.gz $path/csf.nii.gz $path/gt_fod.nii.gz	
 	cp $path/wmfod.nii.gz $path/$folder_name/gt_wm_fod.nii.gz
 	
 	

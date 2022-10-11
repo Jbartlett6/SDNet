@@ -40,11 +40,11 @@ def per_subject_inference(subject, opts, data):
 
     #Loading the network
     print('Loading the network and the correct state')
-    net = Convcsdnet.FCNet(opts)
+    net = Convcsdcfrnet.FCNet(opts)
     net = nn.DataParallel(net)
     net.load_state_dict(torch.load(model_path))
     net = net.to(device)
-
+    net.eval()
     #Initialising the infeence dataset for the given subject. A new dataset will be initialised for each subject in the eval loop.
     print('Initialising the inference dataset and dataloader')
     inf_tmp = [subject]
@@ -57,18 +57,19 @@ def per_subject_inference(subject, opts, data):
     #Initialising the output
     print('Initialising the output image')
     out = F.pad(torch.zeros((145,174,145,47)),(0,0,5,5,5,5,5,5), mode='constant').to(device)
+    
+    with torch.no_grad():
+        print('Performing the inference loop')
+        for i , data in enumerate(dataloader):
+            signal_data, _, AQ, coords = data
+            signal_data, AQ, coords = signal_data.to(device), AQ.to(device), coords.to(device)
+            
+            if i%20 == 19:
+                print(i*256, '/', len(dataset))
 
-    print('Performing the inference loop')
-    for i , data in enumerate(dataloader):
-        signal_data, _, AQ, coords = data
-        signal_data, AQ, coords = signal_data.to(device), AQ.to(device), coords.to(device)
-        
-        if i%20 == 19:
-            print(i*256, '/', len(dataset))
-
-        
-        with torch.no_grad():
-            out[coords[:,1], coords[:,2], coords[:,3], :] = net(signal_data, AQ).squeeze()
+            
+            with torch.no_grad():
+                out[coords[:,1], coords[:,2], coords[:,3], :] = net(signal_data, AQ).squeeze()
     
 
     

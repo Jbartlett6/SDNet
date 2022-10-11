@@ -9,7 +9,7 @@ fully_sampled_process=$5
 #subjectlist=/media/duanj/F/joe/data/hcp_metadata/hcp_test_subjects.txt
 # traininglist=train_subjects_7T.txt
 # vallist=validation_subjects_7T.txt
-traininglist=train_subjects.txt
+#traininglist=train_subjects.txt
 vallist=validation_subjects.txt
 while read -r subject;
 do

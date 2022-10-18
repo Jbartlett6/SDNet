@@ -15,82 +15,7 @@ import numpy as np
 import util 
 import data
 
-class ConvCascadeLayer(nn.Module):
-    """Cascade Layer"""
-    def __init__(self, dc, P):
-        super().__init__()
-        self.P = P
-        self.dc = dc
-        if dc=='CSD':
-            self.casc = nn.Sequential(nn.Conv3d(47, 80, 3, padding='same'),  
-                                    nn.BatchNorm3d(80),
-                                    nn.ReLU(inplace=True),  
-                                    nn.Conv3d(80, 80, 3, padding='same'),
-                                    nn.BatchNorm3d(80),
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(80, 80, 3, padding='same'),
-                                    nn.BatchNorm3d(80),  
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(80, 80, 3, padding='same'),
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(80, 47, 3))
-        else:
-            self.casc = nn.Sequential(nn.Conv3d(300, 80, 3, padding='same'), 
-                                    nn.BatchNorm3d(80), 
-                                    nn.ReLU(inplace=True),  
-                                    nn.Conv3d(80, 80, 3, padding='same'),
-                                    nn.BatchNorm3d(80),
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(80, 80, 3, padding='same'),
-                                    nn.BatchNorm3d(80),  
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(80, 80, 3, padding='same'),
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(80, 300, 3))
 
-    def forward(self, x):
-        if self.dc == 'CSD':
-            return self.casc(x)
-        else:
-            x = x.transpose(1,4).unsqueeze(5)
-            x = torch.matmul(self.P.to(x.device),x)
-            x = x.transpose(1,4).squeeze()
-
-            return self.casc(x)
-
-class LargeConvCascadeLayer(nn.Module):
-    """Cascade Layer"""
-    def __init__(self, dc):
-        super().__init__()
-        if dc=='CSD':
-            self.casc = nn.Sequential(nn.Conv3d(47, 1024, 3, padding='same'),  
-                                    nn.BatchNorm3d(1024),
-                                    nn.ReLU(inplace=True),  
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.BatchNorm3d(1024),
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.BatchNorm3d(1024),  
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 47, 3))
-        else:
-            self.casc = nn.Sequential(nn.Conv3d(47, 1024, 3, padding='same'), 
-                                    nn.BatchNorm3d(1024), 
-                                    nn.ReLU(inplace=True),  
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.BatchNorm3d(1024),
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.BatchNorm3d(1024),  
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 1024, 3, padding='same'),
-                                    nn.ReLU(inplace=True),
-                                    nn.Conv3d(1024, 300, 3))
-
-    def forward(self, x):
-        return self.casc(x)
 
 class SHConvCascadeLayer(nn.Module):
     """Cascade Layer"""
@@ -122,6 +47,27 @@ class SHConvCascadeLayer(nn.Module):
                                 nn.ReLU(inplace=True),
                                 nn.Conv3d(512, 94, 1, padding = 'same'))
     
+    def forward(self, x):
+        return self.casc(x)
+
+class SmallSHConvCascadeLayer(nn.Module):
+    """Cascade Layer"""
+    def __init__(self):
+        super().__init__()
+
+        self.casc = nn.Sequential(nn.Conv3d(47, 64, 3, padding='same'),  
+                                nn.BatchNorm3d(64),
+                                nn.ReLU(inplace=True),  
+                                nn.Conv3d(64, 128, 3, padding='same'),
+                                nn.BatchNorm3d(128),
+                                nn.ReLU(inplace=True),
+                                nn.Conv3d(128, 256, 3, padding='same'),
+                                nn.BatchNorm3d(256),  
+                                nn.ReLU(inplace=True),
+                                nn.Conv3d(256, 512, 3),
+                                nn.ReLU(inplace=True),
+                                nn.Conv3d(512, 94, 1, padding = 'same'))
+
 
     def forward(self, x):
         return self.casc(x)

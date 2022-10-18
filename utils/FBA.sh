@@ -2,12 +2,13 @@
 inf_im=$1
 subj=$2
 save_dir=$3
+rm -f tmp0.mif tmp1.mif tmp2.mif tmp_dir.mif tmp_afd.mif tmp_afd_abs.mif tmp_peak_amp_im.mif tmp_peak_amp_abs.mif tmp_peak_amp.mif
 
 fod2fixel -afd afd.mif -peak_amp peak_amp.mif $inf_im $save_dir/fixel_directory
 
 #Calculating the difference between the two fixel number images:
 cp $save_dir/fixel_directory/index.mif tmp0.mif
-mrconvert tmp0.mif -coord 3 0 tmp0.mif
+mrconvert -force tmp0.mif -coord 3 0 tmp0.mif
 mrconvert /media/duanj/F/joe/hcp_2/$subj/T1w/Diffusion/fixel_directory/index.mif -coord 3 0 tmp1.mif
 mrcalc tmp0.mif tmp1.mif -sub tmp2.mif
 mrcalc tmp2.mif -abs $save_dir/index_abs_err.mif

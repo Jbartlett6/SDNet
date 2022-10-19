@@ -57,13 +57,15 @@ class network_options():
                     '104416',
                     '104820']
 
-        self.test_subject_list = ['130821',
-                    '145127',
-                    '147737',
-                    '174437',
-                    '178849',
-                    '318637',
-                    '581450']
+        # self.test_subject_list = ['130821',
+        #             '145127',
+        #             '147737',
+        #             '174437',
+        #             '178849',
+        #             '318637',
+        #             '581450']
+
+        self.test_subject_list = ['100610']
         
         self.dataset_type = 'all'
         self.model_name = 'best_model.pth'
@@ -72,6 +74,7 @@ class network_options():
         self.perform_inference=False
         self.dwi_number = 30
         self.dwi_folder_name = 'undersampled_fod'
+        self.scanner_type = '3T'
         
         
         self.option_init()
@@ -103,7 +106,7 @@ class network_options():
         parser.add_argument('--config_path', type=str, help = 'The path of the config file.')
 
         #Data related hyperparameters:
-        parser.add_argument('--data_path',type=str, help = 'The location of the hcp data, where the subject folders can be found')
+        parser.add_argument('--data_dir',type=str, help = 'The location of the hcp data, where the subject folders can be found')
         parser.add_argument('--train_subject_list',type=list, help = 'The subject numbers which will be used to train the network')
         parser.add_argument('--val_subject_list',type=list, help = 'The subject numbers which will be used to calculate the validation loss')
         parser.add_argument('--test_subject_list',type=list, help = 'The subject numbers which will be used to obtain test performance metrics at inference time')

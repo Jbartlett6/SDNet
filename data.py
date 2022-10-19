@@ -272,6 +272,19 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
         self.data_dir = data_dir
         self.inference = inference
         
+
+        if opts.scanner_type == '3T':
+            self.diffusion_dir = 'Diffusion'
+            self.shell_number = 4
+            self.data_file = 'normalised_data.nii.gz'
+            self.spatial_resolution = [len(subject_list),145,174,145]
+        elif opts.scanner_type == '7T':
+            self.diffusion_dir = 'Diffusion_7T'
+            self.shell_number = 3
+            self.data_file = 'data.nii.gz'
+            self.spatial_resolution = [len(subject_list),173,207,173]
+
+
         #Creating the dummy variables for the data to be loaded into RAM:
         self.data_tensor = torch.zeros((len(subject_list),79,87,97,opts.dwi_number))
         self.gt_tensor = torch.zeros((len(subject_list),79,87,97,47))
@@ -309,13 +322,13 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
         print('Loading the Spherical Convolution co-ords into RAM')
         for i, subject in enumerate(subject_list):
             #Extracting bvectors from folders:
-            bvecs = util.bvec_extract(self.data_dir, subject, opts.diffusion_dir, opts.dwi_folder_name)
+            bvecs = util.bvec_extract(self.data_dir, subject, self.diffusion_dir, opts.dwi_folder_name)
             bvecs_sph = util.ss_sph_coords(bvecs)
             bvecs_sph[bvecs_sph[:,0]<0,0] = bvecs_sph[bvecs_sph[:,0]<0,0]+2*math.pi
             order = 8
 
             #Extracting bvalues:
-            bvals = util.bval_extract(self.data_dir, subject, opts.diffusion_dir, opts.dwi_folder_name)
+            bvals = util.bval_extract(self.data_dir, subject, self.diffusion_dir, opts.dwi_folder_name)
 
             #White matter response function extraaction:
             with open(os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', opts.dwi_folder_name, 'wm_response.txt'), 'r') as txt:

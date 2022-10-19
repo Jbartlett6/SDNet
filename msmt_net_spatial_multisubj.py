@@ -43,7 +43,7 @@ if __name__ == '__main__':
                                             shuffle=True, num_workers=opts.val_workers,
                                             drop_last = True)
     
-    print(len(d_train))
+    
     criterion = torch.nn.MSELoss(reduction='mean')
     
     param_list = [150]
@@ -198,7 +198,7 @@ if __name__ == '__main__':
 
         #Early stopping implementation.
         current_loss = best_loss
-        if current_loss < previous_loss:
+        if current_loss > previous_loss:
             early_stopping_counter = early_stopping_counter+1
         
         if early_stopping_counter > opts.early_stopping_threshold:

@@ -46,6 +46,47 @@ class SHConvCascadeLayer(nn.Module):
                                 nn.Conv3d(448, 512, 3),   
                                 nn.ReLU(inplace=True),
                                 nn.Conv3d(512, 94, 1, padding = 'same'))
+        
+        
+
+    
+    def forward(self, x):
+        return self.casc(x)
+
+
+
+class GLUConvCascadeLayer(nn.Module):
+    """Cascade Layer"""
+    def __init__(self):
+        super().__init__()
+        
+        self.casc = nn.Sequential(nn.Conv3d(47, 128, 3, padding='same'),  
+                                nn.BatchNorm3d(128),
+                                torch.nn.GLU(dim=1),  
+                                nn.Conv3d(64, 2*128, 3, padding='same'),
+                                nn.BatchNorm3d(2*128),
+                                torch.nn.GLU(dim=1),
+                                nn.Conv3d(128, 2*192, 3, padding='same'),
+                                nn.BatchNorm3d(2*192),
+                                torch.nn.GLU(dim=1),
+                                nn.Conv3d(192, 2*256, 3, padding='same'),
+                                nn.BatchNorm3d(2*256),
+                                torch.nn.GLU(dim=1),
+                                nn.Conv3d(256, 2*320, 3, padding='same'),
+                                nn.BatchNorm3d(2*320),
+                                torch.nn.GLU(dim=1),
+                                nn.Conv3d(320, 2*384, 3, padding='same'),
+                                nn.BatchNorm3d(2*384),
+                                torch.nn.GLU(dim=1),
+                                nn.Conv3d(384, 2*448, 3, padding='same'),
+                                nn.BatchNorm3d(2*448),
+                                torch.nn.GLU(dim=1),
+                                nn.Conv3d(448, 2*512, 3),   
+                                torch.nn.GLU(dim=1),
+                                nn.Conv3d(512, 94, 1, padding = 'same'))
+        
+        
+
     
     def forward(self, x):
         return self.casc(x)
@@ -125,7 +166,7 @@ class FCNet(nn.Module):
         c_csd = self.csdcascade_1(c_inp)
         # c_cfr, c_csd = c_cfr.transpose(1,4).unsqueeze(5), c_csd.transpose(1,4).unsqueeze(5)
         c_csd = c_csd.transpose(1,4).unsqueeze(5)
-        c_csd = torch.mul(c_csd[:,:,:,:,:47,:], F.sigmoid(c_csd[:,:,:,:,47:,:]))
+        c_csd = torch.mul(c_csd[:,:,:,:,:47,:], torch.sigmoid(c_csd[:,:,:,:,47:,:]))
        
        #Data Consistency layer 1
         c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,1)
@@ -168,7 +209,7 @@ class FCNet(nn.Module):
 
     def res_con(self,c_csd, c):
         if self.opts.dc_type == 'FOD_sig':
-            c_csd = c[:,1:-1,1:-1,1:-1,:,:] + torch.mul(c_csd[:,:,:,:,:47,:], F.sigmoid(c_csd[:,:,:,:,47:,:]))
+            c_csd = c[:,1:-1,1:-1,1:-1,:,:] + torch.mul(c_csd[:,:,:,:,:47,:], torch.sigmoid(c_csd[:,:,:,:,47:,:]))
 
         return c_csd
     

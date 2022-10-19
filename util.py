@@ -54,7 +54,7 @@ def ACC(out,gt):
     return num/denum
 
    
-def bvec_extract(data_dir, subject, sub_dir): 
+def bvec_extract(data_dir, subject, diffusion_dir = 'Diffusion', sub_dir = None): 
     '''
     Input:
         subj (str) - The subject whose bvectors you want to extract.
@@ -64,9 +64,9 @@ def bvec_extract(data_dir, subject, sub_dir):
     '''
     #path = '/media/duanj/F/joe/hcp_2/'+subject+'/T1w/Diffusion/undersampled_fod/bvecs'
     if sub_dir == None:
-        path = os.path.join(data_dir, subject, 'T1w', 'Diffusion', 'bvecs')
+        path = os.path.join(data_dir, subject, 'T1w', diffusion_dir, 'bvecs')
     else:
-        path = os.path.join(data_dir, subject, 'T1w', 'Diffusion', sub_dir,'bvecs')
+        path = os.path.join(data_dir, subject, 'T1w', diffusion_dir, sub_dir,'bvecs')
 
     bvecs = open(path ,'r')
 
@@ -80,7 +80,7 @@ def bvec_extract(data_dir, subject, sub_dir):
     bvecs = [[-xvals[i], yvals[i], zvals[i]] for i in range(len(xvals))]
     return torch.tensor(bvecs)
 
-def bval_extract(data_dir, subject, sub_dir):
+def bval_extract(data_dir, subject,diffusion_dir = 'Diffusion' ,sub_dir = None):
     '''
     Input:
         subj (str) - The subject whose bvals you want to extract.
@@ -93,9 +93,9 @@ def bval_extract(data_dir, subject, sub_dir):
         bvalues and bvectors are found in the subdirectory. Such subdirectory bvalues and bvectors are specified by the sub_dir argument.
     '''
     if sub_dir == None:
-        path = os.path.join(data_dir, str(subject), 'T1w', 'Diffusion','bvals')
+        path = os.path.join(data_dir, str(subject), 'T1w', diffusion_dir, 'bvals')
     else:
-        path = os.path.join(data_dir, str(subject), 'T1w', 'Diffusion',sub_dir,'bvals')
+        path = os.path.join(data_dir, str(subject), 'T1w', diffusion_dir, sub_dir, 'bvals')
     
 
     bvals = open(path, 'r')
@@ -168,7 +168,8 @@ def construct_sh_basis_msmt_all(bvecs_sph, order, g_wm, g_gm, g_csf, bvals):
         
         G = torch.zeros((4,47))
         
-        for i in range(4):
+        #Changed the range for 7T, check if works
+        for i in range(len(g_wm)):
             temp = []
             g_ind = 0
             for l in range(0,8+1,2):

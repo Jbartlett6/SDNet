@@ -65,7 +65,7 @@ class network_options():
         #             '318637',
         #             '581450']
 
-        self.test_subject_list = ['100610']
+        self.test_subject_list = ['102311']
         
         self.dataset_type = 'all'
         self.model_name = 'best_model.pth'
@@ -125,6 +125,7 @@ class network_options():
         parser.add_argument('--model_name', type=str, help = 'The path at which the model is saved')
         parser.add_argument('--perform_inference', type=bool, help = 'The path at which the model is saved')
         parser.add_argument('--network_width', type=str, help = 'The path at which the model is saved')
+        parser.add_argument('--scanner_type',type=str, help = 'Specify whether 3T or 7T data is being used')
 
         self.parser_args = parser.parse_args()
 

@@ -57,15 +57,15 @@ class network_options():
                     '104416',
                     '104820']
 
-        # self.test_subject_list = ['130821',
-        #             '145127',
-        #             '147737',
-        #             '174437',
-        #             '178849',
-        #             '318637',
-        #             '581450']
+        self.test_subject_list = ['130821',
+                    '145127',
+                    '147737',
+                    '174437',
+                    '178849',
+                    '318637',
+                    '581450']
 
-        self.test_subject_list = ['102311']
+        #self.test_subject_list = ['102311']
         
         self.dataset_type = 'all'
         self.model_name = 'best_model.pth'
@@ -86,14 +86,13 @@ class network_options():
     def parse_arguments(self):
         parser = argparse.ArgumentParser(description='Perform a training loop for the ')
 
-        #Learning related hyperparameters.
+        #Optimisation related hyperparameters.
         parser.add_argument('--lr',type=int, help = 'The initial learning rate used by the ADAM optimiser')
         parser.add_argument('--batch_size',type=int, help = 'The batch size which is used to train the model.')
         parser.add_argument('--early_stopping',type=float, help = 'Tur or False option to indicate whether early stopping should take place.')
         parser.add_argument('--early_stopping_threshold',type=float, help = 'The number of ... which have to pass without improvment for early stopping to take place.')
-        parser.add_argument('--continue_training',type=float, help = 'True or False option to indicate whether training should be continued from a previous model or not')
-        parser.add_argument('--experiment_name',type=str, help = 'The experiment name, this will be used to create the folder to save the model, as well as the tensorboard logs.')
         parser.add_argument('--epochs',type=int, help = 'The number of epochs to train the model for')
+        
         #Data consistency related hyperparameters
         parser.add_argument('--deep_reg',type=float, help = 'The deep regularisation parameter which is used in the data consistency term')
         parser.add_argument('--neg_reg',type=float, help = 'The non-negativity regularisation parameter which is used in the data consistency term')
@@ -101,30 +100,37 @@ class network_options():
         parser.add_argument('--learn_lambda',type=bool, help = 'Whether to learn the regularisation parameters in the data consistency layer or not.')
         parser.add_argument('--alpha',type=float, help = 'The smoothing parameter in the network')
 
+        #Network Specific Options:
+        parser.add_argument('--model_name', type=str, help = 'The path at which the model is saved')
+        parser.add_argument('--network_width', type=str, help = 'The path at which the model is saved')
 
-        #Config File path:
+
+        #Config/Saving Arguments:
         parser.add_argument('--config_path', type=str, help = 'The path of the config file.')
+        parser.add_argument('--continue_training',type=float, help = 'True or False option to indicate whether training should be continued from a previous model or not')
+        parser.add_argument('--experiment_name',type=str, help = 'The experiment name, this will be used to create the folder to save the model, as well as the tensorboard logs.')
+       
 
-        #Data related hyperparameters:
+        #Dataset/subject related hyperparameters:
         parser.add_argument('--data_dir',type=str, help = 'The location of the hcp data, where the subject folders can be found')
         parser.add_argument('--train_subject_list',type=list, help = 'The subject numbers which will be used to train the network')
         parser.add_argument('--val_subject_list',type=list, help = 'The subject numbers which will be used to calculate the validation loss')
         parser.add_argument('--test_subject_list',type=list, help = 'The subject numbers which will be used to obtain test performance metrics at inference time')
-        parser.add_argument('--dataset_type',type=str, help = 'Whetehr to use the full dataset or the experimental dataset')
+        parser.add_argument('--dataset_type',type=str, help = 'Whether to use the full dataset or the experimental dataset')
+        parser.add_argument('--subject', type=str, help = 'The path at which the model is saved')
 
 
-        #Computation related hyperparameters:
+        #Computation/Resource related hyperparameters:
         parser.add_argument('--train_workers',type=int, help = 'The number of workers for the training dataloader')
         parser.add_argument('--val_workers',type=int, help = 'The number of workers for the validation dataloader')
-
         
+        #Inference/Evaluation Parameters:
+        parser.add_argument('--perform_inference', type=bool, help = '''When carrying out evaluation this options specifies
+                                                                        whether or not to perform inference. i.e. whether the inference 
+                                                                        folder already contains the infered data.''')
         parser.add_argument('--inference',type=bool, help = 'Whether the options are being used for inference or not.')
-        
-       
-        parser.add_argument('--subject', type=str, help = 'The path at which the model is saved')
-        parser.add_argument('--model_name', type=str, help = 'The path at which the model is saved')
-        parser.add_argument('--perform_inference', type=bool, help = 'The path at which the model is saved')
-        parser.add_argument('--network_width', type=str, help = 'The path at which the model is saved')
+
+        #HCP specific dataset parameters
         parser.add_argument('--scanner_type',type=str, help = 'Specify whether 3T or 7T data is being used')
 
         self.parser_args = parser.parse_args()

@@ -166,7 +166,7 @@ def construct_sh_basis_msmt_all(bvecs_sph, order, g_wm, g_gm, g_csf, bvals):
 
         A = A_cumulative[:,1:]
         
-        G = torch.zeros((4,47))
+        G = torch.zeros((len(g_wm),47))
         
         #Changed the range for 7T, check if works
         for i in range(len(g_wm)):

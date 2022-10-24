@@ -44,7 +44,9 @@ if __name__ == '__main__':
                                             drop_last = True)
     
     print(len(d_train))
-    criterion = torch.nn.MSELoss(reduction='mean')
+    #criterion = torch.nn.MSELoss(reduction='mean')
+    criterion_MSE = torch.nn.MSELoss(reduction='mean')
+    criterion_MAE = torch.nn.L1Loss(reduction='mean')
     
     param_list = [150]
     
@@ -111,13 +113,13 @@ if __name__ == '__main__':
             
             outputs = net(inputs, AQ)
             if opts.loss_type == 'sh':
-                mae_criterion = criterion(outputs.squeeze()[:,:45], labels[:,:45])
+                train_criterion = criterion_MAE(outputs.squeeze()[:,:45], labels[:,:45])
             elif opts.loss_type == 'sig':
                 out_dir = torch.matmul(P,outputs).squeeze()
                 gt_dir = torch.matmul(P,labels.unsqueeze(2)).squeeze()
-                mae_criterion = criterion(out_dir, gt_dir)       
+                train_criterion = criterion_MAE(out_dir, gt_dir)       
             
-            loss = mae_criterion
+            loss = train_criterion
             loss.backward()
             optimizer.step()
             
@@ -151,7 +153,7 @@ if __name__ == '__main__':
                         net.eval()
                         outputs = net(inputs, AQ)
                         #Records only the white matter FOD spherical harmonic coefficients.
-                        loss = criterion(outputs.squeeze()[:,:45], labels[:,:45])
+                        loss = criterion_MSE(outputs.squeeze()[:,:45], labels[:,:45])
                         val_loss += loss.item()
                         acc_loss += util.ACC(outputs,labels).mean()
                         non_neg += torch.sum((torch.matmul(P, outputs)<-0.01).squeeze(),axis = -1).float().mean()
@@ -200,8 +202,10 @@ if __name__ == '__main__':
 
         #Early stopping implementation.
         current_loss = best_loss
-        if current_loss < previous_loss:
+        if current_loss == previous_loss:
             early_stopping_counter = early_stopping_counter+1
+        else:
+            early_stopping_counter = 0
         
         if opts.early_stopping == True:
             if early_stopping_counter > opts.early_stopping_threshold:

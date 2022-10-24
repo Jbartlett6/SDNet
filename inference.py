@@ -56,7 +56,8 @@ def per_subject_inference(subject, opts, data):
     
     #Initialising the output
     print('Initialising the output image')
-    out = F.pad(torch.zeros((145,174,145,47)),(0,0,5,5,5,5,5,5), mode='constant').to(device)
+    #out = F.pad(torch.zeros((145,174,145,47)),(0,0,5,5,5,5,5,5), mode='constant').to(device)
+    out = F.pad(torch.zeros((173,207,173,47)),(0,0,5,5,5,5,5,5), mode='constant').to(device)
     
     with torch.no_grad():
         print('Performing the inference loop')

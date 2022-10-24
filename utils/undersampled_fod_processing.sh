@@ -7,10 +7,11 @@ fully_sampled_process=$5
 
 #subjectlist=hcp-folders-formatted.txt
 #subjectlist=/media/duanj/F/joe/data/hcp_metadata/hcp_test_subjects.txt
-# traininglist=train_subjects_7T.txt
+traininglist=train_subjects_7T.txt
+vallist=0
 # vallist=validation_subjects_7T.txt
 #traininglist=train_subjects.txt
-vallist=validation_subjects.txt
+#vallist=validation_subjects.txt
 while read -r subject;
 do
 	echo Preparing the training data.
@@ -39,15 +40,16 @@ do
     python dwi_undersample.py $data_path $subject $folder_name --dwi_per_shell $dwi_per_shell
 
 	#Normalising the already undersampled data so the maximum value is 1.
-	dwinormalise individual $path/$folder_name/data.nii.gz $path/nodif_brain_mask.nii.gz $path/$folder_name/normalised_data.nii.gz -fslgrad $path/$folder_name/bvecs $path/$folder_name/bvals -intensity 1
+	#dwinormalise individual $path/$folder_name/data.nii.gz $path/nodif_brain_mask.nii.gz $path/$folder_name/normalised_data.nii.gz -fslgrad $path/$folder_name/bvecs $path/$folder_name/bvals -intensity 1
 
 	#Calculating the undersampled response functions to be input into the network:
-	dwi2response dhollander $path/$folder_name/normalised_data.nii.gz $path/$folder_name/wm_response.txt $path/$folder_name/gm_response.txt $path/$folder_name/csf_response.txt -fslgrad $path/$folder_name/bvecs $path/$folder_name/bvals 
+	#dwi2response dhollander $path/$folder_name/normalised_data.nii.gz $path/$folder_name/wm_response.txt $path/$folder_name/gm_response.txt $path/$folder_name/csf_response.txt -fslgrad $path/$folder_name/bvecs $path/$folder_name/bvals 
+	dwi2response dhollander $path/$folder_name/data.nii.gz $path/$folder_name/wm_response.txt $path/$folder_name/gm_response.txt $path/$folder_name/csf_response.txt -fslgrad $path/$folder_name/bvecs $path/$folder_name/bvals 
 	dwi2fod -fslgrad $path/$folder_name/bvecs $path/$folder_name/bvals msmt_csd $path/$folder_name/normalised_data.nii.gz $path/$folder_name/wm_response.txt $path/$folder_name/undersampled_wm_fod.nii.gz $path/$folder_name/gm_response.txt $path/$folder_name/undersampled_gm_fod.nii.gz $path/$folder_name/csf_response.txt $path/$folder_name/undersampled_csf_fod.nii.gz
 	mrcat -axis 3 $path/$folder_name/undersampled_wm_fod.nii.gz $path/$folder_name/undersampled_gm_fod.nii.gz $path/$folder_name/undersampled_csf_fod.nii.gz $path/$folder_name/$folder_name.nii.gz
 	mrcat -axis 3 $path/wmfod.nii.gz $path/gm.nii.gz $path/csf.nii.gz $path/gt_fod.nii.gz	
 	cp $path/wmfod.nii.gz $path/$folder_name/gt_wm_fod.nii.gz
-	
+	 
 	
 done < $traininglist
 

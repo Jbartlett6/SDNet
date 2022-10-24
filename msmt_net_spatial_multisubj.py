@@ -113,11 +113,11 @@ if __name__ == '__main__':
             
             outputs = net(inputs, AQ)
             if opts.loss_type == 'sh':
-                train_criterion = criterion_MAE(outputs.squeeze()[:,:45], labels[:,:45])
+                train_criterion = criterion_MSE(outputs.squeeze()[:,:45], labels[:,:45])
             elif opts.loss_type == 'sig':
                 out_dir = torch.matmul(P,outputs).squeeze()
                 gt_dir = torch.matmul(P,labels.unsqueeze(2)).squeeze()
-                train_criterion = criterion_MAE(out_dir, gt_dir)       
+                train_criterion = criterion_MSE(out_dir, gt_dir)       
             
             loss = train_criterion
             loss.backward()

@@ -19,20 +19,34 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         self.inference = inference
         self.opts = opts
 
+        #Setting the field strength specific parameters
+        if opts.scanner_type == '3T':
+            self.diffusion_dir = 'Diffusion'
+            self.shell_number = 4
+            self.data_file = 'normalised_data.nii.gz'
+            self.spatial_resolution = [len(subject_list),145,174,145]
+        elif opts.scanner_type == '7T':
+            self.diffusion_dir = 'Diffusion_7T'
+            self.shell_number = 3
+            self.data_file = 'data.nii.gz'
+            self.spatial_resolution = [len(subject_list),173,207,173]
+            
+        
         pad_tens = (0,0,5,5,5,5,5,5)
-        print(pad_tens)
-        #Creating the dummy variables for the data to be loaded into RAM:
-        self.data_tensor = F.pad(torch.zeros((len(subject_list),145,174,145,opts.dwi_number)),pad_tens, mode = 'constant')
-        self.gt_tensor = F.pad(torch.zeros((len(subject_list),145,174,145,47)),pad_tens, mode = 'constant')
-        self.AQ_tensor = torch.zeros((len(subject_list),opts.dwi_number,47))
-        self.ttgen_mask_tensor = F.pad(torch.zeros((len(subject_list),145,174,145,5)),pad=pad_tens, mode = 'constant')
-        self.wb_mask_tensor = F.pad(torch.zeros((len(subject_list),145,174,145)),(5,5,5,5,5,5), mode = 'constant')
+        
+        #Creating the dummy variables for the data to be loaded into RAM, the spatial resolution of the images changes depending on whether they are 3T or 7T:
 
+        self.data_tensor = F.pad(torch.zeros(self.spatial_resolution+[opts.dwi_number]),pad_tens, mode = 'constant')
+        self.gt_tensor = F.pad(torch.zeros(self.spatial_resolution+[47]),pad_tens, mode = 'constant')
+        self.AQ_tensor = torch.zeros((len(subject_list),opts.dwi_number,47))
+        self.ttgen_mask_tensor = F.pad(torch.zeros(self.spatial_resolution+[5]),pad=pad_tens, mode = 'constant')
+        self.wb_mask_tensor = F.pad(torch.zeros(self.spatial_resolution),(5,5,5,5,5,5), mode = 'constant')
+        
 
         #Loading the data into the data tensor
         print('Loading the signal data into RAM')
         for i, subject in enumerate(subject_list):
-            path = os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', opts.dwi_folder_name, 'normalised_data.nii.gz')
+            path = os.path.join(self.data_dir, subject, 'T1w', self.diffusion_dir, opts.dwi_folder_name, self.data_file)
             nifti = nib.load(path)
             self.data_tensor[i,:,:,:,:] = F.pad(torch.tensor(np.array(nifti.dataobj)),pad_tens, mode = 'constant')
         if self.inference:
@@ -44,7 +58,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         print('Loading the ground Truth FOD data into RAM')
         for i, subject in enumerate(subject_list):
             #Should move the ground truth FOD to outside the undersampled folder to avoid this problem (note that it needs to be the who mrcat gt rather than just wm FOD)
-            path = os.path.join(self.data_dir, subject,'T1w','Diffusion','undersampled_fod','gt_fod.nii.gz')
+            path = os.path.join(self.data_dir, subject,'T1w',self.diffusion_dir,'undersampled_fod','gt_fod.nii.gz')
             nifti = nib.load(path)
             self.gt_tensor[i,:,:,:,:] = F.pad(torch.tensor(np.array(nifti.dataobj)),pad_tens, mode = 'constant')
         print(f'The shape of the ground truth tensor is {self.gt_tensor.shape}')
@@ -53,7 +67,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         print('Loading the mask data into RAM')
         for i, subject in enumerate(subject_list):
             #Importing the whole brain mask
-            path_wb = os.path.join(self.data_dir,subject,'T1w','Diffusion','nodif_brain_mask.nii.gz')
+            path_wb = os.path.join(self.data_dir,subject,'T1w',self.diffusion_dir,'nodif_brain_mask.nii.gz')
             nifti_wb = nib.load(path_wb)
             self.wb_mask_tensor[i,:,:,:] = F.pad(torch.tensor(np.array(nifti_wb.dataobj)),(5,5,5,5,5,5), mode = 'constant')
             
@@ -69,29 +83,29 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         print('Loading the Spherical Convolution co-ords into RAM')
         for i, subject in enumerate(subject_list):
             #Extracting bvectors from folders:
-            bvecs = util.bvec_extract(self.data_dir, subject, opts.dwi_folder_name)
+            bvecs = util.bvec_extract(self.data_dir, subject, self.diffusion_dir, opts.dwi_folder_name)
             bvecs_sph = util.ss_sph_coords(bvecs)
             bvecs_sph[bvecs_sph[:,0]<0,0] = bvecs_sph[bvecs_sph[:,0]<0,0]+2*math.pi
             order = 8
 
             #Extracting bvalues:
-            bvals = util.bval_extract(self.data_dir, subject, opts.dwi_folder_name)
+            bvals = util.bval_extract(self.data_dir, subject, self.diffusion_dir, opts.dwi_folder_name)
             #White matter response function extraaction:
-            with open(os.path.join(self.data_dir, subject,'T1w','Diffusion',opts.dwi_folder_name,'wm_response.txt'), 'r') as txt:
+            with open(os.path.join(self.data_dir, subject,'T1w',self.diffusion_dir,opts.dwi_folder_name,'wm_response.txt'), 'r') as txt:
                 x = txt.read()
             x = x.split('\n')[2:-1]
             
-            g_wm = torch.zeros(4,6)
-            for j in range(4):
+            g_wm = torch.zeros(self.shell_number,6)
+            for j in range(self.shell_number):
                 g_wm[j] = torch.tensor([float(resp) for resp in x[j].split(' ')])
 
             #Grey matter response function extraction:
-            with open(os.path.join(self.data_dir, subject,'T1w','Diffusion',opts.dwi_folder_name,'gm_response.txt'), 'r') as txt:
+            with open(os.path.join(self.data_dir, subject,'T1w',self.diffusion_dir,opts.dwi_folder_name,'gm_response.txt'), 'r') as txt:
                 x = txt.read()
             g_gm = [float(resp) for resp in x.split('\n')[2:-1]]
 
             #CSF response function extraction:
-            with open(os.path.join(self.data_dir, subject,'T1w','Diffusion',opts.dwi_folder_name,'csf_response.txt'), 'r') as txt:
+            with open(os.path.join(self.data_dir, subject, 'T1w', self.diffusion_dir, opts.dwi_folder_name, 'csf_response.txt'), 'r') as txt:
                 x = txt.read()
             g_csf = [float(resp) for resp in x.split('\n')[2:-1]]    
         
@@ -113,7 +127,9 @@ class DWIPatchDataset(torch.utils.data.Dataset):
             self.coords = grid[self.wb_mask_tensor.to(bool),:]
         else:
             self.coords = grid[(self.ttgen_mask_tensor[:,:,:,:,0].to(bool) | self.ttgen_mask_tensor[:,:,:,:,1].to(bool) | self.ttgen_mask_tensor[:,:,:,:,2].to(bool)) & self.wb_mask_tensor.to(bool),:]
-    
+
+        #Printing the number of datapoints in the dataset:
+        print('The number of datapoints in this dataset are: ' + str(len(self)))
 
     def __len__(self):
         #return int(torch.sum(torch.tensor(self.mask)))
@@ -130,18 +146,6 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         #Obtains the signals and the target FOD. The signals which are kept are determined by the keep list.
         input_signals = self.data_tensor[central_coords[0],central_coords[1]-4:central_coords[1]+5, central_coords[2]-4:central_coords[2]+5, central_coords[3]-4:central_coords[3]+5, :]
         
-            
-        # if central_coords[3]-4 < 0:
-        #     input_signals = torch.zeros((9,9,9,30,1)) 
-        #     print(input_signals[:,:,4-central_coords[3]:,:,:].shape)
-        #     print(self.data_tensor[central_coords[0],central_coords[1]-4:central_coords[1]+5, central_coords[2]-4:central_coords[2]+5, 0:central_coords[3]+5, :,:].shape)
-        #     input_signals[:,:,4-central_coords[3]:,:,:] =  self.data_tensor[central_coords[0],central_coords[1]-4:central_coords[1]+5, central_coords[2]-4:central_coords[2]+5, 0:central_coords[3]+5, :,:]
-        # elif central_coords[3]+5 >= self.data_tensor.shape[3]:
-        #     input_signals = torch.zeros((9,9,9,30,1))
-        #     print(input_signals[:,:,:self.data_tensor.shape[3]-(central_coords[3]+5),:,:].shape)
-        #     print(self.data_tensor[central_coords[0],central_coords[1]-4:central_coords[1]+5, central_coords[2]-4:central_coords[2]+5, central_coords[3]-4:self.data_tensor.shape[3], :,:].shape)
-        #     input_signals[:,:,:self.data_tensor.shape[3]-(central_coords[3]+5),:,:] = self.data_tensor[central_coords[0],central_coords[1]-4:central_coords[1]+5, central_coords[2]-4:central_coords[2]+5, central_coords[3]-4:self.data_tensor.shape[3], :,:]
-
         target_fod = self.gt_tensor[central_coords[0], central_coords[1], central_coords[2], central_coords[3], :]
         
         AQ = self.AQ_tensor[central_coords[0],:,:]
@@ -149,6 +153,8 @@ class DWIPatchDataset(torch.utils.data.Dataset):
             return input_signals.float().unsqueeze(-1), target_fod.float(), AQ.float(), central_coords
         else:
             return input_signals.float().unsqueeze(-1), target_fod.float(), AQ.float()
+
+
 
 class FODPatchDataset(torch.utils.data.Dataset):
     def __init__(self, data_dir, subject_list, inference):
@@ -266,6 +272,19 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
         self.data_dir = data_dir
         self.inference = inference
         
+
+        if opts.scanner_type == '3T':
+            self.diffusion_dir = 'Diffusion'
+            self.shell_number = 4
+            self.data_file = 'normalised_data.nii.gz'
+            self.spatial_resolution = [len(subject_list),145,174,145]
+        elif opts.scanner_type == '7T':
+            self.diffusion_dir = 'Diffusion_7T'
+            self.shell_number = 3
+            self.data_file = 'data.nii.gz'
+            self.spatial_resolution = [len(subject_list),173,207,173]
+
+
         #Creating the dummy variables for the data to be loaded into RAM:
         self.data_tensor = torch.zeros((len(subject_list),79,87,97,opts.dwi_number))
         self.gt_tensor = torch.zeros((len(subject_list),79,87,97,47))
@@ -287,7 +306,7 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
         print('Loading the ground Truth FOD data into RAM')
         for i, subject in enumerate(subject_list):
             #path = os.path.join('/media','duanj','F','joe','hcp_2',subject,'T1w','Diffusion','undersampled_fod','gt_fod.nii.gz')
-            path = os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', 'undersampled_fod', 'gt_fod.nii.gz')
+            path = os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', opts.dwi_folder_name, 'gt_fod.nii.gz')
             nifti = nib.load(path)
             self.gt_tensor[i,4:66,4:74,4:84,:] = torch.tensor(np.array(nifti.dataobj))[13:75, 90:160, 44:124,:]
 
@@ -303,13 +322,13 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
         print('Loading the Spherical Convolution co-ords into RAM')
         for i, subject in enumerate(subject_list):
             #Extracting bvectors from folders:
-            bvecs = util.bvec_extract(self.data_dir, subject, opts.dwi_folder_name)
+            bvecs = util.bvec_extract(self.data_dir, subject, self.diffusion_dir, opts.dwi_folder_name)
             bvecs_sph = util.ss_sph_coords(bvecs)
             bvecs_sph[bvecs_sph[:,0]<0,0] = bvecs_sph[bvecs_sph[:,0]<0,0]+2*math.pi
             order = 8
 
             #Extracting bvalues:
-            bvals = util.bval_extract(self.data_dir, subject, opts.dwi_folder_name)
+            bvals = util.bval_extract(self.data_dir, subject, self.diffusion_dir, opts.dwi_folder_name)
 
             #White matter response function extraaction:
             with open(os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', opts.dwi_folder_name, 'wm_response.txt'), 'r') as txt:
@@ -344,8 +363,11 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
         grid_0, grid_1, grid_2, grid_3 = torch.meshgrid(seq_0, seq_1, seq_2, seq_3)
         grid = torch.stack((grid_0, grid_1, grid_2, grid_3), 4)
 
-            #Making a vector containing the co-ordinates of only pixels which are in the brain mask.
+        #Making a vector containing the co-ordinates of only pixels which are in the brain mask.
         self.coords = grid[self.mask_tensor.to(bool),:]
+        
+        #Printing the length of the experimental dataset:
+        print('The length of the experimental dataset is: ' + str(len(self)))
     
 
     def __len__(self):
@@ -383,6 +405,16 @@ class UndersampleDataset(torch.utils.data.Dataset):
         self.undersample_val = undersample_val
         self.T7 = T7
         self.save_folder=save_folder
+
+        #Setting the field strength specific parameters
+        if T7 == False:
+            self.diffusion_dir = 'Diffusion'
+            self.shell_number = 4
+            self.data_file = 'normalised_data.nii.gz'
+        elif T7 == True:
+            self.diffusion_dir = 'Diffusion_7T'
+            self.shell_number = 3
+            self.data_file = 'data.nii.gz'
 
         #Calculating the mask list and keep lists (using this function here will only work when a constant undersampling pattern is used)
         self.mask_list, self.keep_list= self.sample_lists()

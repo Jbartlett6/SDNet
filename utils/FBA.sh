@@ -39,8 +39,11 @@ mrstats -mask /media/duanj/F/joe/hcp_2/$subj/T1w/white_matter_mask.mif $save_dir
 echo $subj >> $save_dir/../wm_afde_stats.txt
 mrstats -mask /media/duanj/F/joe/hcp_2/$subj/T1w/white_matter_mask.mif $save_dir/afde.mif >> $save_dir/../wm_afde_stats.txt
 
-#Teh tract specifice FBA analysis (namely PAE and AFDE)
+#The tract specifice FBA analysis (namely PAE and AFDE)
 tract_seg_masks=/media/duanj/F/joe/hcp_2/$subj/T1w/Diffusion/tractseg/bundle_segmentations/
+
+#Clear the text files if they already exist - to prevent them from containing repeat results:
+rm -f $save_dir/tract_specific_afde.txt $save_dir/tract_specific_pae.txt
 
 #Calculating the AFDE and PAE in the CC
 echo Corpus Callosum >> $save_dir/tract_specific_afde.txt
@@ -67,7 +70,7 @@ echo Cerebrospinal Tract >> $save_dir/tract_specific_pae.txt
 mrstats -mask $tract_seg_masks/CST_whole.nii.gz $save_dir/pae.mif >> $save_dir/tract_specific_pae.txt
 echo >> $save_dir/tract_specific_pae.txt
 
-#Calculating the AFDE and PAE in the CC and CC with only 1 fixel
+#Calculating the AFDE and PAE in the CC with only 1 fixel
 echo Corpus Callosum Single Fixel >> $save_dir/tract_specific_afde.txt
 mrstats -mask $tract_seg_masks/CC_1fixel.nii.gz $save_dir/afde.mif >> $save_dir/tract_specific_afde.txt
 echo >> $save_dir/tract_specific_afde.txt
@@ -83,10 +86,11 @@ echo Middle Cerebellar Penduncle and Cerebrospinal Tract Crossing with Two Fixel
 mrstats -mask $tract_seg_masks/MCP_CST_2fixel.nii.gz $save_dir/pae.mif >> $save_dir/tract_specific_pae.txt
 echo >> $save_dir/tract_specific_pae.txt
 
-#Calculating the AFDE and PAE in the CC,CST and SLF with only 3 fibres
-echo Corpus Callosum, Cerebrospinal Tract and the Superior Longitudinal Fascicle Three Fixel >> $save_dir/tract_specific_afde.txt
+#Calculating the AFDE and PAE in the crossing between the CC, CST and SLF with only 3 fixels. 
+echo Corpus Callosum, Cerebrospinal Tract and the Superior Longitudinal Fascicle Three Fixels >> $save_dir/tract_specific_afde.txt
 mrstats -mask $tract_seg_masks/CC_CST_SLF_3fixel.nii.gz $save_dir/afde.mif >> $save_dir/tract_specific_afde.txt
 echo >> $save_dir/tract_specific_afde.txt
-echo Corpus Callosum, Cerebrospinal Tract and the Superior Longitudinal Fascicle Three Fixel >> $save_dir/tract_specific_pae.txt
+echo Corpus Callosum, Cerebrospinal Tract and the Superior Longitudinal Fascicle Three Fixels >> $save_dir/tract_specific_pae.txt
 mrstats -mask $tract_seg_masks/CC_CST_SLF_3fixel.nii.gz $save_dir/pae.mif >> $save_dir/tract_specific_pae.txt
 echo >> $save_dir/tract_specific_pae.txt
+

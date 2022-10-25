@@ -139,10 +139,10 @@ class FCNet(nn.Module):
         self.register_buffer('P',torch.cat((P,P_temp),1))
           
 
-        self.csdcascade_1 = SHConvCascadeLayer()
-        self.csdcascade_2 = SHConvCascadeLayer()
-        self.csdcascade_3 = SHConvCascadeLayer()
-        self.csdcascade_4 = SHConvCascadeLayer()
+        self.csdcascade_1 = GLUConvCascadeLayer()
+        self.csdcascade_2 = GLUConvCascadeLayer()
+        self.csdcascade_3 = GLUConvCascadeLayer()
+        self.csdcascade_4 = GLUConvCascadeLayer()
             
 
     def forward(self, b, AQ):

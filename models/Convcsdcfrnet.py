@@ -54,6 +54,50 @@ class SHConvCascadeLayer(nn.Module):
         return self.casc(x)
 
 
+class SkipConnectConvCascadeLayer(nn.Module):
+    """Cascade Layer"""
+    def __init__(self):
+        super().__init__()
+        
+        self.casc = nn.Sequential(nn.Conv3d(47, 64, 3, padding='same'),  
+                                nn.BatchNorm3d(64),
+                                nn.ReLU(inplace=True),  
+                                nn.Conv3d(64, 128, 3, padding='same'),
+                                nn.BatchNorm3d(128),
+                                nn.ReLU(inplace=True),
+                                nn.Conv3d(128, 192, 3, padding='same'),
+                                nn.BatchNorm3d(192),
+                                nn.ReLU(inplace=True),
+                                nn.Conv3d(192, 256, 3, padding='same'),
+                                nn.BatchNorm3d(256),
+                                nn.ReLU(inplace=True),
+                                nn.Conv3d(256, 320, 3, padding='same'),
+                                nn.BatchNorm3d(320),
+                                nn.ReLU(inplace=True),
+                                nn.Conv3d(320, 384, 3, padding='same'),
+                                nn.BatchNorm3d(384),
+                                nn.ReLU(inplace=True),
+                                nn.Conv3d(384, 448, 3, padding='same'),
+                                nn.BatchNorm3d(448),
+                                nn.ReLU(inplace=True))
+                                
+                                
+        self.feature_conv_1 = nn.Conv3d(448+512, 512, 3)   
+                                #nn.ReLU(inplace=True),
+        self.feature_conv_2 = nn.Conv3d(512, 94, 1, padding = 'same')
+        
+        
+
+    
+    def forward(self, x, prev_feat):
+        x = self.casc(x)
+        x = torch.cat((x,prev_feat), dim = 1)
+        x = self.feature_conv_1(x)
+        curr_feat = torch.relu(x)
+        x = self.feature_conv_2(x)
+        return x, curr_feat
+
+
 
 class GLUConvCascadeLayer(nn.Module):
     """Cascade Layer"""
@@ -139,10 +183,10 @@ class FCNet(nn.Module):
         self.register_buffer('P',torch.cat((P,P_temp),1))
           
 
-        self.csdcascade_1 = GLUConvCascadeLayer()
-        self.csdcascade_2 = GLUConvCascadeLayer()
-        self.csdcascade_3 = GLUConvCascadeLayer()
-        self.csdcascade_4 = GLUConvCascadeLayer()
+        self.csdcascade_1 = SkipConnectConvCascadeLayer()
+        self.csdcascade_2 = SkipConnectConvCascadeLayer()
+        self.csdcascade_3 = SkipConnectConvCascadeLayer()
+        self.csdcascade_4 = SkipConnectConvCascadeLayer()
             
 
     def forward(self, b, AQ):
@@ -162,9 +206,11 @@ class FCNet(nn.Module):
         c[:,:,:,:,45:,:] = c_hat[:,:,:,:,16:,:]
         
         c_inp = c.transpose(1,4).squeeze()
-        #c_cfr = self.cfrcascade_1(c_inp)
-        c_csd = self.csdcascade_1(c_inp)
-        # c_cfr, c_csd = c_cfr.transpose(1,4).unsqueeze(5), c_csd.transpose(1,4).unsqueeze(5)
+        
+        #c_csd = self.csdcascade_1(c_inp)
+        curr_feat = torch.zeros([128, 512, 9,9,9]).to(b.device)
+        c_csd, curr_feat = self.csdcascade_1(c_inp, curr_feat)
+        
         c_csd = c_csd.transpose(1,4).unsqueeze(5)
         c_csd = torch.mul(c_csd[:,:,:,:,:47,:], torch.sigmoid(c_csd[:,:,:,:,47:,:]))
        
@@ -173,7 +219,8 @@ class FCNet(nn.Module):
 
         c_inp = c.transpose(1,4).squeeze()
         #c_cfr = self.cfrcascade_2(c_inp)
-        c_csd = self.csdcascade_2(c_inp)
+        #c_csd = self.csdcascade_2(c_inp)
+        c_csd, curr_feat = self.csdcascade_2(c_inp, curr_feat)
         #c_cfr, c_csd = c_cfr.transpose(1,4).unsqueeze(5), c_csd.transpose(1,4).unsqueeze(5)
         c_csd = c_csd.transpose(1,4).unsqueeze(5)
         c_csd = self.res_con(c_csd,c)
@@ -182,7 +229,8 @@ class FCNet(nn.Module):
         c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,2)
         
         c_inp = c.transpose(1,4).squeeze()
-        c_csd = self.csdcascade_3(c_inp)
+        #c_csd = self.csdcascade_3(c_inp)
+        c_csd, curr_feat = self.csdcascade_3(c_inp, curr_feat)
         c_csd = c_csd.transpose(1,4).unsqueeze(5)
         c_csd = self.res_con(c_csd,c)
         c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,3)
@@ -190,7 +238,8 @@ class FCNet(nn.Module):
         
         #c = torch.cat((c,c_csd), dim = 4 )
         c_inp = c.transpose(1,4).squeeze() 
-        c_csd = self.csdcascade_4(c_inp)
+        #c_csd = self.csdcascade_4(c_inp)
+        c_csd, curr_feat = self.csdcascade_4(c_inp, curr_feat)
         c_csd = c_csd.transpose(1,4).unsqueeze(5)
         c_csd = self.res_con(c_csd,c)
         c = self.dc(c,c_csd, AQ_Tb, AQ_TAQ, b,4)

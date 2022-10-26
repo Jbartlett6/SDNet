@@ -187,6 +187,8 @@ class FCNet(nn.Module):
         self.csdcascade_2 = SkipConnectConvCascadeLayer()
         self.csdcascade_3 = SkipConnectConvCascadeLayer()
         self.csdcascade_4 = SkipConnectConvCascadeLayer()
+
+        
             
 
     def forward(self, b, AQ):
@@ -208,7 +210,7 @@ class FCNet(nn.Module):
         c_inp = c.transpose(1,4).squeeze()
         
         #c_csd = self.csdcascade_1(c_inp)
-        curr_feat = torch.zeros([128, 512, 9,9,9]).to(b.device)
+        curr_feat = torch.zeros([256, 512, 9,9,9]).to(b.device)
         c_csd, curr_feat = self.csdcascade_1(c_inp, curr_feat)
         
         c_csd = c_csd.transpose(1,4).unsqueeze(5)

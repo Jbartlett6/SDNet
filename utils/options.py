@@ -81,6 +81,8 @@ class network_options():
         if self.continue_training or self.inference:
             self.continue_training_init()
         
+        print(self.__dict__)
+        
 
     def parse_arguments(self):
         parser = argparse.ArgumentParser(description='Perform a training loop for the ')

@@ -664,3 +664,21 @@ class UndersampleDataset(torch.utils.data.Dataset):
         with open(save_path,'w') as temp:
             temp.write(bvals_string)
         print('Finished saving bvals')
+
+def init_dataloaders(opts):
+    #Write a function in data.py to initialise the dataset and dataloader. - Clean up this part of the code.
+    if opts.dataset_type == 'all':
+        d_train = DWIPatchDataset(opts.data_dir, opts.train_subject_list, inference=False, opts=opts)
+        d_val = DWIPatchDataset(opts.data_dir, opts.val_subject_list, inference=False, opts=opts)
+    elif opts.dataset_type == 'experiment':
+        d_train = ExperimentPatchDataset(opts.data_dir, ['100206'], inference=False, opts=opts)
+        d_val = ExperimentPatchDataset(opts.data_dir, ['100307'], inference=False, opts=opts)
+
+    train_dataloader = torch.utils.data.DataLoader(d_train, batch_size=opts.batch_size,
+                                            shuffle=True, num_workers=opts.train_workers, 
+                                            drop_last = True)
+    val_dataloader = torch.utils.data.DataLoader(d_val, batch_size=opts.batch_size,
+                                            shuffle=True, num_workers=opts.val_workers,
+                                            drop_last = True)
+    
+    return train_dataloader, val_dataloader

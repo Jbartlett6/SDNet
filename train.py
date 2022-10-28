@@ -32,19 +32,26 @@ if __name__ == '__main__':
     train_dataloader, val_dataloader = data.init_dataloaders(opts)
     criterion = torch.nn.MSELoss(reduction='mean')
     net, P, param_num, current_training_details, model_save_path = Convcsdcfrnet.init_network(opts)
-    optimizer = torch.optim.Adam(net.parameters(), lr = opts.lr, betas = (0.9,0.999), eps = 1e-8)
+    optimizer = torch.optim.Adam(net.parameters(), lr = opts.warmup_factor*opts.lr, betas = (0.9,0.999), eps = 1e-8)
     loss_tracker = tracker.LossTracker(P,criterion)    
     visualiser = tracker.Vis(opts, train_dataloader)
     writer = SummaryWriter(os.path.join('checkpoints', opts.experiment_name,'runs'))
 
     #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
     early_stopping_counter = 0
-    
+    print(optimizer.param_groups[0]['lr'])
     #Running the training loop,in this case for spatial deep reg
     for epoch in range(opts.epochs):  # loop over the dataset multiple times
+        if epoch == 1:
+            for g in optimizer.param_groups:
+                g['lr'] = opts.lr
+
         for i, data in enumerate(train_dataloader, 0):
             inputs, labels, AQ = data
             inputs, labels, AQ = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device)
+            
+            
+            
             
             # zero the parameter gradients and setting network to train
             optimizer.zero_grad()

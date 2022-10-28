@@ -22,6 +22,8 @@ class network_options():
         self.learn_lambda = True
 
         self.loss_type = 'sig'
+        self.init_type = 'orthogonal' #{'normal', 'xavier', 'kaiming', 'orthogonal'}
+        self.activation = 'sigmoid' #{'relu', 'tanh', 'sigmoid', 'leaky_relu'}
 
         self.early_stopping = False
         self.early_stopping_threshold = inf
@@ -110,7 +112,12 @@ class network_options():
         parser.add_argument('--config_path', type=str, help = 'The path of the config file.')
         parser.add_argument('--continue_training',type=float, help = 'True or False option to indicate whether training should be continued from a previous model or not')
         parser.add_argument('--experiment_name',type=str, help = 'The experiment name, this will be used to create the folder to save the model, as well as the tensorboard logs.')
-       
+        
+
+        parser.add_argument('--init_type',type=str, help = 'The type of initialisation used to initialise the weights in the network.')
+        parser.add_argument('--activation',type=str, help = 'The type activation function used in the network.')
+
+        self.activation
 
         #Dataset/subject related hyperparameters:
         parser.add_argument('--data_dir',type=str, help = 'The location of the hcp data, where the subject folders can be found')

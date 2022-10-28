@@ -3,20 +3,21 @@ import torch
 
 class SmallSHConvCascadeLayer(nn.Module):
     """Cascade Layer"""
-    def __init__(self):
-        super().__init__()
+    def __init__(self, activation):
+    
 
+        
         self.casc = nn.Sequential(nn.Conv3d(47, 64, 3, padding='same'),  
                                 nn.BatchNorm3d(64),
-                                nn.ReLU(inplace=True),  
+                                activation,  
                                 nn.Conv3d(64, 128, 3, padding='same'),
                                 nn.BatchNorm3d(128),
-                                nn.ReLU(inplace=True),
+                                activation,
                                 nn.Conv3d(128, 256, 3, padding='same'),
                                 nn.BatchNorm3d(256),  
-                                nn.ReLU(inplace=True),
+                                activation,
                                 nn.Conv3d(256, 512, 3),
-                                nn.ReLU(inplace=True),
+                                activation,
                                 nn.Conv3d(512, 94, 1, padding = 'same'))
 
 
@@ -108,32 +109,32 @@ class SkipConnectConvCascadeLayer(nn.Module):
 
 class SHConvCascadeLayer(nn.Module):
     """Cascade Layer"""
-    def __init__(self):
+    def __init__(self, activation):
         super().__init__()
         
         self.casc = nn.Sequential(nn.Conv3d(47, 64, 3, padding='same'),  
                                 nn.BatchNorm3d(64),
-                                nn.ReLU(inplace=True),  
+                                activation,  
                                 nn.Conv3d(64, 128, 3, padding='same'),
                                 nn.BatchNorm3d(128),
-                                nn.ReLU(inplace=True),
+                                activation,
                                 nn.Conv3d(128, 192, 3, padding='same'),
                                 nn.BatchNorm3d(192),
-                                nn.ReLU(inplace=True),
+                                activation,
                                 nn.Conv3d(192, 256, 3, padding='same'),
                                 nn.BatchNorm3d(256),
-                                nn.ReLU(inplace=True),
+                                activation,
                                 nn.Conv3d(256, 320, 3, padding='same'),
                                 nn.BatchNorm3d(320),
-                                nn.ReLU(inplace=True),
+                                activation,
                                 nn.Conv3d(320, 384, 3, padding='same'),
                                 nn.BatchNorm3d(384),
-                                nn.ReLU(inplace=True),
+                                activation,
                                 nn.Conv3d(384, 448, 3, padding='same'),
                                 nn.BatchNorm3d(448),
-                                nn.ReLU(inplace=True),
+                                activation,
                                 nn.Conv3d(448, 512, 3),   
-                                nn.ReLU(inplace=True),
+                                activation,
                                 nn.Conv3d(512, 94, 1, padding = 'same'))
         
         

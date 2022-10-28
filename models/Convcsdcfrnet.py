@@ -15,17 +15,8 @@ class CSDNet(nn.Module):
 
         self.opts = opts
 
-        #Initialises the parameters associated with the data consistency layers. In my current version
-        #of the network neg_reg and alpha aren't used (need tidying).
-        if opts.learn_lambda == True:
-            self.deep_reg = nn.Parameter(torch.tensor(self.opts.deep_reg))
-            self.neg_reg = nn.Parameter(torch.tensor(self.opts.neg_reg))
-            self.alpha = nn.Parameter(torch.tensor(self.opts.alpha).float())
-        else:
-            #Data consistency term parameters:
-            self.register_buffer('deep_reg', torch.tensor(self.opts.deep_reg))
-            self.register_buffer('neg_reg', torch.tensor(self.opts.neg_reg))
-            self.register_buffer('alpha', torch.tensor(self.opts.alpha).float())
+        #Initialising the data consistency parameters.
+        self.init_dc_params()
 
         #Not currently used (needs tidying).
         self.sampling_directions = torch.load(os.path.join('utils/300_predefined_directions.pt'))
@@ -34,30 +25,16 @@ class CSDNet(nn.Module):
         P_temp = torch.zeros((300,2))
         self.register_buffer('P',torch.cat((P,P_temp),1))
           
+        activation_mod = self.set_activation()
 
-        self.csdcascade_1 = netblocks.SHConvCascadeLayer()
-        self.csdcascade_2 = netblocks.SHConvCascadeLayer()
-        self.csdcascade_3 = netblocks.SHConvCascadeLayer()
-        self.csdcascade_4 = netblocks.SHConvCascadeLayer()
+        self.csdcascade_1 = netblocks.SHConvCascadeLayer(activation_mod)
+        self.csdcascade_2 = netblocks.SHConvCascadeLayer(activation_mod)
+        self.csdcascade_3 = netblocks.SHConvCascadeLayer(activation_mod)
+        self.csdcascade_4 = netblocks.SHConvCascadeLayer(activation_mod)
 
+        self.init_weight(self.opts.activation)
         
-        # for m in [[child for child in child_1.children() if isinstance(child, nn.Conv3d)] for child_1 in self.csdcascade_1.children()][0]:
-        #     nn.init.xavier_uniform_(m.weight, gain=nn.init.calculate_gain('relu'))
-
-        # for m in [[child for child in child_1.children() if isinstance(child, nn.Conv3d)] for child_1 in self.csdcascade_2.children()][0]:
-        #     nn.init.xavier_uniform_(m.weight, gain=nn.init.calculate_gain('relu'))
-
-        # for m in [[child for child in child_1.children() if isinstance(child, nn.Conv3d)] for child_1 in self.csdcascade_3.children()][0]:
-        #     nn.init.xavier_uniform_(m.weight, gain=nn.init.calculate_gain('relu'))
-
-        # for m in [[child for child in child_1.children() if isinstance(child, nn.Conv3d)] for child_1 in self.csdcascade_4.children()][0]:
-        #     nn.init.xavier_uniform_(m.weight, gain=nn.init.calculate_gain('relu'))
         
-        for m in self.modules():
-            if isinstance(m,nn.Conv3d):
-                nn.init.xavier_uniform_(m.weight, gain=nn.init.calculate_gain('relu'))
-            
-
     def forward(self, b, AQ):
         #Initialising some matricies which will be used throughout the forward pass for given data.
         AQ_Tb = torch.matmul(AQ.transpose(1,2).unsqueeze(1).unsqueeze(1).unsqueeze(1),b)
@@ -129,6 +106,44 @@ class CSDNet(nn.Module):
         c[:,:,:,:,45:,:] = c_hat[:,:,:,:,16:,:]
     
         return c
+
+    def init_weight(self,activation ,init_gain = 1.0):
+        for m in self.modules():
+            if isinstance(m,nn.Conv3d):
+                if self.opts.init_type == 'normal':
+                    nn.init.normal_(m.weight, 0.0, init_gain)
+                elif self.opts.init_type == 'xavier':
+                    nn.init.xavier_uniform_(m.weight, gain=nn.init.calculate_gain(activation))
+                elif self.opts.init_type == 'kaiming':
+                    nn.init.kaiming_normal_(m.weight, a=0, mode='fan_in', nonlinearity=activation)
+                elif self.opts.init_type == 'orthogonal':
+                    nn.init.orthogonal_(m.weight, gain=init_gain)
+    
+    def set_activation(self):
+        if self.opts.activation == 'sigmoid':
+            mod = nn.Sigmoid()
+        elif self.opts.activation == 'relu':
+            mod = nn.ReLU(inplace=True)
+        elif self.opts.activation == 'tanh':
+            mod = nn.Tanh()
+        elif self.opts.activation == 'leaky_relu':
+            mod = nn.LeakyReLU(inplace = True)
+        return mod
+
+    def init_dc_params(self):
+        if self.opts.learn_lambda == True:
+            self.deep_reg = nn.Parameter(torch.tensor(self.opts.deep_reg))
+            self.neg_reg = nn.Parameter(torch.tensor(self.opts.neg_reg))
+            self.alpha = nn.Parameter(torch.tensor(self.opts.alpha).float())
+        else:
+            #Data consistency term parameters:
+            self.register_buffer('deep_reg', torch.tensor(self.opts.deep_reg))
+            self.register_buffer('neg_reg', torch.tensor(self.opts.neg_reg))
+            self.register_buffer('alpha', torch.tensor(self.opts.alpha).float())
+
+        
+                
+
 
 def init_network(opts):
     #Initialising the network and moving it to the correct device.

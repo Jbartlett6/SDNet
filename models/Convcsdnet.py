@@ -131,14 +131,7 @@ class FCNet(nn.Module):
         AQ_TAQ = torch.matmul(AQ.transpose(1,2).unsqueeze(1).unsqueeze(1).unsqueeze(1),AQ.unsqueeze(1).unsqueeze(1).unsqueeze(1))
         #AQ_TAQ = [47,47] AQ_Tb = [B,X,Y,Z,47,1] ---> #c_hat = [B,X,Y,Z,18,1]
   
-        ##AQ = [B,30,47] ---> AQ_TAQ_temp = [B, 18,18]
-        AQ_TAQ_temp = torch.matmul(AQ[:,:,[i for i in range(16)]+[45,46]].transpose(1,2).unsqueeze(1).unsqueeze(1).unsqueeze(1), AQ[:,:,[i for i in range(16)]+[45,46]].unsqueeze(1).unsqueeze(1).unsqueeze(1))
-        c_hat = torch.linalg.solve(AQ_TAQ_temp+0.01*torch.eye(18).to(b.device),AQ_Tb[:,:,:,:,[i for i in range(16)]+[45,46],:])
-        
-        #c_hat = [B,X,Y,Z,18,1] ---> c = [B,X,Y,Z,47,1]
-        c = torch.zeros((c_hat.shape[0], c_hat.shape[1], c_hat.shape[2], c_hat.shape[3],47,1)).to(b.device)
-        c[:,:,:,:,:16,:] = c_hat[:,:,:,:,:16,:]
-        c[:,:,:,:,45:,:] = c_hat[:,:,:,:,16:,:]
+        c = self.c_init()
         
         c_inp = c.transpose(1,4).squeeze()
         c_out = self.cascade_1(c_inp)
@@ -205,6 +198,18 @@ class FCNet(nn.Module):
             c_hat = c_hat + c[:,1:-1,1:-1,1:-1,:,:]
         
         return c_hat
+    
+    def c_init(self,AQ, AQ_Tb, b):
+        ##AQ = [B,30,47] ---> AQ_TAQ_temp = [B, 18,18]
+        AQ_TAQ_temp = torch.matmul(AQ[:,:,[i for i in range(16)]+[45,46]].transpose(1,2).unsqueeze(1).unsqueeze(1).unsqueeze(1), AQ[:,:,[i for i in range(16)]+[45,46]].unsqueeze(1).unsqueeze(1).unsqueeze(1))
+        c_hat = torch.linalg.solve(AQ_TAQ_temp+0.01*torch.eye(18).to(b.device),AQ_Tb[:,:,:,:,[i for i in range(16)]+[45,46],:])
+        
+        #c_hat = [B,X,Y,Z,18,1] ---> c = [B,X,Y,Z,47,1]
+        c = torch.zeros((c_hat.shape[0], c_hat.shape[1], c_hat.shape[2], c_hat.shape[3],47,1)).to(b.device)
+        c[:,:,:,:,:16,:] = c_hat[:,:,:,:,:16,:]
+        c[:,:,:,:,45:,:] = c_hat[:,:,:,:,16:,:]
+        
+        return c
     
     def L_update(self, sampling_directions, c, tau,P, soft, alpha):
         '''

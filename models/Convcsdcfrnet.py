@@ -42,7 +42,8 @@ class CSDNet(nn.Module):
         
         for m in self.modules():
             if isinstance(m,nn.Conv3d):
-                nn.init.xavier_uniform_(m.weight, gain=nn.init.calculate_gain('relu'))
+                #nn.init.xavier_uniform_(m.weight, gain=nn.init.calculate_gain('relu'))
+                nn.init.kaiming_normal_(m.weight, a=0, mode='fan_in', nonlinearity='relu')
             
 
     def forward(self, b, AQ):

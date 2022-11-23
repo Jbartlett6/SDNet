@@ -125,13 +125,13 @@ class OutputLayer(nn.Module):
         x = self.casc(x)
         return x
     
+
 class SHConvCascadeLayer(nn.Module):
     """Cascade Layer"""
     def __init__(self, activation):
         super().__init__()
         
-        self.casc = nn.Sequential(nn.BatchNorm3d(47),
-                                nn.Conv3d(47, 64, 3, padding='same'),  
+        self.casc = nn.Sequential(nn.Conv3d(47, 64, 3, padding='same'),  
                                 nn.BatchNorm3d(64),
                                 activation,  
                                 nn.Conv3d(64, 128, 3, padding='same'),
@@ -155,7 +155,6 @@ class SHConvCascadeLayer(nn.Module):
                                 nn.Conv3d(448, 512, 3),   
                                 activation,
                                 nn.Conv3d(512, 94, 1, padding = 'same'))
-    
     def forward(self, x):
         x = x.transpose(1,4).squeeze()
         x = self.casc(x)

@@ -1,4 +1,6 @@
 from torch.utils.tensorboard import SummaryWriter
+import torch.nn.functional as F
+import nibabel as nib
 import os
 import util
 import torch
@@ -11,16 +13,26 @@ class Vis():
         self.dataloader_length = len(train_dataloader)
         
     def add_scalars(self,losses,net,current_training_details,i,epoch):
-
+        
         self.writer.add_scalar('Training Loss', losses['running_loss']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Validation Loss', losses['val_loss']/10,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Validation ACC', losses['acc_loss']/10 ,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Validation Non-Negativity Tracker', (losses['non_neg']/10).detach().to('cpu').numpy() ,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('Validation Loss', losses['val_loss']/250,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('Validation ACC', losses['acc_loss']/250 ,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('Validation Non-Negativity Tracker', (losses['non_neg']/250).detach().to('cpu').numpy() ,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
         self.writer.add_scalar('Deep Regularisation Lambda', net.module.deep_reg, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
         self.writer.add_scalar('Non-negativity Regularisation Lambda', net.module.neg_reg, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
         self.writer.add_scalar('Sigmoid Slope', net.module.alpha, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
 
         print(f'[{current_training_details["global_epochs"]+epoch + 1}, {i + 1:5d}] training loss: {losses["running_loss"]/20:.7f}')
+        
+
+
+    def add_fixel_scalars(self,afde_mean, afde_median, pae_mean, pae_median,current_training_details,i,epoch):
+        self.writer.add_scalar('AFDE Mean', float(afde_mean), (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('AFDE Median', float(afde_median),(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('PAE Mean', float(pae_mean),(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('PAE Median', float(pae_median),(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+    
+    
         
 
         
@@ -48,12 +60,12 @@ class LossTracker():
         self.loss_dict['running_loss'] += loss.item()
 
 def update_details(losses, current_training_details, model_save_path, net, epoch, i, opts, optimizer, param_num, train_dataloader):
-    if losses['acc_loss']/10 > current_training_details['best_val_ACC']:
-        current_training_details['best_val_ACC'] = losses['acc_loss']/10
+    if losses['acc_loss']/250 > current_training_details['best_val_ACC']:
+        current_training_details['best_val_ACC'] = losses['acc_loss']/250
 
-    if losses['val_loss']/10 < current_training_details['best_loss']:
+    if losses['val_loss']/250 < current_training_details['best_loss']:
                     
-        current_training_details['best_loss'] = losses['val_loss']/10
+        current_training_details['best_loss'] = losses['val_loss']/250
         save_path = os.path.join(model_save_path, 'best_model.pth')
         torch.save(net.state_dict(), save_path)
 
@@ -81,4 +93,100 @@ def update_details(losses, current_training_details, model_save_path, net, epoch
 
     return current_training_details
 
+def fba_eval(val_dataloader, net,opts, val_affine):
     
+    print('Initialising the output image')
+    out = F.pad(torch.zeros((62,70,80,47)),(0,0,5,5,5,5,5,5), mode='constant').to(opts.device)
+    
+    #Need to perform the inference loop over the entire dataloader - to calculate the FODs.
+   
+    with torch.no_grad():
+        net = net.eval()
+        print('Performing the inference loop')
+        for i, data in enumerate(val_dataloader):
+            signal_data, _, AQ, coords = data
+            signal_data, AQ, coords = signal_data.to(opts.device), AQ.to(opts.device), coords.to(opts.device)
+            
+            if i%20 == 19:
+                print(i*256, '/', len(val_dataloader)*256)
+        
+            out[coords[:,1], coords[:,2], coords[:,3], :] = net(signal_data, AQ).squeeze()
+        net.train()
+
+    #Inference Paths
+    temp_path = os.path.join('checkpoints', opts.experiment_name, 'val_temp')
+    #temp_path = os.path.join(opts.data_dir, '100307','T1w','Diffusion','val_temp')
+    os.mkdir(temp_path)
+
+    fod_path = os.path.join(temp_path, 'fod.nii.gz')
+    fixel_dir = os.path.join(temp_path,'fix_dir')
+
+    afd_path = os.path.join(fixel_dir,'afd.nii.gz')
+    afd_im_path = os.path.join(fixel_dir, 'afd_im.nii.gz')
+
+    pa_path = os.path.join(fixel_dir,'pa.nii.gz')
+    pa_im_path = os.path.join(fixel_dir,'pa_im.nii.gz')
+
+    #tmps
+    abs_afde_path = os.path.join(fixel_dir,'abs_afde.nii.gz')
+    tot_afde_path = os.path.join(fixel_dir,'afde.nii.gz')
+
+    abs_pae_path = os.path.join(fixel_dir,'abs_pae.nii.gz')
+    tot_pae_path = os.path.join(fixel_dir,'pae.nii.gz')
+    stat_path = os.path.join(temp_path,'stat_path.txt')
+
+    #Ground Truth Paths
+    gt_fix_dir = os.path.join(opts.data_dir, '100307','T1w','Diffusion','bench_val_fixel_dir')
+    gt_afd_im_path = os.path.join(gt_fix_dir, 'afd_im.nii.gz') 
+    gt_pa_im_path = os.path.join(gt_fix_dir, 'pa_im.nii.gz') 
+    cropped_wm_path = os.path.join(opts.data_dir, '100307','T1w','Diffusion', 'cropped_wm_mask.nii.gz')
+
+
+    
+    out = out[5:-5,5:-5,5:-5,:45].detach().to('cpu').numpy()
+    validation_fod = nib.Nifti1Image(out, affine=val_affine)
+    nib.save(validation_fod, fod_path)
+
+    
+    os.system('fod2fixel -afd afd.nii.gz -peak_amp pa.nii.gz'+ ' ' + str(fod_path) + ' ' + str(fixel_dir))
+
+    #Apply mrtrix to calculate the fixels of the fod
+    #calculate the afde_image
+    os.system('fixel2voxel -number 11 ' + str(afd_path) + ' none ' + str(afd_im_path))
+    os.system('fixel2voxel -number 11 ' + str(pa_path) + ' none ' + str(pa_im_path))
+
+    #Calculate the difference metrics and appropraite stats using mrtrix
+    os.system('mrcalc ' + str(afd_im_path) + ' ' + str(gt_afd_im_path) + ' -sub -abs ' + str(abs_afde_path))
+    os.system('mrmath ' + str(abs_afde_path) + ' sum ' + str(tot_afde_path) + ' -axis 3')
+    
+    os.system('mrcalc ' + str(pa_im_path) + ' ' + str(gt_pa_im_path) + ' -sub -abs ' + str(abs_pae_path)) 
+    os.system('mrmath ' + str(abs_pae_path) + ' sum ' + str(tot_pae_path) + ' -axis 3')
+
+    os.system('mrstats -mask ' + str(cropped_wm_path) + ' ' + str(tot_afde_path) + ' >> ' + str(stat_path))
+    os.system('mrstats -mask ' + str(cropped_wm_path) + ' ' + str(tot_pae_path) + ' >> ' + str(stat_path))
+
+    #Read the stats from the text file into pthon
+    means = stat_extract(stat_path,'mean')
+    afde_mean = means[0]
+    pae_mean = means[1]
+
+    medians = stat_extract(stat_path,'median')
+    afde_median = medians[0]
+    pae_median = medians[1]
+
+    os.system('rm -r ' + str(temp_path))
+    print(afde_mean, afde_median, pae_mean, pae_median)
+    
+    return afde_mean, afde_median, pae_mean, pae_median
+        
+
+def stat_extract(path,stat_name):
+    indicies = {'mean':3, 'median': 4, 'std': 5, 'min':6, 'max':7, 'count':8}
+    
+    with open(path, 'r') as f:
+        x = f.read()
+    
+    y = x.split('\n')
+    stats = [y[i] for i in range(len(y)) if i % 2 == 1]
+    stat_list = [[i for i in line.split(' ') if i != '' ][indicies[stat_name]] for line in stats]
+    return stat_list   

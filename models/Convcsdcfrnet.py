@@ -28,11 +28,20 @@ class CSDNet(nn.Module):
         activation_mod = self.set_activation()
 
         self.csdcascade_1 = netblocks.SHConvCascadeLayer(activation_mod)
-        self.csdcascade_2 = netblocks.SHConvCascadeLayer_MS(activation_mod)
-        self.csdcascade_3 = netblocks.SHConvCascadeLayer_MS(activation_mod)
-        self.csdcascade_4 = netblocks.SHConvCascadeLayer_MS(activation_mod)
-        self.output_net = netblocks.OutputLayer()
+        self.csdcascade_2 = netblocks.SHConvCascadeLayer(activation_mod)
+        self.csdcascade_3 = netblocks.SHConvCascadeLayer(activation_mod)
+        self.csdcascade_4 = netblocks.SHConvCascadeLayer(activation_mod)
 
+        if self.opts.output_net:
+            self.output_net = netblocks.OutputLayer()
+
+
+        
+        # self.csdcascade_1 = netblocks.GLUConvCascadeLayer()
+        # self.csdcascade_2 = netblocks.GLUConvCascadeLayer()
+        # self.csdcascade_3 = netblocks.GLUConvCascadeLayer()
+        # self.csdcascade_4 = netblocks.GLUConvCascadeLayer()
+        
         self.init_weight(self.opts.activation)
         
         
@@ -52,38 +61,39 @@ class CSDNet(nn.Module):
         # c_csd, curr_feat = self.csdcascade_1(c_inp, curr_feat)
         c_csd = torch.mul(c_csd[:,:,:,:,:47,:], torch.sigmoid(c_csd[:,:,:,:,47:,:]))
         c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,1)
-        c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
-        dc = c
+        #c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
+        #dc = c
         
         
         #Second Cascade
-        c_csd = self.csdcascade_2(c_cat)
+        c_csd = self.csdcascade_2(c)
         # c_csd, curr_feat = self.csdcascade_2(c_inp, curr_feat)
         c_csd = self.res_con(c_csd,c)
         c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,2)
-        c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
-        dc = c
+        #c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
+        #dc = c
         
         
         #Third Cascade
-        c_csd = self.csdcascade_3(c_cat)
+        c_csd = self.csdcascade_3(c)
         # c_csd, curr_feat = self.csdcascade_3(c_inp, curr_feat)
         c_csd = self.res_con(c_csd,c)
         c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,3)
-        c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
-        dc = c
+        #c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
+        #dc = c
         
         
         #Final Cascade
-        c_csd = self.csdcascade_4(c_cat)
+        c_csd = self.csdcascade_4(c)
         # c_csd, curr_feat = self.csdcascade_4(c_inp, curr_feat)
         c_csd = self.res_con(c_csd,c)
         c = self.dc(c,c_csd, AQ_Tb, AQ_TAQ, b,4)
        
         #A small network to just allow the network extra freedom
-        c = c.squeeze()
-        c = c + self.output_net(c)
-        c = c.unsqueeze(-1)
+        if self.opts.output_net:
+            c = c.squeeze()
+            c = c + self.output_net(c)
+            c = c.unsqueeze(-1)
 
         return c
 
@@ -192,6 +202,8 @@ def init_network(opts):
         current_training_details['previous_loss'] = training_details['best loss']
         current_training_details['best_val_ACC'] = training_details['best ACC']
         current_training_details['global_epochs'] = training_details['epochs_count']
+        current_training_details['plot_offset'] = training_details['plot_step']
+
         print('Plot offset is:'+str(current_training_details['plot_offset']))
         
         

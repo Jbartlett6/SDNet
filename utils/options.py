@@ -12,12 +12,8 @@ class network_options():
     def __init__(self):
         self.lr = 1e-4
         self.batch_size = 128
-<<<<<<< HEAD
-        self.epochs = 20
-=======
         self.epochs = 10
         self.warmup_factor = 1e-2
->>>>>>> 195d04dd04199540a760154aa9ed0461cb256e96
 
         #Data consistency related hyperparameters
         self.neg_reg = (0.7/0.1875)*0.25
@@ -28,11 +24,8 @@ class network_options():
 
         self.loss_type = 'sig'
         self.init_type = 'orthogonal' #{'normal', 'xavier', 'kaiming', 'orthogonal'}
-<<<<<<< HEAD
-        self.activation = 'relu' #{'relu', 'tanh', 'sigmoid', 'leaky_relu'}
-=======
-        self.activation = 'sigmoid' #{'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
->>>>>>> 195d04dd04199540a760154aa9ed0461cb256e96
+        self.activation = 'relu' #{'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
+        self.output_net = False
 
         self.early_stopping = False
         self.early_stopping_threshold = inf

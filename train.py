@@ -18,7 +18,6 @@ import options
 import Convcsdnet
 import Convcsdcfrnet
 import argparse
-from torch.utils.tensorboard import SummaryWriter
 import torch.optim.lr_scheduler 
 import yaml
 import tracker 
@@ -35,8 +34,9 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(net.parameters(), lr = opts.warmup_factor*opts.lr, betas = (0.9,0.999), eps = 1e-8)
     loss_tracker = tracker.LossTracker(P,criterion)    
     visualiser = tracker.Vis(opts, train_dataloader)
-    writer = SummaryWriter(os.path.join('checkpoints', opts.experiment_name,'runs'))
 
+    validation_affine = nib.load(os.path.join(opts.data_dir,'100307','T1w','Diffusion','cropped_fod.nii.gz')).affine
+    print(validation_affine)
     #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
     early_stopping_counter = 0
     print(optimizer.param_groups[0]['lr'])
@@ -47,7 +47,7 @@ if __name__ == '__main__':
                 g['lr'] = opts.lr
 
         for i, data in enumerate(train_dataloader, 0):
-            inputs, labels, AQ = data
+            inputs, labels, AQ, _ = data
             inputs, labels, AQ = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device)
             
             
@@ -67,15 +67,15 @@ if __name__ == '__main__':
             
             # Adding the loss calculated for the current minibatch to the running training loss
             loss_tracker.add_running_loss(loss)
-
+            
             if i%20 == 19:    
                 # #Calculating the average validation loss over 10 random batches from the validation set.
                 with torch.no_grad():
                     #Forward pass for calculating validation loss
                     val_temp_dataloader = iter(val_dataloader)
-                    for j in range(10):
+                    for j in range(250):
                         data = val_temp_dataloader.next()
-                        inputs, labels, AQ = data
+                        inputs, labels, AQ, _ = data
                         inputs, labels, AQ = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device)
 
                         #Could put this in a function connected with the model or alternatively put it in a function on its own
@@ -108,6 +108,11 @@ if __name__ == '__main__':
                     break
         
         current_training_details['previous_loss'] = current_loss
+        
+        print('Calculating the validation fixel losses.')
+        afde_mean, afde_median, pae_mean, pae_median = tracker.fba_eval(val_dataloader, net,opts, validation_affine)
+        print(afde_mean, afde_median, pae_mean, pae_median)
+        visualiser.add_fixel_scalars(afde_mean, afde_median, pae_mean, pae_median, current_training_details, i, epoch)
         
                 
     print('Finished Training')

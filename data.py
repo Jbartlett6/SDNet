@@ -309,6 +309,8 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
             path = os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', opts.dwi_folder_name, 'gt_fod.nii.gz')
             nifti = nib.load(path)
             self.gt_tensor[i,4:66,4:74,4:84,:] = torch.tensor(np.array(nifti.dataobj))[13:75, 90:160, 44:124,:]
+        self.aff = nifti.affine
+
 
         #Loading the mask data into RAM
         print('Loading the mask data into RAM')
@@ -388,10 +390,9 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
         target_fod = self.gt_tensor[central_coords[0], central_coords[1], central_coords[2], central_coords[3], :]
         
         AQ = self.AQ_tensor[central_coords[0],:,:]
-        if self.inference:
-            return input_signals.float().unsqueeze(-1), target_fod.float(), AQ.float(), central_coords
-        else:
-            return input_signals.float().unsqueeze(-1), target_fod.float(), AQ.float()
+        
+        return input_signals.float().unsqueeze(-1), target_fod.float(), AQ.float(), central_coords
+        
 
 class UndersampleDataset(torch.utils.data.Dataset):
     def __init__(self, subject, data_path, normalised = False, sample_pattern = 'uniform', undersample_val = 6, T7 = False, save_folder = 'undersampled_fod'):
@@ -677,7 +678,7 @@ def init_dataloaders(opts):
     train_dataloader = torch.utils.data.DataLoader(d_train, batch_size=opts.batch_size,
                                             shuffle=True, num_workers=opts.train_workers, 
                                             drop_last = True)
-    val_dataloader = torch.utils.data.DataLoader(d_val, batch_size=opts.batch_size,
+    val_dataloader = torch.utils.data.DataLoader(d_val, batch_size=2,
                                             shuffle=True, num_workers=opts.val_workers,
                                             drop_last = True)
     

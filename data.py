@@ -295,14 +295,14 @@ class FODPatchDataset(torch.utils.data.Dataset):
 
 
 class ExperimentPatchDataset(torch.utils.data.Dataset):
-    def __init__(self, data_dir, subject_list, inference, opts):
+    def __init__(self, data_dir, subject_list, inference, opts,):
         
         #Initialising the parameters for the dataset class.
         self.subject_list = subject_list
         self.data_dir = data_dir
         self.inference = inference
         
-
+        #Ommit if possible
         if opts.scanner_type == '3T':
             self.diffusion_dir = 'Diffusion'
             self.shell_number = 4
@@ -318,6 +318,8 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
         #Creating the dummy variables for the data to be loaded into RAM:
         self.data_tensor = torch.zeros((len(subject_list),79,87,97,opts.dwi_number))
         self.gt_tensor = torch.zeros((len(subject_list),79,87,97,47))
+        self.gt_fixel_tensor = torch.zeros((len(subject_list),79,87,97))
+        
         self.AQ_tensor = torch.zeros((len(subject_list),opts.dwi_number,47))
         self.mask_tensor = torch.zeros((len(subject_list),79,87,97))
 
@@ -331,7 +333,13 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
             #Shape = [62, 70, 80, :]
             self.data_tensor[i,4:66,4:74,4:84,:] = torch.tensor(np.array(nifti.dataobj))[13:75, 90:160, 44:124,:]
 
+        print('Loading the ground truth fixel data into RAM')
         
+        for i, subject in enumerate(subject_list):
+            path = os.path.join(self.data_dir, subject, 'T1w', self.diffusion_dir, 'fixel_directory', 'fixnet_targets', 'gt_threshold_fixels.nii.gz')
+            nifti = nib.load(path)
+            self.gt_fixel_tensor[i,:,:,:] = F.pad(torch.tensor(np.array(nifti.dataobj).astype(np.uint8)[:,:,:,0]),(5,5,5,5,5,5), mode = 'constant')
+
         #Loading the ground truth data into RAM
         print('Loading the ground Truth FOD data into RAM')
         for i, subject in enumerate(subject_list):

@@ -50,8 +50,8 @@ if __name__ == '__main__':
                         g['lr'] = opts.lr
             
             
-            inputs, labels, AQ, gt_AQ, gt_fixel = data
-            inputs, labels, AQ, gt_AQ, gt_fixel = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device), gt_AQ.to(opts.device), gt_fixel.to(opts.device)
+            inputs, labels, AQ, gt_fixel = data
+            inputs, labels, AQ, gt_fixel = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device), gt_AQ.to(opts.device), gt_fixel.to(opts.device)
             
         
             # zero the parameter gradients and setting network to train
@@ -84,8 +84,8 @@ if __name__ == '__main__':
                     val_temp_dataloader = iter(val_dataloader)
                     for j in range(10):
                         data = val_temp_dataloader.next()
-                        inputs, labels, AQ, gt_AQ, _ = data
-                        inputs, labels, AQ, gt_AQ = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device), gt_AQ.to(opts.device)
+                        inputs, labels, AQ, _ = data
+                        inputs, labels, AQ = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device), gt_AQ.to(opts.device)
 
                         #Could put this in a function connected with the model or alternatively put it in a function on its own
                         net.eval()

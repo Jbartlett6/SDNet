@@ -209,3 +209,4 @@ def construct_sh_basis(bvecs_sph, order):
                     A_temp[n,k] = real_sh_eval(k-l,l,bvecs_sph[n,0],bvecs_sph[n,1])
             A_cumulative = torch.cat((A_cumulative,A_temp),1)
     return A_cumulative[:,1:]
+

@@ -13,16 +13,18 @@ class Vis():
         self.dataloader_length = len(train_dataloader)
         
     def add_scalars(self,losses,net,current_training_details,i,epoch):
-        
+        #Training loss and its decomposition :
         self.writer.add_scalar('Training Loss', losses['running_loss']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Validation Loss', losses['val_loss']/250,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Validation ACC', losses['acc_loss']/250 ,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Validation Non-Negativity Tracker', (losses['non_neg']/250).detach().to('cpu').numpy() ,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('FOD Loss', losses['fod_loss']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('Fixel Loss', losses['fixel_loss']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('Fixel Accuracy', losses['fixel_accuracy']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        
+        #The validation losses
+        self.writer.add_scalar('Validation Loss', losses['val_loss']/10,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('Validation ACC', losses['acc_loss']/10 ,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])        
         self.writer.add_scalar('Deep Regularisation Lambda', net.module.deep_reg, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Non-negativity Regularisation Lambda', net.module.neg_reg, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Sigmoid Slope', net.module.alpha, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
 
-        print(f'[{current_training_details["global_epochs"]+epoch + 1}, {i + 1:5d}] training loss: {losses["running_loss"]/20:.7f}')
+        print(f'[{current_training_details["global_epochs"]+epoch + 1}, {i + 1:5d}] training loss: {losses["running_loss"]/20:.7f} training fod loss {losses["fod_loss"]/20:.7f}')
         
 
 
@@ -39,7 +41,7 @@ class Vis():
 
 class LossTracker():
     def __init__(self,P,criterion):
-        self.loss_dict = {'running_loss':0.0, 'val_loss':0.0, 'acc_loss':0.0, 'non_neg':0.0}
+        self.loss_dict = {'running_loss':0.0, 'val_loss':0.0, 'acc_loss':0.0, 'non_neg':0.0, 'fod_loss':0.0, 'fixel_loss':0.0, 'fixel_accuracy':0.0}
         self.P = P
         self.criterion=criterion
 
@@ -48,16 +50,25 @@ class LossTracker():
         self.loss_dict['acc_loss'] = 0.0
         self.loss_dict['non_neg'] = 0.0
         self.loss_dict['running_loss'] = 0.0
+        self.loss_dict['fod_loss'] = 0.0
+        self.loss_dict['fixel_loss'] = 0.0
+        self.loss_dict['fixel_accuracy'] = 0.0
         
     
     def add_val_losses(self, outputs, labels):
-        loss = self.criterion(outputs.squeeze()[:,:45], labels[:,:45])
+        #loss = self.criterion(outputs.squeeze()[:,:45], labels[:,:45])
+        loss = self.criterion(outputs.squeeze(), labels)
         self.loss_dict['val_loss'] += loss.item()
         self.loss_dict['acc_loss'] += util.ACC(outputs,labels).mean()
         self.loss_dict['non_neg'] += torch.sum((torch.matmul(self.P, outputs)<-0.01).squeeze(),axis = -1).float().mean()
 
-    def add_running_loss(self,loss):
+    def add_running_loss(self,loss,fod_loss,fixel_loss, fixel_accuracy):
         self.loss_dict['running_loss'] += loss.item()
+        self.loss_dict['fod_loss'] += fod_loss.item()
+        self.loss_dict['fixel_loss'] += fixel_loss.item()
+        self.loss_dict['fixel_accuracy'] += fixel_accuracy.item()
+
+
 
 def update_details(losses, current_training_details, model_save_path, net, epoch, i, opts, optimizer, param_num, train_dataloader):
     if losses['acc_loss']/250 > current_training_details['best_val_ACC']:
@@ -190,3 +201,10 @@ def stat_extract(path,stat_name):
     stats = [y[i] for i in range(len(y)) if i % 2 == 1]
     stat_list = [[i for i in line.split(' ') if i != '' ][indicies[stat_name]] for line in stats]
     return stat_list   
+def fixel_accuracy(fix_est, gt_fixel):
+    fixel_preds = torch.argmax(fix_est, dim = 1)
+    val_acc = torch.sum(fixel_preds == gt_fixel)/gt_fixel.shape[0]
+    
+    return val_acc
+
+    

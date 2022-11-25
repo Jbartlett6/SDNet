@@ -52,7 +52,7 @@ class CSDNet(nn.Module):
         
         #Initialising c using only lower order spsheircal harmonics
         c = self.c_init(AQ, AQ_Tb, b)
-        dc = c
+        #dc = c
         
         
         #First cascade
@@ -61,8 +61,8 @@ class CSDNet(nn.Module):
         # c_csd, curr_feat = self.csdcascade_1(c_inp, curr_feat)
         c_csd = torch.mul(c_csd[:,:,:,:,:47,:], torch.sigmoid(c_csd[:,:,:,:,47:,:]))
         c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,1)
-        #c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
-        #dc = c
+        # c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
+        # dc = c
         
         
         #Second Cascade
@@ -70,8 +70,8 @@ class CSDNet(nn.Module):
         # c_csd, curr_feat = self.csdcascade_2(c_inp, curr_feat)
         c_csd = self.res_con(c_csd,c)
         c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,2)
-        #c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
-        #dc = c
+        # c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
+        # dc = c
         
         
         #Third Cascade
@@ -79,8 +79,8 @@ class CSDNet(nn.Module):
         # c_csd, curr_feat = self.csdcascade_3(c_inp, curr_feat)
         c_csd = self.res_con(c_csd,c)
         c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,3)
-        #c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
-        #dc = c
+        # c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
+        # dc = c
         
         
         #Final Cascade
@@ -89,11 +89,10 @@ class CSDNet(nn.Module):
         c_csd = self.res_con(c_csd,c)
         c = self.dc(c,c_csd, AQ_Tb, AQ_TAQ, b,4)
        
-        #A small network to just allow the network extra freedom
-        if self.opts.output_net:
-            c = c.squeeze()
-            c = c + self.output_net(c)
-            c = c.unsqueeze(-1)
+        # #A small network to just allow the network extra freedom
+        # c = c.squeeze()
+        # c = c + self.output_net(c)
+        # c = c.unsqueeze(-1)
 
         return c
 

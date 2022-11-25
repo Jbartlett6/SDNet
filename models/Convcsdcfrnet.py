@@ -14,7 +14,8 @@ class CSDNet(nn.Module):
         super(CSDNet, self).__init__()
 
         self.opts = opts
-
+        #self.I = torch.eye(47).to(opts.device)
+        self.register_buffer('I', torch.eye(47))
         #Initialising the data consistency parameters.
         self.init_dc_params()
 
@@ -31,6 +32,7 @@ class CSDNet(nn.Module):
         self.csdcascade_2 = netblocks.SHConvCascadeLayer(activation_mod)
         self.csdcascade_3 = netblocks.SHConvCascadeLayer(activation_mod)
         self.csdcascade_4 = netblocks.SHConvCascadeLayer(activation_mod)
+        #self.output_net = netblocks.OutputLayer()
 
         if self.opts.output_net:
             self.output_net = netblocks.OutputLayer()
@@ -59,11 +61,11 @@ class CSDNet(nn.Module):
         c_csd = self.csdcascade_1(c)
         # curr_feat = torch.zeros([128, 512, 9,9,9]).to(b.device)
         # c_csd, curr_feat = self.csdcascade_1(c_inp, curr_feat)
+        
         c_csd = torch.mul(c_csd[:,:,:,:,:47,:], torch.sigmoid(c_csd[:,:,:,:,47:,:]))
         c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,1)
         # c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
         # dc = c
-        
         
         #Second Cascade
         c_csd = self.csdcascade_2(c)
@@ -101,10 +103,9 @@ class CSDNet(nn.Module):
         The data consistency block used in the network.
         '''
         c = c[:,1:-1,1:-1,1:-1,:,:]
-        A_tmp = AQ_TAQ+self.deep_reg*torch.eye(47).to(c_csd.device)
-        b_tmp = AQ_Tb[:,n:-n,n:-n,n:-n,:,:]+self.deep_reg*c_csd
+        A_tmp = (AQ_TAQ+self.deep_reg*self.I)
+        b_tmp = (AQ_Tb[:,n:-n,n:-n,n:-n,:,:]+self.deep_reg*c_csd)
         c = torch.linalg.solve(A_tmp, b_tmp)
-
         return c
 
     def res_con(self,c_csd, c):
@@ -179,7 +180,12 @@ def init_network(opts):
     P = net.P.to(opts.device)
     net = nn.DataParallel(net)
     net = net.to(opts.device)
-
+    
+    #Loading state dict (Identity has to be added due to changes made to the network) 
+    loaded_state_dict = torch.load('/media/duanj/F/joe/CSD_experiments/deep_sh_casc/models/best_model.pth')
+    loaded_state_dict['module.I'] = torch.eye(47)
+    net.load_state_dict(loaded_state_dict)
+    
     #Printing the layers and number of parameters of the network.
     print(net)
     param_num = sum(p.numel() for p in net.parameters() if p.requires_grad)

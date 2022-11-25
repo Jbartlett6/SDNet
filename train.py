@@ -2,6 +2,7 @@ import sys
 import os 
 sys.path.append(os.path.join(sys.path[0],'models'))
 sys.path.append(os.path.join(sys.path[0],'utils'))
+import util
 import torch 
 import matplotlib.pyplot as plt 
 import data
@@ -34,10 +35,10 @@ if __name__ == '__main__':
     print(validation_affine)
     #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
     #Initialising the classification network:
-    # class_network = network.init_fixnet(opts)
-    # print(f'The training state of the network is: {class_network.training}')
-    # print(f'The gradient state of the network is: {class_network.casc[0].weight.requires_grad}')
-    # class_criterion = torch.nn.CrossEntropyLoss()
+    class_network = network.init_fixnet(opts)
+    print(f'The training state of the network is: {class_network.training}')
+    print(f'The gradient state of the network is: {class_network.casc[0].weight.requires_grad}')
+    class_criterion = torch.nn.CrossEntropyLoss()
     
 
     early_stopping_counter = 0
@@ -53,8 +54,8 @@ if __name__ == '__main__':
                         g['lr'] = opts.lr
             
             
-            inputs, labels, AQ, gt_AQ, gt_fixel = data
-            inputs, labels, AQ, gt_AQ, gt_fixel = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device), gt_AQ.to(opts.device), gt_fixel.to(opts.device)
+            inputs, labels, AQ, gt_fixel = data
+            inputs, labels, AQ, gt_fixel = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device), gt_fixel.to(opts.device)
             
         
             # zero the parameter gradients and setting network to train
@@ -62,9 +63,10 @@ if __name__ == '__main__':
             net.train()
             
             #The feeding the data forward through the network.
+            
             outputs = net(inputs, AQ)
             fix_est = class_network(outputs.squeeze()[:,:45])
-
+            
 
             #Calculating the loss function, backpropagation and stepping the optimizer
             fod_loss = criterion(outputs.squeeze()[:,:45], labels[:,:45])
@@ -74,11 +76,15 @@ if __name__ == '__main__':
             #fod_loss = criterion(outputs.squeeze(), labels)
             #loss = criterion(torch.matmul(gt_AQ, outputs.squeeze().unsqueeze(-1)).squeeze(), gt_data) 
             loss = fod_loss+(0.45/(2*1400))*fixel_loss
+            
+            
             loss.backward()
             optimizer.step()
             
             # Adding the loss calculated for the current minibatch to the running training loss
+            
             loss_tracker.add_running_loss(loss, fod_loss, fixel_loss, fixel_accuracy)
+            
 
             if i%20 == 19:    
                 # #Calculating the average validation loss over 10 random batches from the validation set.
@@ -87,14 +93,19 @@ if __name__ == '__main__':
                     val_temp_dataloader = iter(val_dataloader)
                     for j in range(250):
                         data = val_temp_dataloader.next()
-                        inputs, labels, AQ, _ = data
-                        inputs, labels, AQ = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device)
+                        inputs, labels, AQ, gt_fixel = data
+                        inputs, labels, AQ, gt_fixel = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device), gt_fixel.to(opts.device)
 
                         #Could put this in a function connected with the model or alternatively put it in a function on its own
                         net.eval()
                         outputs = net(inputs, AQ)
 
-                        loss_tracker.add_val_losses(outputs,labels)
+                        #Calculating the fixel based statistics. 
+                        fix_est = class_network(outputs.squeeze()[:,:45])
+                        fixel_loss = class_criterion(fix_est, gt_fixel.long())
+                        fixel_accuracy = tracker.fixel_accuracy(fix_est, gt_fixel)
+
+                        loss_tracker.add_val_losses(outputs,labels, fixel_loss, fixel_accuracy)
                         
 
                 #Plotting the results using tensorboard using the visualiser class.
@@ -110,6 +121,9 @@ if __name__ == '__main__':
                 
                 #Resetting the losses for the next set of minibatches
                 loss_tracker.reset_losses()
+        
+        #Resetting the losses at the end of an epoch to prevent a spike on the graphs.
+        loss_tracker.reset_losses()
         
 
         #Early stopping implementation (over epochs).

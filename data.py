@@ -14,14 +14,13 @@ import h5py
 
 
 class DWIPatchDataset(torch.utils.data.Dataset):
-    def __init__(self, data_dir, subject_list, inference, opts, fixels):
+    def __init__(self, data_dir, subject_list, inference, opts):
         
         #Initialising the parameters for the dataset class.
         self.subject_list = subject_list
         self.data_dir = data_dir
         self.inference = inference
         self.opts = opts
-        self.fixels = fixels
 
         #Setting the field strength specific parameters
         if opts.scanner_type == '3T':
@@ -66,11 +65,11 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         print(f'The shape of the data tensor is {self.data_tensor.shape}')
 
         print('Loading the ground truth fixel data into RAM')
-        if self.fixels:
-            for i, subject in enumerate(subject_list):
-                path = os.path.join(self.data_dir, subject, 'T1w', self.diffusion_dir, 'fixel_directory', 'fixnet_targets', 'gt_threshold_fixels.nii.gz')
-                nifti = nib.load(path)
-                self.gt_fixel_tensor[i,:,:,:] = F.pad(torch.tensor(np.array(nifti.dataobj).astype(np.uint8)[:,:,:,0]),(5,5,5,5,5,5), mode = 'constant')
+        
+        for i, subject in enumerate(subject_list):
+            path = os.path.join(self.data_dir, subject, 'T1w', self.diffusion_dir, 'fixel_directory', 'fixnet_targets', 'gt_threshold_fixels.nii.gz')
+            nifti = nib.load(path)
+            self.gt_fixel_tensor[i,:,:,:] = F.pad(torch.tensor(np.array(nifti.dataobj).astype(np.uint8)[:,:,:,0]),(5,5,5,5,5,5), mode = 'constant')
 
 
         #Loading the ground truth data into RAM
@@ -303,7 +302,8 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
         self.inference = inference
         self.fixels = fixels
         
-
+        
+        #Ommit if possible
         if opts.scanner_type == '3T':
             self.diffusion_dir = 'Diffusion'
             self.shell_number = 4
@@ -319,6 +319,8 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
         #Creating the dummy variables for the data to be loaded into RAM:
         self.data_tensor = torch.zeros((len(subject_list),79,87,97,opts.dwi_number))
         self.gt_tensor = torch.zeros((len(subject_list),79,87,97,47))
+        self.gt_fixel_tensor = torch.zeros((len(subject_list),79,87,97))
+        
         self.AQ_tensor = torch.zeros((len(subject_list),opts.dwi_number,47))
         self.mask_tensor = torch.zeros((len(subject_list),79,87,97))
 
@@ -332,7 +334,13 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
             #Shape = [62, 70, 80, :]
             self.data_tensor[i,4:66,4:74,4:84,:] = torch.tensor(np.array(nifti.dataobj))[13:75, 90:160, 44:124,:]
 
+        print('Loading the ground truth fixel data into RAM')
         
+        for i, subject in enumerate(subject_list):
+            path = os.path.join(self.data_dir, subject, 'T1w', self.diffusion_dir, 'fixel_directory', 'fixnet_targets', 'gt_threshold_fixels.nii.gz')
+            nifti = nib.load(path)
+            self.gt_fixel_tensor[i,4:66,4:74,4:84] = torch.tensor(np.array(nifti.dataobj).astype(np.uint8)[13:75, 90:160, 44:124,0])
+
         #Loading the ground truth data into RAM
         print('Loading the ground Truth FOD data into RAM')
         for i, subject in enumerate(subject_list):
@@ -426,11 +434,13 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
         input_signals = self.data_tensor[central_coords[0],central_coords[1]-4:central_coords[1]+5, central_coords[2]-4:central_coords[2]+5, central_coords[3]-4:central_coords[3]+5, :]
         
         target_fod = self.gt_tensor[central_coords[0], central_coords[1], central_coords[2], central_coords[3], :]
-        
+        gt_fixel = self.gt_fixel_tensor[central_coords[0], central_coords[1], central_coords[2], central_coords[3]]
+
         AQ = self.AQ_tensor[central_coords[0],:,:]
-        
-        return input_signals.float().unsqueeze(-1), target_fod.float(), AQ.float(), central_coords
-        
+        if self.inference:
+            return input_signals.float().unsqueeze(-1), target_fod.float(), AQ.float(), central_coords
+        else:
+            return input_signals.float().unsqueeze(-1), target_fod.float(), AQ.float(), gt_fixel.float()
 
 class UndersampleDataset(torch.utils.data.Dataset):
     def __init__(self, subject, data_path, normalised = False, sample_pattern = 'uniform', undersample_val = 6, T7 = False, save_folder = 'undersampled_fod'):
@@ -707,11 +717,11 @@ class UndersampleDataset(torch.utils.data.Dataset):
 def init_dataloaders(opts):
     #Write a function in data.py to initialise the dataset and dataloader. - Clean up this part of the code.
     if opts.dataset_type == 'all':
-        d_train = DWIPatchDataset(opts.data_dir, opts.train_subject_list, inference=False, opts=opts, fixels = True)
-        d_val = DWIPatchDataset(opts.data_dir, opts.val_subject_list, inference=False, opts=opts, fixels = False)
+        d_train = DWIPatchDataset(opts.data_dir, opts.train_subject_list, inference=False, opts=opts)
+        d_val = DWIPatchDataset(opts.data_dir, opts.val_subject_list, inference=False, opts=opts)
     elif opts.dataset_type == 'experiment':
-        d_train = ExperimentPatchDataset(opts.data_dir, ['100206'], inference=False, opts=opts, fixels = True)
-        d_val = ExperimentPatchDataset(opts.data_dir, ['100307'], inference=False, opts=opts, fixels = False)
+        d_train = ExperimentPatchDataset(opts.data_dir, ['100206'], inference=False, opts=opts)
+        d_val = ExperimentPatchDataset(opts.data_dir, ['100307'], inference=False, opts=opts)
 
     train_dataloader = torch.utils.data.DataLoader(d_train, batch_size=opts.batch_size,
                                             shuffle=True, num_workers=opts.train_workers, 

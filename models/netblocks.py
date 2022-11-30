@@ -166,8 +166,7 @@ class SHConvCascadeLayer_MS(nn.Module):
     def __init__(self, activation):
         super().__init__()
         
-        self.casc = nn.Sequential(nn.BatchNorm3d(94),  
-                                nn.Conv3d(94, 128, 3, padding='same'),
+        self.casc = nn.Sequential(nn.Conv3d(94, 128, 3, padding='same'),
                                 nn.BatchNorm3d(128),
                                 activation,
                                 nn.Conv3d(128, 192, 3, padding='same'),

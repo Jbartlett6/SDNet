@@ -146,7 +146,7 @@ class UndersampleDataset(torch.utils.data.Dataset):
             
             
             
-            print(keep_list)
+            print(keep_ind)
             #mask_list = torch.tensor([b1000_list[i] for i in mask_list])
 
             #Uncomment this for the multi-shell version 
@@ -303,6 +303,8 @@ bool_7T = False
 #usamp = int(sys.argv[1])
 #usamp = args.undersampling_rate
 for subject in subject_list:
+    if os.path.isdir(os.path.join(data_path,subject,'T1w','Diffusion',save_folder)) == False:
+        os.mkdir(os.path.join(data_path,subject,'T1w','Diffusion',save_folder))
 #os.mkdir(os.path.join(args.data_path, args.subject,'T1w','Diffusion_7T',args.save_folder))
     print('Initialising dataset')
     print(subject)
@@ -327,6 +329,3 @@ for subject in subject_list:
     #Normalising the data and calculating the normalised response functions using Mrtrix.
     os.system('dwinormalise individual ' + str(usamp_data_path) + ' ' + str(norm_usamp_data_path) + ' -fslgrad ' + str(usamp_bvecs_path) + ' ' + str(usamp_bvals_path) + ' -intensity 1')
     os.system('dwi2response dhollander ' + str(norm_usamp_data_path) + ' ' + str(wm_response) + ' ' + str(gm_response) + ' ' +  str(csf_response) + ' -fslgrad '+str(usamp_bvecs_path) + ' ' + str(usamp_bvals_path))
-    
-
-

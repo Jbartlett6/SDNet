@@ -118,7 +118,6 @@ class FCNet(nn.Module):
             self.cascade_3 = LargeConvCascadeLayer(opts.dc_type)
             self.cascade_4 = LargeConvCascadeLayer(opts.dc_type)
         elif self.opts.network_width == 'normal':
-            print(self.P.shape)
             self.cascade_1 = ConvCascadeLayer(opts.dc_type)
             self.cascade_2 = ConvCascadeLayer(opts.dc_type)
             self.cascade_3 = ConvCascadeLayer(opts.dc_type)

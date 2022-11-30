@@ -13,7 +13,7 @@ class network_options():
         self.lr = 1e-4
         self.batch_size = 128
         self.epochs = 10
-        self.warmup_factor = 1e-2
+        self.warmup_factor = 1
 
         #Data consistency related hyperparameters
         self.neg_reg = (0.7/0.1875)*0.25
@@ -21,6 +21,7 @@ class network_options():
         self.dc_type = 'FOD_sig' #'CSD' or 'FOD_sig'
         self.alpha = 150
         self.learn_lambda = True
+        self.fixel_lambda = (0.45/(140))
 
         self.loss_type = 'sig'
         self.init_type = 'orthogonal' #{'normal', 'xavier', 'kaiming', 'orthogonal'}
@@ -33,9 +34,9 @@ class network_options():
 
         #Computation related hyperparameters:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.train_workers = 8
-        self.val_workers = 8
-        self.data_dir = '/media/duanj/F/joe/hcp_2'
+        self.train_workers = 16
+        self.val_workers = 16
+        self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp'
         self.train_subject_list = ['100206',
                     '100307',
                     '100408',
@@ -44,7 +45,6 @@ class network_options():
                     '101107',
                     '101309',
                     '101915',
-                    '102109',
                     '102311',
                     '102513',
                     '102614',
@@ -56,6 +56,7 @@ class network_options():
                     '103414',
                     '103515',
                     '103818']
+        #102109 has been removed from the test list due to the fixel directory - can be readded providing the fixles are correct.
         self.val_subject_list = ['104012',
                     '104416',
                     '104820']
@@ -78,7 +79,6 @@ class network_options():
         self.dwi_number = 30
         self.dwi_folder_name = 'undersampled_fod'
         self.scanner_type = '3T'
-        
         
         self.option_init()
         

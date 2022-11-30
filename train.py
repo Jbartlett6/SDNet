@@ -13,6 +13,7 @@ import Convcsdcfrnet
 from torch.utils.tensorboard import SummaryWriter
 import torch.optim.lr_scheduler 
 import tracker 
+import nibabel as nib
 sys.path.append(os.path.join(sys.path[0],'..', 'fixel_loss'))
 import network
 
@@ -30,8 +31,10 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(net.parameters(), lr = opts.warmup_factor*opts.lr, betas = (0.9,0.999), eps = 1e-8)
     loss_tracker = tracker.LossTracker(P,criterion)    
     visualiser = tracker.Vis(opts, train_dataloader)
-    writer = SummaryWriter(os.path.join('checkpoints', opts.experiment_name,'runs'))
 
+    validation_affine = nib.load(os.path.join(opts.data_dir,'100307','T1w','Diffusion','cropped_fod.nii.gz')).affine
+    print(validation_affine)
+    #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
     #Initialising the classification network:
     class_network = network.init_fixnet(opts)
     print(f'The training state of the network is: {class_network.training}')
@@ -46,13 +49,13 @@ if __name__ == '__main__':
         
 
         for i, data in enumerate(train_dataloader, 0):
-            if epoch == 0:
-                if i == 1000:
-                    for g in optimizer.param_groups:
-                        g['lr'] = opts.lr
+        #     if epoch == 0:
+        #         if i == 1000:
+        #             for g in optimizer.param_groups:
+        #                 g['lr'] = opts.lr
             
             
-            inputs, labels, AQ, gt_fixel = data
+            inputs, labels, AQ, gt_fixel, _ = data
             inputs, labels, AQ, gt_fixel = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device), gt_fixel.to(opts.device)
             
         
@@ -68,13 +71,10 @@ if __name__ == '__main__':
 
             #Calculating the loss function, backpropagation and stepping the optimizer
             fod_loss = criterion(outputs.squeeze()[:,:45], labels[:,:45])
-            fixel_loss = class_criterion(fix_est, gt_fixel.long())
+            fixel_loss = opts.fixel_lambda*class_criterion(fix_est, gt_fixel.long())
             fixel_accuracy = tracker.fixel_accuracy(fix_est, gt_fixel)
-            # loss = fod_loss+fixel_loss
-            #fod_loss = criterion(outputs.squeeze(), labels)
-            #loss = criterion(torch.matmul(gt_AQ, outputs.squeeze().unsqueeze(-1)).squeeze(), gt_data) 
-            loss = fod_loss+(0.45/(100*1400))*fixel_loss
             
+            loss = fod_loss+fixel_loss
             
             loss.backward()
             optimizer.step()
@@ -91,7 +91,7 @@ if __name__ == '__main__':
                     val_temp_dataloader = iter(val_dataloader)
                     for j in range(10):
                         data = val_temp_dataloader.next()
-                        inputs, labels, AQ, gt_fixel = data
+                        inputs, labels, AQ, gt_fixel, _ = data
                         inputs, labels, AQ, gt_fixel = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device), gt_fixel.to(opts.device)
 
                         #Could put this in a function connected with the model or alternatively put it in a function on its own
@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
                         #Calculating the fixel based statistics. 
                         fix_est = class_network(outputs.squeeze()[:,:45])
-                        fixel_loss = class_criterion(fix_est, gt_fixel.long())
+                        fixel_loss = opts.fixel_lambda*class_criterion(fix_est, gt_fixel.long())
                         fixel_accuracy = tracker.fixel_accuracy(fix_est, gt_fixel)
 
                         loss_tracker.add_val_losses(outputs,labels, fixel_loss, fixel_accuracy)
@@ -120,9 +120,9 @@ if __name__ == '__main__':
                 #Resetting the losses for the next set of minibatches
                 loss_tracker.reset_losses()
 
-            if i%200 == 199:
-                torch.save(net.state_dict(), os.path.join(model_save_path, 'most_recent_model.pth'))
-
+                if i%200 == 199:
+                    torch.save(net.state_dict(), os.path.join(model_save_path, 'most_recent_model.pth'))
+        
         #Resetting the losses at the end of an epoch to prevent a spike on the graphs.
         loss_tracker.reset_losses()
         
@@ -137,6 +137,11 @@ if __name__ == '__main__':
                     break
         
         current_training_details['previous_loss'] = current_loss
+        
+        # print('Calculating the validation fixel losses.')
+        # afde_mean, afde_median, pae_mean, pae_median = tracker.fba_eval(val_dataloader, net,opts, validation_affine)
+        # print(afde_mean, afde_median, pae_mean, pae_median)
+        # visualiser.add_fixel_scalars(afde_mean, afde_median, pae_mean, pae_median, current_training_details, i, epoch)
         
                 
     print('Finished Training')

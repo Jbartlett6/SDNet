@@ -1,5 +1,8 @@
-experiment_name: CSD_exp_1_tmp
+experiment_name: Conv_nolearn_CSDNet_exp
 dc_type: CSD
-continue_training: True
-learn_lambda: True
+continue_training: False
+learn_lambda: False
 early_stopping: True
+early_stopping_threshold: 5
+train_workers: 8
+val_workers: 8

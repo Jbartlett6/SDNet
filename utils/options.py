@@ -80,10 +80,10 @@ class network_options():
         self.dwi_folder_name = 'undersampled_fod'
         self.scanner_type = '3T'
         
-        self.option_init()
+        #self.option_init()
         
-        if self.continue_training or self.inference:
-            self.continue_training_init()
+        # if self.continue_training or self.inference:
+        #     self.continue_training_init()
         
         print(self.__dict__)
         

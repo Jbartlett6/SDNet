@@ -13,7 +13,7 @@ class network_options():
         self.lr = 1e-4
         self.batch_size = 128
         self.epochs = 10
-        self.warmup_factor = 1e-2
+        self.warmup_factor = 1
 
         #Data consistency related hyperparameters
         self.neg_reg = (0.7/0.1875)*0.25
@@ -21,6 +21,7 @@ class network_options():
         self.dc_type = 'FOD_sig' #'CSD' or 'FOD_sig'
         self.alpha = 150
         self.learn_lambda = True
+        self.fixel_lambda = (0.45/(140))
 
         self.loss_type = 'sig'
         self.init_type = 'orthogonal' #{'normal', 'xavier', 'kaiming', 'orthogonal'}
@@ -45,7 +46,6 @@ class network_options():
                     '101107',
                     '101309',
                     '101915',
-                    '102109',
                     '102311',
                     '102513',
                     '102614',
@@ -57,6 +57,7 @@ class network_options():
                     '103414',
                     '103515',
                     '103818']
+        #102109 has been removed from the test list due to the fixel directory - can be readded providing the fixles are correct.
         self.val_subject_list = ['104012',
                     '104416',
                     '104820']

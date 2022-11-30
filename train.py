@@ -15,7 +15,7 @@ import torch.optim.lr_scheduler
 import tracker 
 import nibabel as nib
 sys.path.append(os.path.join(sys.path[0],'..', 'fixel_loss'))
-#import network
+import network
 
 if __name__ == '__main__':
     opts = options.network_options()
@@ -48,13 +48,13 @@ if __name__ == '__main__':
         
 
         for i, data in enumerate(train_dataloader, 0):
-            if epoch == 0:
-                if i == 1000:
-                    for g in optimizer.param_groups:
-                        g['lr'] = opts.lr
+        #     if epoch == 0:
+        #         if i == 1000:
+        #             for g in optimizer.param_groups:
+        #                 g['lr'] = opts.lr
             
             
-            inputs, labels, AQ, gt_fixel = data
+            inputs, labels, AQ, gt_fixel, _ = data
             inputs, labels, AQ, gt_fixel = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device), gt_fixel.to(opts.device)
             
         
@@ -70,13 +70,10 @@ if __name__ == '__main__':
 
             #Calculating the loss function, backpropagation and stepping the optimizer
             fod_loss = criterion(outputs.squeeze()[:,:45], labels[:,:45])
-            fixel_loss = class_criterion(fix_est, gt_fixel.long())
+            fixel_loss = opts.fixel_lambda*class_criterion(fix_est, gt_fixel.long())
             fixel_accuracy = tracker.fixel_accuracy(fix_est, gt_fixel)
-            # loss = fod_loss+fixel_loss
-            #fod_loss = criterion(outputs.squeeze(), labels)
-            #loss = criterion(torch.matmul(gt_AQ, outputs.squeeze().unsqueeze(-1)).squeeze(), gt_data) 
-            loss = fod_loss+(0.45/(2*1400))*fixel_loss
             
+            loss = fod_loss+fixel_loss
             
             loss.backward()
             optimizer.step()
@@ -91,9 +88,9 @@ if __name__ == '__main__':
                 with torch.no_grad():
                     #Forward pass for calculating validation loss
                     val_temp_dataloader = iter(val_dataloader)
-                    for j in range(250):
+                    for j in range(10):
                         data = val_temp_dataloader.next()
-                        inputs, labels, AQ, gt_fixel = data
+                        inputs, labels, AQ, gt_fixel, _ = data
                         inputs, labels, AQ, gt_fixel = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device), gt_fixel.to(opts.device)
 
                         #Could put this in a function connected with the model or alternatively put it in a function on its own
@@ -102,7 +99,7 @@ if __name__ == '__main__':
 
                         #Calculating the fixel based statistics. 
                         fix_est = class_network(outputs.squeeze()[:,:45])
-                        fixel_loss = class_criterion(fix_est, gt_fixel.long())
+                        fixel_loss = opts.fixel_lambda*class_criterion(fix_est, gt_fixel.long())
                         fixel_accuracy = tracker.fixel_accuracy(fix_est, gt_fixel)
 
                         loss_tracker.add_val_losses(outputs,labels, fixel_loss, fixel_accuracy)
@@ -121,6 +118,9 @@ if __name__ == '__main__':
                 
                 #Resetting the losses for the next set of minibatches
                 loss_tracker.reset_losses()
+
+                if i%200 == 199:
+                    torch.save(net.state_dict(), os.path.join(model_save_path, 'most_recent_model.pth'))
         
         #Resetting the losses at the end of an epoch to prevent a spike on the graphs.
         loss_tracker.reset_losses()
@@ -137,10 +137,10 @@ if __name__ == '__main__':
         
         current_training_details['previous_loss'] = current_loss
         
-        print('Calculating the validation fixel losses.')
-        afde_mean, afde_median, pae_mean, pae_median = tracker.fba_eval(val_dataloader, net,opts, validation_affine)
-        print(afde_mean, afde_median, pae_mean, pae_median)
-        visualiser.add_fixel_scalars(afde_mean, afde_median, pae_mean, pae_median, current_training_details, i, epoch)
+        # print('Calculating the validation fixel losses.')
+        # afde_mean, afde_median, pae_mean, pae_median = tracker.fba_eval(val_dataloader, net,opts, validation_affine)
+        # print(afde_mean, afde_median, pae_mean, pae_median)
+        # visualiser.add_fixel_scalars(afde_mean, afde_median, pae_mean, pae_median, current_training_details, i, epoch)
         
                 
     print('Finished Training')

@@ -70,8 +70,8 @@ class LossTracker():
         
     
     def add_val_losses(self, outputs, labels, val_fixel_loss, val_fixel_accuracy):
-        #loss = self.criterion(outputs.squeeze()[:,:45], labels[:,:45])
-        loss = self.criterion(outputs.squeeze(), labels)
+        loss = self.criterion(outputs.squeeze()[:,:45], labels[:,:45])
+        #loss = self.criterion(outputs.squeeze(), labels)
         self.loss_dict['val_loss'] += loss.item()
         self.loss_dict['acc_loss'] += util.ACC(outputs,labels).mean()
         self.loss_dict['non_neg'] += torch.sum((torch.matmul(self.P, outputs)<-0.01).squeeze(),axis = -1).float().mean()
@@ -131,7 +131,7 @@ def fba_eval(val_dataloader, net,opts, val_affine):
         net = net.eval()
         print('Performing the inference loop')
         for i, data in enumerate(val_dataloader):
-            signal_data, _, AQ, coords = data
+            signal_data, _, AQ, _, coords = data
             signal_data, AQ, coords = signal_data.to(opts.device), AQ.to(opts.device), coords.to(opts.device)
             
             if i%20 == 19:

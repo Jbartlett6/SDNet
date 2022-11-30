@@ -182,7 +182,7 @@ def init_network(opts):
     net = net.to(opts.device)
     
     #Loading state dict (Identity has to be added due to changes made to the network) 
-    loaded_state_dict = torch.load('/media/duanj/F/joe/CSD_experiments/deep_sh_casc/models/best_model.pth')
+    loaded_state_dict = torch.load('/bask/projects/d/duanj-ai-imaging/jxb1336/code/CSDNet/checkpoints/deep_sh_casc/models/best_model.pth')
     loaded_state_dict['module.I'] = torch.eye(47)
     net.load_state_dict(loaded_state_dict)
     

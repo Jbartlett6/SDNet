@@ -40,7 +40,7 @@ def per_subject_inference(subject, opts, data):
 
     #Loading the network
     print('Loading the network and the correct state')
-    net = Convcsdcfrnet.FCNet(opts)
+    net = Convcsdcfrnet.CSDNet(opts)
     net = nn.DataParallel(net)
     net.load_state_dict(torch.load(model_path))
     net = net.to(device)

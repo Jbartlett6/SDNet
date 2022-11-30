@@ -18,7 +18,8 @@ import network
 
 if __name__ == '__main__':
     opts = options.network_options()
-
+    #getattr(opts, '')
+    #exit()
     #Initalising the tensorboard writer
     plt.switch_backend('agg')
     
@@ -72,7 +73,7 @@ if __name__ == '__main__':
             # loss = fod_loss+fixel_loss
             #fod_loss = criterion(outputs.squeeze(), labels)
             #loss = criterion(torch.matmul(gt_AQ, outputs.squeeze().unsqueeze(-1)).squeeze(), gt_data) 
-            loss = fod_loss+(0.45/(2*1400))*fixel_loss
+            loss = fod_loss+(0.45/(100*1400))*fixel_loss
             
             
             loss.backward()
@@ -118,7 +119,10 @@ if __name__ == '__main__':
                 
                 #Resetting the losses for the next set of minibatches
                 loss_tracker.reset_losses()
-        
+
+            if i%200 == 199:
+                torch.save(net.state_dict(), os.path.join(model_save_path, 'most_recent_model.pth'))
+
         #Resetting the losses at the end of an epoch to prevent a spike on the graphs.
         loss_tracker.reset_losses()
         

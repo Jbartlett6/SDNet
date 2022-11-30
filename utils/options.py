@@ -24,7 +24,7 @@ class network_options():
 
         self.loss_type = 'sig'
         self.init_type = 'orthogonal' #{'normal', 'xavier', 'kaiming', 'orthogonal'}
-        self.activation = 'sigmoid' #{'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
+        self.activation = 'relu' #{'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
 
         self.early_stopping = False
         self.early_stopping_threshold = inf

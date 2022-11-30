@@ -35,12 +35,13 @@ def per_subject_inference(subject, opts, data):
     if os.path.isdir(os.path.join('checkpoints',opts.experiment_name, 'inference')) == False:
         os.mkdir(os.path.join('checkpoints',opts.experiment_name, 'inference'))
     save_dir = os.path.join('checkpoints',opts.experiment_name, 'inference')
-    model_path = os.path.join('checkpoints', opts.experiment_name, 'models', opts.model_name)
+    #model_path = os.path.join('checkpoints', opts.experiment_name, 'models', opts.model_name)
+    model_path = '/home/jxb1336/code/Project_1: HARDI_Recon/FOD-REG_NET/CSDNet_dir/checkpoints/test_tmp/models/most_recent_model.pth'
     device = torch.device('cuda')
 
     #Loading the network
     print('Loading the network and the correct state')
-    net = Convcsdcfrnet.FCNet(opts)
+    net = Convcsdcfrnet.CSDNet(opts)
     net = nn.DataParallel(net)
     net.load_state_dict(torch.load(model_path))
     net = net.to(device)
@@ -56,8 +57,8 @@ def per_subject_inference(subject, opts, data):
     
     #Initialising the output
     print('Initialising the output image')
-    #out = F.pad(torch.zeros((145,174,145,47)),(0,0,5,5,5,5,5,5), mode='constant').to(device)
-    out = F.pad(torch.zeros((173,207,173,47)),(0,0,5,5,5,5,5,5), mode='constant').to(device)
+    out = F.pad(torch.zeros((145,174,145,47)),(0,0,5,5,5,5,5,5), mode='constant').to(device)
+    #out = F.pad(torch.zeros((173,207,173,47)),(0,0,5,5,5,5,5,5), mode='constant').to(device)
     
     with torch.no_grad():
         print('Performing the inference loop')

@@ -20,7 +20,6 @@ class network_options():
         #Data consistency related hyperparameters
         self.neg_reg = (0.7/0.1875)*0.25
         self.deep_reg = 0.25
-        self.dc_type = 'FOD_sig' #'CSD' or 'FOD_sig'
         self.alpha = 150
         self.learn_lambda = True
         self.fixel_lambda = 0.000160
@@ -31,8 +30,8 @@ class network_options():
 
         self.early_stopping = False
         self.early_stopping_threshold = inf
-        self.continue_training = True
-        self.experiment_name = 'fixel_class_loss_0.000160_full_dataset'
+        self.continue_training = False
+        self.experiment_name = 'test_temporary'
 
         #Computation related hyperparameters:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -70,20 +69,14 @@ class network_options():
                     '318637',
                     '581450',
                     '130821']
-
         
-        
-
-        #self.test_subject_list = ['102311']
-        
-        self.dataset_type = 'all'
+        self.dataset_type = 'experiment' #{'all', 'experiment'}
         #Important for loading parameters in and out of models.
         self.model_name = 'best_model.pth'
         self.inference=False
         self.perform_inference=False
         self.dwi_number = 30
         self.dwi_folder_name = 'undersampled_fod'
-        self.scanner_type = '3T'
         
         #self.option_init()
         

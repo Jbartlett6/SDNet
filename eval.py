@@ -53,7 +53,7 @@ if __name__ == '__main__':
         os.system('bash utils/MAE.sh ' + os.path.join(inference_path, subj, 'fixel_directory', 'fixel_directions.nii.gz') + ' ' + subj +' '+save_path+' '+opts.data_dir)
 
 
-    with open(os.path.join(infeth, 'all_stats.txt'), 'a') as f:
+    with open(os.path.join(inference_path, 'all_stats.txt'), 'a') as f:
             #Writing the average stats for the ACC into a text file.
             f.write('The mean ACC over the white matter is: \n')
             f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wm_acc_stats.txt'))) + '\n')

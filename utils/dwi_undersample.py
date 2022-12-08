@@ -284,6 +284,17 @@ class UndersampleDataset(torch.utils.data.Dataset):
 
 print('Running dwi_undersampled.py:')
 
+def fixel_threshold_save(fixel_path, save_path):
+    nifti = nib.load(fixel_path)
+    aff = nifti.affine
+
+    fix_im = np.array(nifti.dataobj)
+    fix_im[fix_im >= 4] = 4
+
+    nifti_updated = nib.Nifti1Image(fix_im, aff)
+
+    nib.save(nifti_updated, save_path)
+
 
 
 ################################################Parameters for the undersamplding process ############################################
@@ -294,38 +305,103 @@ subject_list = ['174437',
 '147737',
 '178849',
 '130821']
-data_path = '/media/duanj/F/joe/hcp_2'
+#subject_list = ['130821']
+
+#subject_list = ['174437']
+hcp_path = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp'
 save_folder = 'undersampled_fod'
 dwi_per_shell = 9
 bool_7T = False
 ################################################Parameters for the undersampleing process ############################################
 
-#usamp = int(sys.argv[1])
-#usamp = args.undersampling_rate
+#Ground Truth processing:
 for subject in subject_list:
-    if os.path.isdir(os.path.join(data_path,subject,'T1w','Diffusion',save_folder)) == False:
-        os.mkdir(os.path.join(data_path,subject,'T1w','Diffusion',save_folder))
-#os.mkdir(os.path.join(args.data_path, args.subject,'T1w','Diffusion_7T',args.save_folder))
-    print('Initialising dataset')
-    print(subject)
-    d = UndersampleDataset(subject, data_path , undersample_val=dwi_per_shell, T7=bool_7T, save_folder=save_folder)
-    print('Dataset initialised')
-    d.all_save()
-
-
-#Normalising the data:
-for subject in subject_list:
-    subject_undersampled_path = os.path.join(data_path,subject,'T1w','Diffusion',save_folder)
-    usamp_data_path = os.path.join(subject_undersampled_path,'data.nii.gz')
-    norm_usamp_data_path = os.path.join(subject_undersampled_path, 'normalised_data.nii.gz')
-    usamp_bvecs_path = os.path.join(subject_undersampled_path, 'bvecs')
-    usamp_bvals_path = os.path.join(subject_undersampled_path, 'bvals')
-
-    #Paths relating to the response functions:
-    wm_response = os.path.join(subject_undersampled_path, 'wm_response.txt')
-    gm_response = os.path.join(subject_undersampled_path, 'gm_response.txt')
-    csf_response = os.path.join(subject_undersampled_path, 'csf_response.txt')
+    subject_path = os.path.join(hcp_path,subject,'T1w','Diffusion')
     
-    #Normalising the data and calculating the normalised response functions using Mrtrix.
-    os.system('dwinormalise individual ' + str(usamp_data_path) + ' ' + str(norm_usamp_data_path) + ' -fslgrad ' + str(usamp_bvecs_path) + ' ' + str(usamp_bvals_path) + ' -intensity 1')
-    os.system('dwi2response dhollander ' + str(norm_usamp_data_path) + ' ' + str(wm_response) + ' ' + str(gm_response) + ' ' +  str(csf_response) + ' -fslgrad '+str(usamp_bvecs_path) + ' ' + str(usamp_bvals_path))
+    #T1w path
+    T1w_path = os.path.join(hcp_path,subject,'T1w','T1w_acpc_dc_restore_1.25.nii.gz')
+
+    #Brain mask paths
+    ttgen_path = os.path.join(hcp_path,subject,'T1w','5ttgen.nii.gz')
+    wm_mask_path = os.path.join(hcp_path,subject,'T1w','white_matter_mask.nii.gz')
+    brain_mask_path = os.path.join(subject_path,'nodif_brain_mask.nii.gz')
+
+    #Ground Truth data, bvector and bvalue paths
+    data_path = os.path.join(subject_path, 'data.nii.gz')
+    bvecs_path = os.path.join(subject_path, 'bvecs')
+    bvals_path = os.path.join(subject_path, 'bvals')
+    
+
+    #Ground Truth FOD and Fixel paths
+    wmresponse_path = os.path.join(subject_path, 'wm_response.txt')
+    gmresponse_path = os.path.join(subject_path, 'gm_response.txt')
+    csfresponse_path = os.path.join(subject_path, 'csf_response.txt')
+    
+    wm_outputfod_path = os.path.join(subject_path, 'wmfod.nii.gz')
+    gm_output_path = os.path.join(subject_path, 'gm.nii.gz')
+    csf_output_path = os.path.join(subject_path, 'csf.nii.gz')
+    gt_whole_fod_path = os.path.join(subject_path, 'gt_fod.nii.gz')
+
+    fixel_directory = os.path.join(subject_path, 'fixel_directory')
+    afd_path = os.path.join(fixel_directory, 'afd.mif') 
+    pa_path = os.path.join(fixel_directory, 'peak_amp.mif')
+    index_mif_path = os.path.join(fixel_directory, 'index.mif')
+    
+    afd_im_path = os.path.join(fixel_directory, 'afd_im.mif')
+    pa_im_path = os.path.join(fixel_directory, 'peak_amp_im.mif')
+    index_nifti_path = os.path.join(fixel_directory, 'index.nii.gz')
+
+    fixnet_tgt_dir_path = os.path.join(fixel_directory, 'fixnet_targets')
+    thresh_fix_path = os.path.join(fixnet_tgt_dir_path, 'gt_threshold_fixels.nii.gz')
+
+
+    #Undersampled data paths:
+    undersampled_path = os.path.join(hcp_path,subject,'T1w','Diffusion',save_folder)
+    
+    #undersampled_data, normalised data, bvectors and bvalues:
+    usamp_data_path = os.path.join(undersampled_path,'data.nii.gz')
+    norm_usamp_data_path = os.path.join(undersampled_path, 'normalised_data.nii.gz')
+    usamp_bvecs_path = os.path.join(undersampled_path, 'bvecs')
+    usamp_bvals_path = os.path.join(undersampled_path, 'bvals')
+    
+    #Undersampled response functions
+    wm_response = os.path.join(undersampled_path, 'wm_response.txt')
+    gm_response = os.path.join(undersampled_path, 'gm_response.txt')
+    csf_response = os.path.join(undersampled_path, 'csf_response.txt')
+
+    # #Calculating the 5ttgen path and the white matter mask:
+    os.system('5ttgen fsl ' + str(T1w_path) + ' ' + str(ttgen_path) + ' -force -nocrop')
+    os.system('mrconvert -force ' + str(ttgen_path) + ' -coord 3 2 ' + str(wm_mask_path))
+
+    #Ground Truth Response functions and fods:
+    os.system('dwi2response dhollander ' + str(data_path) + ' ' + str(wmresponse_path) + ' ' + str(gmresponse_path) + ' ' +  str(csfresponse_path) + ' -force -fslgrad '+str(bvecs_path) + ' ' + str(bvals_path))
+    os.system('dwi2fod -force -fslgrad ' + str(bvecs_path) + ' ' + str(bvals_path) + ' msmt_csd ' + str(data_path) + ' ' + str(wmresponse_path) + ' ' + str(wm_outputfod_path) + ' ' + str(gmresponse_path) + ' ' + str(gm_output_path) + ' ' + str(csfresponse_path) + ' ' + str(csf_output_path))
+    os.system('mrcat -axis 3 ' + str(wm_outputfod_path) + ' ' +  str(gm_output_path) + ' ' + str(csf_output_path) + ' ' + str(gt_whole_fod_path))
+
+    #Ground truth fixels and fixel derived images:
+    os.system('fod2fixel -afd afd.mif -peak_amp peak_amp.mif ' + str(wm_outputfod_path) + ' ' + str(fixel_directory))
+    os.system('fixel2voxel -number 11 ' + str(afd_path) + ' none ' + str(afd_im_path))
+    os.system('fixel2voxel -number 11 ' + str(pa_path) + ' none ' + str(pa_im_path))
+    os.system('mrconvert ' + str(index_mif_path) + ' ' + str(index_nifti_path))
+    if os.path.exists(index_mif_path):
+        os.remove(index_mif_path)
+
+    #Fixel Thresholding:
+    if not os.path.isdir(fixnet_tgt_dir_path):
+        os.mkdir(fixnet_tgt_dir_path)
+    fixel_threshold_save(index_nifti_path, thresh_fix_path)
+
+
+    # #Creating the undersampled data folder
+    # if os.path.isdir(undersampled_path) == False:
+    #     os.mkdir(undersampled_path)
+
+    # #Creating the undersampled data dataset and saving all appropriate data to the undersampled_data folder:
+    # print('Initialising dataset')
+    # d = UndersampleDataset(subject, hcp_path , undersample_val=dwi_per_shell, T7=bool_7T, save_folder=save_folder)
+    # print('Dataset initialised')
+    # d.all_save()
+    
+    # #Normalising the undersampled data and creating corresponding response functions
+    # os.system('dwinormalise individual ' + str(usamp_data_path) + ' ' + str(brain_mask_path) + ' ' + str(norm_usamp_data_path) + ' -fslgrad ' + str(usamp_bvecs_path) + ' ' + str(usamp_bvals_path) + ' -intensity 1')
+    # os.system('dwi2response dhollander ' + str(norm_usamp_data_path) + ' ' + str(wm_response) + ' ' + str(gm_response) + ' ' +  str(csf_response) + ' -fslgrad '+str(usamp_bvecs_path) + ' ' + str(usamp_bvals_path))

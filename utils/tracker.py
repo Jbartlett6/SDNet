@@ -13,20 +13,22 @@ class Vis():
         self.dataloader_length = len(train_dataloader)
         
     def add_scalars(self,losses,net,current_training_details,i,epoch):
+        #step = (self.dataloader_length*epoch)+i+current_training_details['plot_offset']
+        step = (self.dataloader_length*epoch)+i
         #Training loss and its decomposition :
-        self.writer.add_scalar('Training Loss', losses['running_loss']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('FOD Loss', losses['fod_loss']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Fixel Loss', losses['fixel_loss']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Fixel Accuracy', losses['fixel_accuracy']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('Training Loss', losses['running_loss']/20, step)
+        self.writer.add_scalar('FOD Loss', losses['fod_loss']/20, step)
+        self.writer.add_scalar('Fixel Loss', losses['fixel_loss']/20, step)
+        self.writer.add_scalar('Fixel Accuracy', losses['fixel_accuracy']/20, step)
         
 
 
         #The validation losses
-        self.writer.add_scalar('Validation Loss', losses['val_loss']/10,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Validation ACC', losses['acc_loss']/10 ,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])        
-        #self.writer.add_scalar('Deep Regularisation Lambda', net.module.deep_reg, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Validation Fixel Loss', losses['val_fixel_loss']/10,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Validation Fixel Accuracy', losses['val_fixel_accuracy']/10,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('Validation Loss', losses['val_loss']/10,step)
+        self.writer.add_scalar('Validation ACC', losses['acc_loss']/10 ,step)        
+        #self.writer.add_scalar('Deep Regularisation Lambda', net.module.deep_reg, step)
+        self.writer.add_scalar('Validation Fixel Loss', losses['val_fixel_loss']/10,step)
+        self.writer.add_scalar('Validation Fixel Accuracy', losses['val_fixel_accuracy']/10,step)
         print(f'[{current_training_details["global_epochs"]+epoch + 1}, {i + 1:5d}] training loss: {losses["running_loss"]/20:.7f} training fod loss {losses["fod_loss"]/20:.7f}')
         
 
@@ -44,28 +46,22 @@ class Vis():
 
 class LossTracker():
     def __init__(self,P,criterion):
-        self.loss_dict = {'running_loss':0.0,
-                         'val_loss':0.0,
-                         'acc_loss':0.0,
-                         'non_neg':0.0,
-                         'fod_loss':0.0, 
-                         'fixel_loss':0.0,
-                         'fixel_accuracy':0.0,
-                         'val_fixel_loss':0.0,
-                         'val_fixel_accuracy':0.0}
+        loss_keys = ['running_loss',
+                         'val_loss',
+                         'acc_loss',
+                         'non_neg',
+                         'fod_loss', 
+                         'fixel_loss',
+                         'fixel_accuracy',
+                         'val_fixel_loss',
+                         'val_fixel_accuracy']
+
+        self.loss_dict = dict.fromkeys(loss_keys, 0.0)
         self.P = P
         self.criterion=criterion
 
     def reset_losses(self):
-        self.loss_dict['val_loss'] = 0.0
-        self.loss_dict['acc_loss'] = 0.0
-        self.loss_dict['non_neg'] = 0.0
-        self.loss_dict['running_loss'] = 0.0
-        self.loss_dict['fod_loss'] = 0.0
-        self.loss_dict['fixel_loss'] = 0.0
-        self.loss_dict['fixel_accuracy'] = 0.0
-        self.loss_dict['val_fixel_loss'] = 0.0
-        self.loss_dict['val_fixel_accuracy'] = 0.0
+        self.loss_dict = dict.fromkeys(self.loss_dict.keys(), 0.0)
 
         
     

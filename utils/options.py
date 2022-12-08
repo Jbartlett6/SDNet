@@ -10,10 +10,12 @@ import torch
 
 class network_options():
     def __init__(self):
+        #Optimisation 
         self.lr = 1e-4
-        self.batch_size = 128
-        self.epochs = 10
         self.warmup_factor = 1
+        self.batch_size = 256
+        self.epochs = 5
+        
 
         #Data consistency related hyperparameters
         self.neg_reg = (0.7/0.1875)*0.25
@@ -21,21 +23,21 @@ class network_options():
         self.dc_type = 'FOD_sig' #'CSD' or 'FOD_sig'
         self.alpha = 150
         self.learn_lambda = True
-        self.fixel_lambda = (0.45/(140))
+        self.fixel_lambda = 0.000160
 
-        self.loss_type = 'sig'
+        self.loss_type = 'sh'
         self.init_type = 'orthogonal' #{'normal', 'xavier', 'kaiming', 'orthogonal'}
         self.activation = 'relu' #{'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
 
         self.early_stopping = False
         self.early_stopping_threshold = inf
         self.continue_training = True
-        self.experiment_name = 'test'
+        self.experiment_name = 'fixel_class_loss_0.000160_full_dataset'
 
         #Computation related hyperparameters:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.train_workers = 16
-        self.val_workers = 16
+        self.train_workers = 8
+        self.val_workers = 8
         self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp'
         self.train_subject_list = ['100206',
                     '100307',
@@ -61,19 +63,22 @@ class network_options():
                     '104416',
                     '104820']
 
-        self.test_subject_list = ['130821',
-                    '145127',
+        self.test_subject_list = ['145127',
                     '147737',
                     '174437',
                     '178849',
                     '318637',
-                    '581450']
+                    '581450',
+                    '130821']
+
+        
+        
 
         #self.test_subject_list = ['102311']
         
         self.dataset_type = 'all'
+        #Important for loading parameters in and out of models.
         self.model_name = 'best_model.pth'
-        self.network_width = 'normal'
         self.inference=False
         self.perform_inference=False
         self.dwi_number = 30
@@ -109,7 +114,6 @@ class network_options():
 
         #Network Specific Options:
         parser.add_argument('--model_name', type=str, help = 'The path at which the model is saved')
-        parser.add_argument('--network_width', type=str, help = 'The path at which the model is saved')
 
 
         #Config/Saving Arguments:

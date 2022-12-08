@@ -34,8 +34,8 @@ class CSDNet(nn.Module):
         self.csdcascade_4 = netblocks.SHConvCascadeLayer(activation_mod)
         #self.output_net = netblocks.OutputLayer()
 
-        if self.opts.output_net:
-            self.output_net = netblocks.OutputLayer()
+        # if self.opts.output_net:
+        #     self.output_net = netblocks.OutputLayer()
 
 
         
@@ -182,6 +182,7 @@ def init_network(opts):
     net = net.to(opts.device)
     
     #Loading state dict (Identity has to be added due to changes made to the network) 
+    #loaded_state_dict = torch.load('/bask/projects/d/duanj-ai-imaging/jxb1336/code/CSDNet/checkpoints/benchmark/models/best_model.pth')
     loaded_state_dict = torch.load('/bask/projects/d/duanj-ai-imaging/jxb1336/code/CSDNet/checkpoints/deep_sh_casc/models/best_model.pth')
     loaded_state_dict['module.I'] = torch.eye(47)
     net.load_state_dict(loaded_state_dict)
@@ -202,6 +203,8 @@ def init_network(opts):
         
         with open(os.path.join(model_save_path,'training_details.yml'), 'r') as file:
             training_details = yaml.load(file, yaml.loader.SafeLoader)
+
+        #Refactor this code so it is only one line (possible cidctionary comprehension)
         current_training_details['plot_offset'] = training_details['plot_step']
         current_training_details['best_loss'] = training_details['best loss']
         current_training_details['previous_loss'] = training_details['best loss']

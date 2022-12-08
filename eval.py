@@ -22,6 +22,10 @@ if __name__ == '__main__':
     opts = options.network_options()
     print(opts.__dict__)
     print('arguments loaded')
+    setattr(opts,'experiment_name', 'fixel_class_loss_0.000160_full_dataset')
+    setattr(opts, 'inference', True)
+    setattr(opts, 'perform_inference', True)
+
 
     file_dir = opts.experiment_name
     inference_path = os.path.join('.','checkpoints',file_dir,'inference')
@@ -39,7 +43,7 @@ if __name__ == '__main__':
         print('Performing accuracy measures for subject: '+ subj)
         
         print('Calculating ACC')
-        gt_fod_path = os.path.join(opts.data_dir, subj, 'T1w', 'Diffusion', 'undersampled_fod', 'gt_wm_fod.nii.gz')
+        gt_fod_path = os.path.join(opts.data_dir, subj, 'T1w', 'Diffusion', 'wmfod.nii.gz')
         inf_wm_path = os.path.join(inference_path, subj, 'inf_wm_fod.nii.gz')
         save_path = os.path.join(inference_path, subj)
         os.system('bash utils/ACC.sh ' + gt_fod_path + ' ' + inf_wm_path +' '+save_path+' '+subj) 
@@ -49,7 +53,7 @@ if __name__ == '__main__':
         os.system('bash utils/MAE.sh ' + os.path.join(inference_path, subj, 'fixel_directory', 'fixel_directions.nii.gz') + ' ' + subj +' '+save_path+' '+opts.data_dir)
 
 
-    with open(os.path.join(inference_path, 'all_stats.txt'), 'a') as f:
+    with open(os.path.join(infeth, 'all_stats.txt'), 'a') as f:
             #Writing the average stats for the ACC into a text file.
             f.write('The mean ACC over the white matter is: \n')
             f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wm_acc_stats.txt'))) + '\n')
@@ -60,7 +64,7 @@ if __name__ == '__main__':
             f.write('The mean pae over the white matter is: \n')
             f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wm_pae_stats.txt'))) + '\n')
             f.write('The mean pae over the whole brain is: \n')
-            f.write(str(mrstats_interpreter(os.path.join(inference_path, 'wb_pae_stats.txt'))) + '\n')
+            f.writerence_pa(str(mrstats_interpreter(os.path.join(inference_path, 'wb_pae_stats.txt'))) + '\n')
             
 
             #Writing the average stats for the afde into a text file. 

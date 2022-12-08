@@ -29,21 +29,29 @@ def per_subject_inference(subject, opts, data):
     print('Loading options')
     opts = options.network_options()
     print(opts.__dict__)
+    setattr(opts,'experiment_name', 'fixel_class_loss_0.000160_full_dataset')
+    setattr(opts, 'inference', True)
+    setattr(opts, 'perform_inference', True)
+
 
     #Setting the paths to be used.
     print('Setting paths')
     if os.path.isdir(os.path.join('checkpoints',opts.experiment_name, 'inference')) == False:
         os.mkdir(os.path.join('checkpoints',opts.experiment_name, 'inference'))
     save_dir = os.path.join('checkpoints',opts.experiment_name, 'inference')
-    #model_path = os.path.join('checkpoints', opts.experiment_name, 'models', opts.model_name)
-    model_path = '/home/jxb1336/code/Project_1: HARDI_Recon/FOD-REG_NET/CSDNet_dir/checkpoints/test_tmp/models/most_recent_model.pth'
+    model_path = os.path.join('checkpoints', opts.experiment_name, 'models', opts.model_name)
+    #model_path = '/home/jxb1336/code/Project_1: HARDI_Recon/FOD-REG_NET/CSDNet_dir/checkpoints/test_tmp/models/most_recent_model.pth'
     device = torch.device('cuda')
 
     #Loading the network
     print('Loading the network and the correct state')
     net = Convcsdcfrnet.CSDNet(opts)
     net = nn.DataParallel(net)
-    net.load_state_dict(torch.load(model_path))
+
+    loaded_state_dict = torch.load(model_path)
+    loaded_state_dict['module.I'] = torch.eye(47)
+    net.load_state_dict(loaded_state_dict)
+    
     net = net.to(device)
     net.eval()
     #Initialising the infeence dataset for the given subject. A new dataset will be initialised for each subject in the eval loop.
@@ -63,7 +71,7 @@ def per_subject_inference(subject, opts, data):
     with torch.no_grad():
         print('Performing the inference loop')
         for i , data in enumerate(dataloader):
-            signal_data, _, AQ, coords = data
+            signal_data, _, AQ, _,coords = data
             signal_data, AQ, coords = signal_data.to(device), AQ.to(device), coords.to(device)
             
             if i%20 == 19:

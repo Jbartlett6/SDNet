@@ -23,8 +23,34 @@ The directory structure of the data directory is as follows. The data directory 
     └── subject
         └── T1w
             └── Diffusion
+                └── bvals
+                └── bvecs 
+                └── data.nii.gz
+                └── nodif_brain_mask.nii.gz
+                └── normalised_data.nii.gz
+                └── csf_response.txt
+                └── gm_response.txt
+                └── wm_response.txt
+                └── csf.nii.gz
+                └── gm.nii.gz
+                └── wmfod.nii.gz
                 ├──fixel_directory
-                └── sub_dir 
+                    └── afd.nii.gz
+                    └── peak_amp.nii.gz
+                    └── index.nii.gz
+                    └── directions.nii.gz
+                    └── gt_threshold_fixels.nii.gz
+                └── undersampled_fod
+                    └── bvals
+                    └── bvecs
+                    └── data.nii.gz
+                    └── normalised_data.nii.gz
+                    └── csf_response.txt
+                    └── gm_response.txt
+                    └── wm_response.txt
+                    └── csf.nii.gz
+                    └── gm.nii.gz
+                    └── wm.nii.gz
 ```
 
 Network options:

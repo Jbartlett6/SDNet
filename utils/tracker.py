@@ -5,6 +5,7 @@ import os
 import util
 import torch
 import yaml
+import sys
 
 
 class Vis():
@@ -83,12 +84,12 @@ class LossTracker():
 
 
 def update_details(losses, current_training_details, model_save_path, net, epoch, i, opts, optimizer, param_num, train_dataloader):
-    if losses['acc_loss']/250 > current_training_details['best_val_ACC']:
-        current_training_details['best_val_ACC'] = losses['acc_loss']/250
+    if losses['acc_loss']/10 > current_training_details['best_val_ACC']:
+        current_training_details['best_val_ACC'] = losses['acc_loss']/10
 
-    if losses['val_loss']/250 < current_training_details['best_loss']:
+    if losses['val_loss']/10 < current_training_details['best_loss']:
                     
-        current_training_details['best_loss'] = losses['val_loss']/250
+        current_training_details['best_loss'] = losses['val_loss']/10
         save_path = os.path.join(model_save_path, 'best_model.pth')
         torch.save(net.state_dict(), save_path)
 
@@ -102,7 +103,6 @@ def update_details(losses, current_training_details, model_save_path, net, epoch
                             'deep_reg': float(net.module.deep_reg),
                             'neg_reg':float(net.module.neg_reg),
                             'alpha':float(net.module.alpha),
-                            'loss_type':opts.loss_type,
                             'learn_lambda':opts.learn_lambda,
                             'Number of Parameters':param_num,
                             'dataset_type':opts.dataset_type}
@@ -213,10 +213,29 @@ def stat_extract(path,stat_name):
     stats = [y[i] for i in range(len(y)) if i % 2 == 1]
     stat_list = [[i for i in line.split(' ') if i != '' ][indicies[stat_name]] for line in stats]
     return stat_list   
+
 def fixel_accuracy(fix_est, gt_fixel):
     fixel_preds = torch.argmax(fix_est, dim = 1)
     val_acc = torch.sum(fixel_preds == gt_fixel)/gt_fixel.shape[0]
     
     return val_acc
+
+
+class EarlyStopping():
+    def __init__(self):
+        self.early_stopping_counter = 0
+
+    def early_stopping_update(self,current_training_details,opts,epoch,i):
+        current_loss = current_training_details['best_loss']
+        if current_loss > current_training_details['previous_loss']:
+            self.early_stopping_counter = self.early_stopping_counter+1
+
+        if self.early_stopping_counter > opts.early_stopping_threshold:
+            print(f'Training stopped at epoch {current_training_details["global_epochs"]+epoch} due to Early stopping and minibatch {i}, the best validation loss achieved is: {current_training_details["best_loss"]}')
+            sys.exit()
+
+        return current_loss
+
+    
 
     

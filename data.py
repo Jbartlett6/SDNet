@@ -27,6 +27,8 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         self.shell_number = 4
         self.data_file = 'normalised_data.nii.gz'
         self.spatial_resolution = [len(subject_list),145,174,145]
+        self.dwi_number = 30
+        self.dwi_folder_name = 'undersampled_fod'
         
         #Setting the padding tensor for the image - key if the brain mask is less than 9 voxels away from the edge of the image.
         self.pad_tens = (0,0,5,5,5,5,5,5)
@@ -72,11 +74,11 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         print('Loading the signal data into RAM')
 
         #Defining the input signal tensor.
-        self.data_tensor = F.pad(torch.zeros(self.spatial_resolution+[self.opts.dwi_number]),self.pad_tens, mode = 'constant')
+        self.data_tensor = F.pad(torch.zeros(self.spatial_resolution+[self.dwi_number]),self.pad_tens, mode = 'constant')
 
         for i, subject in enumerate(self.subject_list):
 
-            path = os.path.join(self.data_dir, subject, 'T1w', self.diffusion_dir, self.opts.dwi_folder_name, self.data_file)
+            path = os.path.join(self.data_dir, subject, 'T1w', self.diffusion_dir, self.dwi_folder_name, self.data_file)
             nifti = nib.load(path)
             self.data_tensor[i,:,:,:,:] = F.pad(torch.tensor(np.array(nifti.dataobj)),self.pad_tens, mode = 'constant')
 
@@ -138,14 +140,14 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         print('Loading the Spherical Convolution co-ords into RAM')
 
         #Defining the AQ tensor
-        self.AQ_tensor = torch.zeros((len(self.subject_list),self.opts.dwi_number,47))
+        self.AQ_tensor = torch.zeros((len(self.subject_list),self.dwi_number,47))
         
         for i, subject in enumerate(self.subject_list):
             #Extracting the undersampled b-vectors and b-values:
-            bvecs = util.bvec_extract(self.data_dir, subject, self.diffusion_dir, self.opts.dwi_folder_name)
+            bvecs = util.bvec_extract(self.data_dir, subject, self.diffusion_dir, self.dwi_folder_name)
             bvecs_sph = util.ss_sph_coords(bvecs)
             bvecs_sph[bvecs_sph[:,0]<0,0] = bvecs_sph[bvecs_sph[:,0]<0,0]+2*math.pi
-            bvals = util.bval_extract(self.data_dir, subject, self.diffusion_dir, self.opts.dwi_folder_name)
+            bvals = util.bval_extract(self.data_dir, subject, self.diffusion_dir, self.dwi_folder_name)
             
             #Extracting the ground truth b-vectors and b-values:
             gt_bvecs = util.bvec_extract(self.data_dir, subject, self.diffusion_dir)
@@ -156,7 +158,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
             
             #White matter response function extraction:
             order = 8
-            with open(os.path.join(self.data_dir, subject,'T1w',self.diffusion_dir,self.opts.dwi_folder_name,'wm_response.txt'), 'r') as txt:
+            with open(os.path.join(self.data_dir, subject,'T1w',self.diffusion_dir,self.dwi_folder_name,'wm_response.txt'), 'r') as txt:
                 x = txt.read()
             x = x.split('\n')[2:-1]
             
@@ -165,12 +167,12 @@ class DWIPatchDataset(torch.utils.data.Dataset):
                 g_wm[j] = torch.tensor([float(resp) for resp in x[j].split(' ')])
 
             #Grey matter response function extraction:
-            with open(os.path.join(self.data_dir, subject,'T1w',self.diffusion_dir,self.opts.dwi_folder_name,'gm_response.txt'), 'r') as txt:
+            with open(os.path.join(self.data_dir, subject,'T1w',self.diffusion_dir,self.dwi_folder_name,'gm_response.txt'), 'r') as txt:
                 x = txt.read()
             g_gm = [float(resp) for resp in x.split('\n')[2:-1]]
 
             #CSF response function extraction:
-            with open(os.path.join(self.data_dir, subject, 'T1w', self.diffusion_dir, self.opts.dwi_folder_name, 'csf_response.txt'), 'r') as txt:
+            with open(os.path.join(self.data_dir, subject, 'T1w', self.diffusion_dir, self.dwi_folder_name, 'csf_response.txt'), 'r') as txt:
                 x = txt.read()
             g_csf = [float(resp) for resp in x.split('\n')[2:-1]]    
         
@@ -188,7 +190,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         grid_0, grid_1, grid_2, grid_3 = torch.meshgrid(seq_0, seq_1, seq_2, seq_3)
         grid = torch.stack((grid_0, grid_1, grid_2, grid_3), 4)
 
-            #Making a vector containing the co-ordinates of only pixels which are in the brain mask.
+        #Making a vector containing the co-ordinates of only pixels which are in the brain mask.
         if self.opts.inference == True:
             self.coords = grid[self.wb_mask_tensor.to(bool),:]
         else:
@@ -208,13 +210,15 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
         self.shell_number = 4
         self.data_file = 'normalised_data.nii.gz'
         self.spatial_resolution = [len(subject_list),145,174,145]
+        self.dwi_number = 30
+        self.dwi_folder_name = 'undersampled_fod'
+
         
         self.init_data_tensors()
 
         #Printing the length of the experimental dataset:
         print('The length of the experimental dataset is: ' + str(len(self)))
     
-
     def __len__(self):
         #return int(torch.sum(torch.tensor(self.mask)))
         return self.coords.shape[0]
@@ -247,10 +251,10 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
     def load_input_signal(self):
         #Loading the data into the data tensor
         print('Loading the signal data into RAM')
-        self.data_tensor = torch.zeros((len(self.subject_list),79,87,97,self.opts.dwi_number))
+        self.data_tensor = torch.zeros((len(self.subject_list),79,87,97,self.dwi_number))
 
         for i, subject in enumerate(self.subject_list):
-            path = os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', self.opts.dwi_folder_name, 'normalised_data.nii.gz')
+            path = os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', self.dwi_folder_name, 'normalised_data.nii.gz')
             nifti = nib.load(path)
             #Shape = [62, 70, 80, :]
             self.data_tensor[i,4:66,4:74,4:84,:] = torch.tensor(np.array(nifti.dataobj))[13:75, 90:160, 44:124,:]
@@ -273,30 +277,39 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
             self.gt_tensor[i,4:66,4:74,4:84,:] = torch.tensor(np.array(nifti.dataobj))[13:75, 90:160, 44:124,:]
         
     def load_brain_masks(self):
+        
         #Loading the mask data into RAM
         print('Loading the mask data into RAM')
-        self.mask_tensor = torch.zeros((len(self.subject_list),79,87,97))
+        self.ttgen_mask_tensor = torch.zeros((len(self.subject_list),79,87,97,5))
+        self.wb_mask_tensor = torch.zeros((len(self.subject_list),79,87,97))
+        
         for i, subject in enumerate(self.subject_list):
-            path = os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', 'nodif_brain_mask.nii.gz')
-            nifti = nib.load(path)
-            self.mask_tensor[i,4:66,4:74,4:84] = torch.tensor(np.array(nifti.dataobj))[13:75, 90:160, 44:124]
+            #Importing the whole brain mask
+            path_wb = os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', 'nodif_brain_mask.nii.gz')
+            nifti_wb = nib.load(path_wb)
+            self.wb_mask_tensor[i,4:66,4:74,4:84] = torch.tensor(np.array(nifti_wb.dataobj))[13:75, 90:160, 44:124]
+
+            #Importing the 5ttgen mask
+            path_5ttgen = os.path.join(self.data_dir,subject,'T1w','5ttgen.nii.gz')
+            nifti_5ttgen = nib.load(path_5ttgen)
+            self.ttgen_mask_tensor[i,4:66,4:74,4:84] = torch.tensor(np.array(nifti_5ttgen.dataobj))[13:75, 90:160, 44:124,:]
 
     def load_convolution_matricies(self):
         #Loading the spherical harmonic co-ords into RAM.
         print('Loading the Spherical Convolution co-ords into RAM')
-        self.AQ_tensor = torch.zeros((len(self.subject_list),self.opts.dwi_number,47))
+        self.AQ_tensor = torch.zeros((len(self.subject_list),self.dwi_number,47))
         for i, subject in enumerate(self.subject_list):
             #Extracting bvectors from folders:
-            bvecs = util.bvec_extract(self.data_dir, subject, self.diffusion_dir, self.opts.dwi_folder_name)
+            bvecs = util.bvec_extract(self.data_dir, subject, self.diffusion_dir, self.dwi_folder_name)
             bvecs_sph = util.ss_sph_coords(bvecs)
             bvecs_sph[bvecs_sph[:,0]<0,0] = bvecs_sph[bvecs_sph[:,0]<0,0]+2*math.pi
             order = 8
 
             #Extracting bvalues:
-            bvals = util.bval_extract(self.data_dir, subject, self.diffusion_dir, self.opts.dwi_folder_name)
+            bvals = util.bval_extract(self.data_dir, subject, self.diffusion_dir, self.dwi_folder_name)
 
             #White matter response function extraaction:
-            with open(os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', self.opts.dwi_folder_name, 'wm_response.txt'), 'r') as txt:
+            with open(os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', self.dwi_folder_name, 'wm_response.txt'), 'r') as txt:
                 
                 x = txt.read()
             x = x.split('\n')[2:-1]
@@ -306,12 +319,12 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
                 g_wm[j] = torch.tensor([float(resp) for resp in x[j].split(' ')])
 
             #Grey matter response function extraction:
-            with open(os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', self.opts.dwi_folder_name, 'gm_response.txt'), 'r') as txt:
+            with open(os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', self.dwi_folder_name, 'gm_response.txt'), 'r') as txt:
                 x = txt.read()
             g_gm = [float(resp) for resp in x.split('\n')[2:-1]]
 
             #CSF response function extraction:
-            with open(os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', self.opts.dwi_folder_name, 'csf_response.txt'), 'r') as txt:
+            with open(os.path.join(self.data_dir, subject, 'T1w', 'Diffusion', self.dwi_folder_name, 'csf_response.txt'), 'r') as txt:
                 x = txt.read()
             g_csf = [float(resp) for resp in x.split('\n')[2:-1]]    
         
@@ -321,16 +334,20 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
     def load_coords(self):
         print('Creating Co-ordinate grid')
         #Creating a meshgrid for the subject - a volume where each voxel is the x,y,z coordinate.
-        seq_0 = torch.tensor([i for i in range(self.mask_tensor.shape[0])])
-        seq_1 = torch.tensor([i for i in range(self.mask_tensor.shape[1])])
-        seq_2 = torch.tensor([i for i in range(self.mask_tensor.shape[2])])
-        seq_3 = torch.tensor([i for i in range(self.mask_tensor.shape[3])])
+        seq_0 = torch.tensor([i for i in range(self.wb_mask_tensor.shape[0])])
+        seq_1 = torch.tensor([i for i in range(self.wb_mask_tensor.shape[1])])
+        seq_2 = torch.tensor([i for i in range(self.wb_mask_tensor.shape[2])])
+        seq_3 = torch.tensor([i for i in range(self.wb_mask_tensor.shape[3])])
 
         grid_0, grid_1, grid_2, grid_3 = torch.meshgrid(seq_0, seq_1, seq_2, seq_3)
         grid = torch.stack((grid_0, grid_1, grid_2, grid_3), 4)
 
         #Making a vector containing the co-ordinates of only pixels which are in the brain mask.
-        self.coords = grid[self.mask_tensor.to(bool),:]
+        if self.opts.inference == True:
+            self.coords = grid[self.wb_mask_tensor.to(bool),:]
+        else:
+            self.coords = grid[(self.ttgen_mask_tensor[:,:,:,:,0].to(bool) | self.ttgen_mask_tensor[:,:,:,:,1].to(bool) | self.ttgen_mask_tensor[:,:,:,:,2].to(bool)) & self.wb_mask_tensor.to(bool),:]
+
 
 
 

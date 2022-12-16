@@ -99,11 +99,13 @@ class SkipConnectConvCascadeLayer(nn.Module):
 
     
     def forward(self, x, prev_feat):
+        x = x.transpose(1,4).squeeze()
         x = self.casc(x)
         x = torch.cat((x,prev_feat), dim = 1)
         x = self.feature_conv_1(x)
         curr_feat = torch.relu(x)
         x = self.feature_conv_2(x)
+        x = x.transpose(1,4).unsqueeze(5)
         return x, curr_feat
 
 class OutputLayer(nn.Module):

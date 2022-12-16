@@ -12,31 +12,35 @@ class network_options():
     def __init__(self):
         #Optimisation 
         self.lr = 1e-4
-        self.warmup_factor = 1
+        self.warmup_factor = 1e-2
         self.batch_size = 256
-        self.epochs = 5
+        self.epochs = 1000
         
-
         #Data consistency related hyperparameters
-        self.neg_reg = (0.7/0.1875)*0.25
         self.deep_reg = 0.25
-        self.alpha = 150
         self.learn_lambda = True
-        self.fixel_lambda = 0.000160
+        #self.fixel_lambda = 0.000160
+        self.fixel_lambda = 0
 
-        self.loss_type = 'sh'
+        #Initialisation Parameters
         self.init_type = 'orthogonal' #{'normal', 'xavier', 'kaiming', 'orthogonal'}
         self.activation = 'relu' #{'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
 
-        self.early_stopping = False
-        self.early_stopping_threshold = inf
+        #Early Stopping Parameters
+        self.early_stopping = True
+        self.early_stopping_threshold = 10
+        
+        #Checkpoint and model parameters
         self.continue_training = False
-        self.experiment_name = 'test_temporary'
+        self.experiment_name = 'test_skip_middle'
+        self.model_name = 'best_model.pth'
 
         #Computation related hyperparameters:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.train_workers = 8
         self.val_workers = 8
+        
+        #Data related hyperparameters
         self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp'
         self.train_subject_list = ['100206',
                     '100307',
@@ -69,14 +73,13 @@ class network_options():
                     '318637',
                     '581450',
                     '130821']
-        
+
         self.dataset_type = 'experiment' #{'all', 'experiment'}
-        #Important for loading parameters in and out of models.
-        self.model_name = 'best_model.pth'
+        
+        
         self.inference=False
         self.perform_inference=False
-        self.dwi_number = 30
-        self.dwi_folder_name = 'undersampled_fod'
+        
         
         #self.option_init()
         

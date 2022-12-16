@@ -31,6 +31,8 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(net.parameters(), lr = opts.warmup_factor*opts.lr, betas = (0.9,0.999), eps = 1e-8)
     loss_tracker = tracker.LossTracker(P,criterion)    
     visualiser = tracker.Vis(opts, train_dataloader)
+    es = tracker.EarlyStopping()
+
 
     validation_affine = nib.load(os.path.join(opts.data_dir,'100307','T1w','Diffusion','cropped_fod.nii.gz')).affine
     print(validation_affine)
@@ -41,18 +43,17 @@ if __name__ == '__main__':
     print(f'The gradient state of the network is: {class_network.casc[0].weight.requires_grad}')
     class_criterion = torch.nn.CrossEntropyLoss()
     
-
-    early_stopping_counter = 0
+    
     print(optimizer.param_groups[0]['lr'])
     #Running the training loop,in this case for spatial deep reg
     for epoch in range(opts.epochs):  # loop over the dataset multiple times
         
 
         for i, data_list in enumerate(train_dataloader, 0):
-        #     if epoch == 0:
+            if epoch == 1:
         #         if i == 1000:
-        #             for g in optimizer.param_groups:
-        #                 g['lr'] = opts.lr
+                for g in optimizer.param_groups:
+                    g['lr'] = opts.lr
             
             
             inputs, labels, AQ, gt_fixel, _ = data_list
@@ -111,7 +112,7 @@ if __name__ == '__main__':
 
                 #Printing the current best validation loss, and the early stopping counter
                 print('Best Loss', current_training_details['best_loss'])
-                print('Early stopping counter', early_stopping_counter)
+                print('Early stopping counter', es.early_stopping_counter)
 
                 #Updating the training details.
                 current_training_details = tracker.update_details(loss_tracker.loss_dict, current_training_details, model_save_path,
@@ -127,21 +128,8 @@ if __name__ == '__main__':
         loss_tracker.reset_losses()
         
 
-        #Early stopping implementation (over epochs).
-        current_loss = current_training_details['best_loss']
-        if current_loss > current_training_details['previous_loss']:
-            early_stopping_counter = early_stopping_counter+1
+        current_training_details['previous_loss'] = es.early_stopping_update(current_training_details,opts,epoch,i)
         
-        if early_stopping_counter > opts.early_stopping_threshold:
-                    print(f'Training stopped at epoch {current_training_details["global_epochs"]+epoch} due to Early stopping and minibatch {i}, the best validation loss achieved is: {current_training_details["best_loss"]}')
-                    break
-        
-        current_training_details['previous_loss'] = current_loss
-        
-        # print('Calculating the validation fixel losses.')
-        # afde_mean, afde_median, pae_mean, pae_median = tracker.fba_eval(val_dataloader, net,opts, validation_affine)
-        # print(afde_mean, afde_median, pae_mean, pae_median)
-        # visualiser.add_fixel_scalars(afde_mean, afde_median, pae_mean, pae_median, current_training_details, i, epoch)
         
                 
     print('Finished Training')

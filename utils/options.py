@@ -12,33 +12,33 @@ class network_options():
     def __init__(self):
         #Optimisation 
         self.lr = 1e-4
-        self.warmup_factor = 1e-2
+        self.warmup_factor = 1
         self.batch_size = 256
         self.epochs = 1000
         
         #Data consistency related hyperparameters
         self.deep_reg = 0.25
         self.learn_lambda = True
-        #self.fixel_lambda = 0.000160
-        self.fixel_lambda = 0
+        self.fixel_lambda = 0.000160
+        #self.fixel_lambda = 0
 
         #Initialisation Parameters
-        self.init_type = 'orthogonal' #{'normal', 'xavier', 'kaiming', 'orthogonal'}
-        self.activation = 'relu' #{'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
+        self.init_type = None #{'normal', 'xavier', 'kaiming', 'orthogonal'}
+        self.activation = 'prelu' #{'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
 
         #Early Stopping Parameters
-        self.early_stopping = True
-        self.early_stopping_threshold = 10
-        
+        self.early_stopping = False
+        self.early_stopping_threshold = 0
+
         #Checkpoint and model parameters
-        self.continue_training = False
-        self.experiment_name = 'test_skip_middle'
+        self.continue_training = True
+        self.experiment_name = 'final_model_classification_loss_1'
         self.model_name = 'best_model.pth'
 
         #Computation related hyperparameters:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.train_workers = 8
-        self.val_workers = 8
+        self.train_workers = 16
+        self.val_workers = 16
         
         #Data related hyperparameters
         self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp'
@@ -49,6 +49,7 @@ class network_options():
                     '101006',
                     '101107',
                     '101309',
+                    '101410',
                     '101915',
                     '102311',
                     '102513',
@@ -74,7 +75,7 @@ class network_options():
                     '581450',
                     '130821']
 
-        self.dataset_type = 'experiment' #{'all', 'experiment'}
+        self.dataset_type = 'all' #{'all', 'experiment'}
         
         
         self.inference=False

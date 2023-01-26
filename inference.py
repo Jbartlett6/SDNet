@@ -29,7 +29,7 @@ def per_subject_inference(subject, opts, data):
     print('Loading options')
     opts = options.network_options()
     print(opts.__dict__)
-    setattr(opts,'experiment_name', 'fixel_class_loss_0.000160_full_dataset')
+    setattr(opts,'experiment_name', 'final_model_classification_loss_1')
     setattr(opts, 'inference', True)
     setattr(opts, 'perform_inference', True)
 

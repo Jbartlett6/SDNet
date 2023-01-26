@@ -22,7 +22,7 @@ if __name__ == '__main__':
     opts = options.network_options()
     print(opts.__dict__)
     print('arguments loaded')
-    setattr(opts,'experiment_name', 'fixel_class_loss_0.000160_full_dataset')
+    setattr(opts,'experiment_name', 'final_model_classification_loss_1')
     setattr(opts, 'inference', True)
     setattr(opts, 'perform_inference', True)
 
@@ -46,11 +46,11 @@ if __name__ == '__main__':
         gt_fod_path = os.path.join(opts.data_dir, subj, 'T1w', 'Diffusion', 'wmfod.nii.gz')
         inf_wm_path = os.path.join(inference_path, subj, 'inf_wm_fod.nii.gz')
         save_path = os.path.join(inference_path, subj)
-        os.system('bash utils/ACC.sh ' + gt_fod_path + ' ' + inf_wm_path +' '+save_path+' '+subj) 
+        os.system('bash utils/eval_funcs/ACC.sh ' + gt_fod_path + ' ' + inf_wm_path +' '+save_path+' '+subj) 
 
         print('Performing fixel based analysis')
-        os.system('bash utils/FBA.sh ' + inf_wm_path + ' ' + subj +' '+save_path)
-        os.system('bash utils/MAE.sh ' + os.path.join(inference_path, subj, 'fixel_directory', 'fixel_directions.nii.gz') + ' ' + subj +' '+save_path+' '+opts.data_dir)
+        os.system('bash utils/eval_funcs/FBA.sh ' + inf_wm_path + ' ' + subj +' '+save_path)
+        os.system('bash utils/eval_funcs/MAE.sh ' + os.path.join(inference_path, subj, 'fixel_directory', 'fixel_directions.nii.gz') + ' ' + subj +' '+save_path+' '+opts.data_dir)
 
 
     with open(os.path.join(inference_path, 'all_stats.txt'), 'a') as f:

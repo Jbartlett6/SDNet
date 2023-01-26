@@ -34,8 +34,8 @@ if __name__ == '__main__':
     es = tracker.EarlyStopping()
 
 
-    validation_affine = nib.load(os.path.join(opts.data_dir,'100307','T1w','Diffusion','cropped_fod.nii.gz')).affine
-    print(validation_affine)
+    # validation_affine = nib.load(os.path.join(opts.data_dir,'100307','T1w','Diffusion','cropped_fod.nii.gz')).affine
+    # print(validation_affine)
     #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
     #Initialising the classification network:
     class_network = network.init_fixnet(opts)
@@ -47,14 +47,14 @@ if __name__ == '__main__':
     print(optimizer.param_groups[0]['lr'])
     #Running the training loop,in this case for spatial deep reg
     for epoch in range(opts.epochs):  # loop over the dataset multiple times
-        
 
+        #The training loop
         for i, data_list in enumerate(train_dataloader, 0):
-            if epoch == 1:
-        #         if i == 1000:
-                for g in optimizer.param_groups:
-                    g['lr'] = opts.lr
-            
+            #After one epoch, increase the learning rate
+            if epoch == 0:
+                if i > 10000:
+                    for g in optimizer.param_groups:
+                        g['lr'] = opts.lr
             
             inputs, labels, AQ, gt_fixel, _ = data_list
             inputs, labels, AQ, gt_fixel = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device), gt_fixel.to(opts.device)
@@ -75,13 +75,12 @@ if __name__ == '__main__':
             fixel_loss = opts.fixel_lambda*class_criterion(fix_est, gt_fixel.long())
             fixel_accuracy = tracker.fixel_accuracy(fix_est, gt_fixel)
             
-            loss = fod_loss+fixel_loss
-            
+            #loss = fod_loss+fixel_loss
+            loss = fod_loss + fixel_loss
             loss.backward()
             optimizer.step()
             
             # Adding the loss calculated for the current minibatch to the running training loss
-            
             loss_tracker.add_running_loss(loss, fod_loss, fixel_loss, fixel_accuracy)
             
 
@@ -103,6 +102,8 @@ if __name__ == '__main__':
                         fix_est = class_network(outputs.squeeze()[:,:45])
                         fixel_loss = opts.fixel_lambda*class_criterion(fix_est, gt_fixel.long())
                         fixel_accuracy = tracker.fixel_accuracy(fix_est, gt_fixel)
+
+                        
 
                         loss_tracker.add_val_losses(outputs,labels, fixel_loss, fixel_accuracy)
                         
@@ -127,7 +128,7 @@ if __name__ == '__main__':
         #Resetting the losses at the end of an epoch to prevent a spike on the graphs.
         loss_tracker.reset_losses()
         
-
+        #Updating the early stopping values at the end of the epoch.
         current_training_details['previous_loss'] = es.early_stopping_update(current_training_details,opts,epoch,i)
         
         

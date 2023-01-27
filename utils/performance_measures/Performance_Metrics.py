@@ -10,8 +10,9 @@ class ModelPerformance():
         '''
         self.model_inference_dir = model_inference_dir
         self.data_dir = '/media/duanj/F/joe/hcp_2'
-        self.subject_list = ['130821']
-        self.ROI_names = ['ROI1','ROI2','ROI3', 'ROI4']
+        self.subject_list = ['130821', '581450']
+        self.ROI_names = ['wm','ROI1','ROI2','ROI3', 'ROI4', 'ROI5', 'ROI6']
+        
 
         #Initialising the Directories where the data is going to be stored. 
         self.init_performance_metric_dir()
@@ -30,6 +31,7 @@ class ModelPerformance():
         self.inf_fod = os.path.join(self.inf_dir, 'inf_wm_fod.nii.gz')
     
         #Masks:
+        self.wm_mask_path_mif = os.path.join(self.data_dir, subject, 'T1w', 'white_matter_mask.mif')
         self.wm_mask_path = os.path.join(self.data_dir, subject, 'T1w', 'white_matter_mask.nii.gz')
         self.CC_mask_path = os.path.join(self.tract_seg_masks, 'CC.nii.gz')
         self.MCP_mask_path = os.path.join(self.tract_seg_masks, 'MCP.nii.gz')
@@ -38,11 +40,7 @@ class ModelPerformance():
         self.twofix_mask_path = os.path.join(self.tract_seg_masks, 'MCP_CST_2fixel.nii.gz')
         self.threefix_mask_path = os.path.join(self.tract_seg_masks, 'CC_CST_SLF_3fixel.nii.gz')
 
-        # self.masks_list = [self.CC_mask_path, self.MCP_mask_path, 
-        #                     self.CST_mask_path]
-
-        self.masks_list = [self.CC_mask_path, self.MCP_mask_path, self.CST_mask_path, self.onefix_mask_path]
-
+        self.masks_list = [self.wm_mask_path, self.CC_mask_path, self.MCP_mask_path, self.CST_mask_path, self.onefix_mask_path, self.twofix_mask_path, self.threefix_mask_path]
         #Initialising the fixel paths: (must have updated the inf_dir first)
         self.init_fixel_paths()
 
@@ -52,7 +50,9 @@ class ModelPerformance():
 
         #Initialising GT paths:
         self.gt_fixel_directory = os.path.join(self.gt_diffusion_dir, 'fixel_directory')
+        self.gt_afd_im_path_mif = os.path.join(self.gt_fixel_directory, 'afd_im.mif')
         self.gt_afd_im_path = os.path.join(self.gt_fixel_directory, 'afd_im.nii.gz')
+        self.gt_pa_im_path_mif = os.path.join(self.gt_fixel_directory, 'peak_amp_im.mif')
         self.gt_pa_im_path = os.path.join(self.gt_fixel_directory, 'peak_amp_im.nii.gz')
         self.gt_fod_path = os.path.join(self.gt_diffusion_dir, 'wmfod.nii.gz')
         self.gt_index_path = os.path.join(self.gt_fixel_directory, 'index.nii.gz')
@@ -112,6 +112,11 @@ class ModelPerformance():
         #Calculating the scalar fixel based analysis comparisons
         os.system('fixel2voxel -number 11 ' + f"\'{self.afd_path}\'" + ' none ' + f"\'{self.afd_im_path}\'")
         os.system('fixel2voxel -number 11 ' + f"\'{self.peak_amp_path}\'" + ' none ' + f"\'{self.peak_amp_im_path}\'")
+    
+    def check_wm_mask(self):
+        if os.path.exists(self.wm_mask_path) == False:
+            os.system(f'mrconvert {self.wm_mask_path_mif} {self.wm_mask_path}')
+    
     ### AFDE functions###
     def calc_afde_image(self):
         '''
@@ -137,7 +142,7 @@ class ModelPerformance():
         afde_ROIs = []
         for mask_path in self.masks_list:
             mask_np = self.load_mask(mask_path)
-            afde_ROIs.append(np.mean(afde_np[mask_np == 1]))
+            afde_ROIs.append(np.mean(afde_np[mask_np[:,:,:] > 0.5]))
 
         return afde_ROIs
 
@@ -268,13 +273,15 @@ class ModelPerformance():
 
         #Calculating the ACC image in numpy.
         acc_dot = inf_fod_np[:, :, :, 1:45] * gt_fod_np[:, :, :, 1:45]
+        print(acc_dot.shape)
         acc_numerator = np.sum(acc_dot, axis = 3)
         acc_denominator = np.linalg.norm(inf_fod_np[:, :, :, 1:45],axis = 3) * np.linalg.norm(gt_fod_np[:, :, :, 1:45], axis=3)
-        acc_np = acc_numerator/acc_denominator
+        
+        acc_np = np.divide(acc_numerator,acc_denominator)
 
         #Saving the ACC image as a nifti file.
-        sse_nifti = nib.Nifti1Image(acc_np, affine = inf_fod_nib.affine)
-        nib.save(sse_nifti, self.acc_path)
+        acc_nifti = nib.Nifti1Image(acc_np, affine = inf_fod_nib.affine)
+        nib.save(acc_nifti, self.acc_path)
 
     def acc_ROI_averages(self):
         '''
@@ -282,11 +289,12 @@ class ModelPerformance():
         '''
         acc_nifti = nib.load(self.acc_path)
         acc_np = np.array(acc_nifti.dataobj)
+
         acc_ROIs = []
         for mask_path in self.masks_list:
             mask_np = self.load_mask(mask_path)
-            acc_ROIs.append(np.mean(acc_np[mask_np == 1]))
-
+            acc_ROIs.append(np.nanmean(acc_np[mask_np[::-1,:,:] >= 0.5]))
+        
         return acc_ROIs
 
     def calc_allsub_acc(self):
@@ -296,8 +304,10 @@ class ModelPerformance():
         '''
         ACC_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
         for i, subject in enumerate(self.subject_list):
-            
             self.init_subject_paths(subject)
+            #Only need to check wm mask once in the first case of it being used
+            self.check_wm_mask()
+            self.check_gt_fix_img()
             #If the afde image doesn't exist for the subject calculate it:
             if os.path.exists(self.acc_path) == False:
                 self.calc_acc_image()
@@ -371,14 +381,25 @@ class ModelPerformance():
         if mask_np.ndim == 4:
             mask_np = mask_np[:,:,:,0]
         
+        #Flipping the image in the first dimension if its the white matter mask (required to get the same results as MRTrix3)
+        if mask_path == self.wm_mask_path:
+            mask_np = mask_np[::-1,:,:]
+        
         return mask_np
 
-    
+    def check_gt_fix_img(self):
+        if os.path.exists(self.gt_afd_im_path) == False:
+            os.system(f'mrconvert {self.gt_afd_im_path_mif} {self.gt_afd_im_path}')
+
+        if os.path.exists(self.gt_pa_im_path) == False:
+            os.system(f'mrconvert {self.gt_pa_im_path_mif} {self.gt_pa_im_path}')
+
     def calc_all_performance(self):
         '''
         This function calculates, and updates all of the perfromance metrics to be stored in the CSV files in the performance metrics folder.
         The number of subjects and which ROIs are dictated by the self.ROI_names and self.subject_list attributes defined in self.__init__().
         '''
+
         self.calc_allsub_acc()
         self.calc_allsub_AFDE()
         self.calc_allsub_PAE()
@@ -388,6 +409,8 @@ class ModelPerformance():
 
 model_inference_dir = '/home/jxb1336/code/Project_1: HARDI_Recon/FOD-REG_NET/CSDNet_dir/checkpoints/test_tmp/inference'        
 test_model_performance = ModelPerformance(model_inference_dir)
+# test_model_performance.init_subject_paths('581450')
+# test_model_performance.create_subject_fixels()
 
 
 test_model_performance.calc_all_performance()

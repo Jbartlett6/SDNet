@@ -15,15 +15,15 @@ class Vis():
     def add_scalars(self,losses,net,current_training_details,i,epoch):
         #Training loss and its decomposition :
         self.writer.add_scalar('Training Loss', losses['running_loss']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('FOD Loss', losses['fod_loss']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Fixel Loss', losses['fixel_loss']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Fixel Accuracy', losses['fixel_accuracy']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('Training FOD Loss', losses['fod_loss']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('Training Fixel Loss', losses['fixel_loss']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('Training Fixel Accuracy', losses['fixel_accuracy']/20, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
         
 
 
         #The validation losses
-        self.writer.add_scalar('Validation Loss', losses['val_loss']/10,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
-        self.writer.add_scalar('Validation ACC', losses['acc_loss']/10 ,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])        
+        self.writer.add_scalar('Validation FOD Loss', losses['val_loss']/10,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
+        self.writer.add_scalar('Validation Angular Correlation Coefficient', losses['acc_loss']/10 ,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])        
         #self.writer.add_scalar('Deep Regularisation Lambda', net.module.deep_reg, (self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
         self.writer.add_scalar('Validation Fixel Loss', losses['val_fixel_loss']/10,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])
         self.writer.add_scalar('Validation Fixel Accuracy', losses['val_fixel_accuracy']/10,(self.dataloader_length*epoch)+i+current_training_details['plot_offset'])

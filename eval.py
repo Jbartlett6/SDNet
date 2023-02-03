@@ -42,11 +42,11 @@ if __name__ == '__main__':
         gt_fod_path = os.path.join(opts.data_dir, subj, 'T1w', 'Diffusion', 'undersampled_fod', 'gt_wm_fod.nii.gz')
         inf_wm_path = os.path.join(inference_path, subj, 'inf_wm_fod.nii.gz')
         save_path = os.path.join(inference_path, subj)
-        os.system('bash utils/ACC.sh ' + gt_fod_path + ' ' + inf_wm_path +' '+save_path+' '+subj) 
+        os.system('bash utils/performance_measures/ACC.sh ' + gt_fod_path + ' ' + inf_wm_path +' '+save_path+' '+subj) 
 
         print('Performing fixel based analysis')
-        os.system('bash utils/FBA.sh ' + inf_wm_path + ' ' + subj +' '+save_path)
-        os.system('bash utils/MAE.sh ' + os.path.join(inference_path, subj, 'fixel_directory', 'fixel_directions.nii.gz') + ' ' + subj +' '+save_path+' '+opts.data_dir)
+        os.system('bash utils/performance_measures/FBA.sh ' + inf_wm_path + ' ' + subj +' '+save_path)
+        os.system('bash utils/performance_measures/MAE.sh ' + os.path.join(inference_path, subj, 'fixel_directory', 'fixel_directions.nii.gz') + ' ' + subj +' '+save_path+' '+opts.data_dir)
 
 
     with open(os.path.join(inference_path, 'all_stats.txt'), 'a') as f:

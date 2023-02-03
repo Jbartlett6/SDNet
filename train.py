@@ -18,7 +18,7 @@ sys.path.append(os.path.join(sys.path[0],'..', 'fixel_loss'))
 import network
 
 if __name__ == '__main__':
-    lambda_values = [0.01,0.1,1,10,100]
+    lambda_values = [0.05,0.075,0.25,0.5]
     original_lambda = (0.45/(140))
     opts = options.network_options()
 

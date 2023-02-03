@@ -1,3 +1,4 @@
+
 from genericpath import isdir
 import sys 
 import os
@@ -21,6 +22,7 @@ import data
 import Convcsdnet
 import Convcsdcfrnet
 
+
 def per_subject_inference(subject, opts, data):
     '''
     A function which conducts inference for a single subject according to the options which are supplied to the function. 
@@ -35,8 +37,8 @@ def per_subject_inference(subject, opts, data):
     if os.path.isdir(os.path.join('checkpoints',opts.experiment_name, 'inference')) == False:
         os.mkdir(os.path.join('checkpoints',opts.experiment_name, 'inference'))
     save_dir = os.path.join('checkpoints',opts.experiment_name, 'inference')
-    #model_path = os.path.join('checkpoints', opts.experiment_name, 'models', opts.model_name)
-    model_path = '/home/jxb1336/code/Project_1: HARDI_Recon/FOD-REG_NET/CSDNet_dir/checkpoints/test_tmp/models/most_recent_model.pth'
+    model_path = os.path.join('checkpoints', opts.experiment_name, 'models', opts.model_name)
+    #model_path = '/home/jxb1336/code/Project_1: HARDI_Recon/FOD-REG_NET/CSDNet_dir/checkpoints/test_tmp/models/most_recent_model.pth'
     device = torch.device('cuda')
 
     #Loading the network

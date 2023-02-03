@@ -30,7 +30,7 @@ class network_options():
         self.early_stopping = False
         self.early_stopping_threshold = inf
         self.continue_training = True
-        self.experiment_name = 'test'
+        self.experiment_name = 'test_tmp'
 
         #Computation related hyperparameters:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -74,8 +74,8 @@ class network_options():
         self.dataset_type = 'all'
         self.model_name = 'best_model.pth'
         self.network_width = 'normal'
-        self.inference=False
-        self.perform_inference=False
+        self.inference=True
+        self.perform_inference=True
         self.dwi_number = 30
         self.dwi_folder_name = 'undersampled_fod'
         self.scanner_type = '3T'

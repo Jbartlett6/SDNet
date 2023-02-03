@@ -2,6 +2,7 @@ import os
 import numpy as np
 import nibabel as nib
 import pandas as pd
+import shutil
     
 class ModelPerformance():
     def __init__(self, model_inference_dir):
@@ -10,7 +11,7 @@ class ModelPerformance():
         '''
         self.model_inference_dir = model_inference_dir
         self.data_dir = '/media/duanj/F/joe/hcp_2'
-        self.subject_list = ['130821', '581450']
+        self.subject_list = ['130821', '581450', '145127']
         self.ROI_names = ['wm','ROI1','ROI2','ROI3', 'ROI4', 'ROI5', 'ROI6']
         
 
@@ -82,7 +83,9 @@ class ModelPerformance():
 
     def init_fixel_paths(self):
         '''
-        Given the inference directory define all paths which relate to the fixel directory
+        Given the inference directory define all paths which relate to the fixel directory.
+
+        Subject specific paths should be initialised before calling this function.
         '''
         self.fixel_directory = os.path.join(self.inf_dir, 'fixel_directory')
         self.index_mif = os.path.join(self.fixel_directory, 'index.mif')
@@ -101,19 +104,35 @@ class ModelPerformance():
     def create_subject_fixels(self):
         '''
         If the fixel directory doesn't exist then this function will create the fixel directory.
+
+        Subject specific paths should be initialised before calling this function.
         '''
 
-        #Creating the fixel directory and converting the index function to a nifti image. 
-        os.system('fod2fixel -afd afd.nii.gz -peak_amp peak_amp.nii.gz ' + f"\'{self.inf_fod}\'" + ' ' + f"\'{self.fixel_directory}\'")
-        os.system('mrconvert ' + f"\'{self.index_mif}\'" + ' ' + f"\'{self.index_nifti}\'")
-        os.remove(self.index_mif)
+        #Creating the fixel directory and converting the index function to a nifti image.
+        if os.path.exists(self.fixel_directory):
+            shutil.rmtree(self.fixel_directory)
+
+        os.system('fod2fixel -force -afd afd.nii.gz -peak_amp peak_amp.nii.gz ' + f"\'{self.inf_fod}\'" + ' ' + f"\'{self.fixel_directory}\'")
+        
+        if os.path.exists(self.index_nifti) == False:
+            os.system('mrconvert ' + f"\'{self.index_mif}\'" + ' ' + f"\'{self.index_nifti}\'")
+        
+        #Removing the uneccessary index.mif file
+        if os.path.exists(self.index_mif):
+            os.remove(self.index_mif)
 
         #Creating the afd and peak amplitude images.
         #Calculating the scalar fixel based analysis comparisons
-        os.system('fixel2voxel -number 11 ' + f"\'{self.afd_path}\'" + ' none ' + f"\'{self.afd_im_path}\'")
-        os.system('fixel2voxel -number 11 ' + f"\'{self.peak_amp_path}\'" + ' none ' + f"\'{self.peak_amp_im_path}\'")
+        os.system('fixel2voxel -force -number 11 ' + f"\'{self.afd_path}\'" + ' none ' + f"\'{self.afd_im_path}\'")
+        os.system('fixel2voxel -force -number 11 ' + f"\'{self.peak_amp_path}\'" + ' none ' + f"\'{self.peak_amp_im_path}\'")
     
     def check_wm_mask(self):
+        '''
+        If the white matter mask only exists in .mif format then the the mif image is converted to nifti
+        image. 
+
+        Subject specific paths should be initialised before calling this function.
+        '''
         if os.path.exists(self.wm_mask_path) == False:
             os.system(f'mrconvert {self.wm_mask_path_mif} {self.wm_mask_path}')
     
@@ -293,7 +312,7 @@ class ModelPerformance():
         acc_ROIs = []
         for mask_path in self.masks_list:
             mask_np = self.load_mask(mask_path)
-            acc_ROIs.append(np.nanmean(acc_np[mask_np[::-1,:,:] >= 0.5]))
+            acc_ROIs.append(np.nanmean(acc_np[mask_np[:,:,:] >= 0.5]))
         
         return acc_ROIs
 
@@ -375,6 +394,14 @@ class ModelPerformance():
             fix_err_df.to_csv(self.fixel_accuracy_csv_path, sep = ',')
     
     def load_mask(self, mask_path):
+        '''
+        Loads the mask_path into a numpy array
+
+        If the mask has too many dimensions then the fourth dimension is removed
+
+        If the mask is a white matter mask the it must be flipped in the first axis (since FSL
+        changes the stride from -1 to 1)
+        '''
         mask_nifti = nib.load(mask_path)
         mask_np = np.array(mask_nifti.dataobj)
             #Masks calculated by tractseg have an extra dimensions which needs removing
@@ -388,24 +415,42 @@ class ModelPerformance():
         return mask_np
 
     def check_gt_fix_img(self):
+        '''
+        Converts the ground truth fixel paths from .mif files to .nifti files. The create 
+        subject fixels may do this already. 
+        '''
         if os.path.exists(self.gt_afd_im_path) == False:
             os.system(f'mrconvert {self.gt_afd_im_path_mif} {self.gt_afd_im_path}')
 
         if os.path.exists(self.gt_pa_im_path) == False:
             os.system(f'mrconvert {self.gt_pa_im_path_mif} {self.gt_pa_im_path}')
 
+      
     def calc_all_performance(self):
         '''
         This function calculates, and updates all of the perfromance metrics to be stored in the CSV files in the performance metrics folder.
         The number of subjects and which ROIs are dictated by the self.ROI_names and self.subject_list attributes defined in self.__init__().
         '''
-
+        self.allsub_preprocessing()
         self.calc_allsub_acc()
         self.calc_allsub_AFDE()
         self.calc_allsub_PAE()
         self.calc_allsub_SSE()
         self.calc_allsub_fix_err()
 
+    def allsub_preprocessing(self):
+        '''
+        Performs the neccessaary preprocessing steps for all subjects, making sure all necessary images exist
+        prior to calculating performance metrics.
+        '''
+        #Make sure all of the appropriate images have been calculated 
+        for i, subject in enumerate(self.subject_list):
+            self.init_subject_paths(subject)
+            
+            self.create_subject_fixels()
+            self.check_wm_mask()
+            self.check_gt_fix_img()
+        
 
 model_inference_dir = '/home/jxb1336/code/Project_1: HARDI_Recon/FOD-REG_NET/CSDNet_dir/checkpoints/test_tmp/inference'        
 test_model_performance = ModelPerformance(model_inference_dir)

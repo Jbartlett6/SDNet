@@ -14,13 +14,13 @@ import h5py
 
 
 class DWIPatchDataset(torch.utils.data.Dataset):
-    def __init__(self, data_dir, subject_list, inference, opts):
+    def __init__(self, data_dir, subject_list, inference, training_voxels):
         
         #Initialising the parameters for the dataset class.
         self.subject_list = subject_list
         self.data_dir = data_dir
         self.inference = inference
-        self.opts = opts
+        self.training_voxels = training_voxels
 
         #Setting parameters for loading in the data
         self.diffusion_dir = 'Diffusion'
@@ -191,7 +191,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         grid = torch.stack((grid_0, grid_1, grid_2, grid_3), 4)
 
         #Making a vector containing the co-ordinates of only pixels which are in the brain mask.
-        if self.opts.inference == True:
+        if self.training_voxels == False:
             self.coords = grid[self.wb_mask_tensor.to(bool),:]
         else:
             self.coords = grid[(self.ttgen_mask_tensor[:,:,:,:,0].to(bool) | self.ttgen_mask_tensor[:,:,:,:,1].to(bool) | self.ttgen_mask_tensor[:,:,:,:,2].to(bool)) & self.wb_mask_tensor.to(bool),:]

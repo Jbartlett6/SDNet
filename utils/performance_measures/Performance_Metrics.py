@@ -113,18 +113,27 @@ class ModelPerformance():
             shutil.rmtree(self.fixel_directory)
 
         os.system('fod2fixel -force -afd afd.nii.gz -peak_amp peak_amp.nii.gz ' + f"\'{self.inf_fod}\'" + ' ' + f"\'{self.fixel_directory}\'")
-        
+
+        #Converting the index file from .mif to .nifti
         if os.path.exists(self.index_nifti) == False:
             os.system('mrconvert ' + f"\'{self.index_mif}\'" + ' ' + f"\'{self.index_nifti}\'")
-        
+
         #Removing the uneccessary index.mif file
         if os.path.exists(self.index_mif):
             os.remove(self.index_mif)
+        
 
         #Creating the afd and peak amplitude images.
         #Calculating the scalar fixel based analysis comparisons
         os.system('fixel2voxel -force -number 11 ' + f"\'{self.afd_path}\'" + ' none ' + f"\'{self.afd_im_path}\'")
         os.system('fixel2voxel -force -number 11 ' + f"\'{self.peak_amp_path}\'" + ' none ' + f"\'{self.peak_amp_im_path}\'")
+
+        
+
+    def allsub_fixels(self):
+        for i, subject in enumerate(self.subject_list):
+            self.init_subject_paths(subject)
+            self.create_subject_fixels()
     
     def check_wm_mask(self):
         '''
@@ -425,19 +434,6 @@ class ModelPerformance():
         if os.path.exists(self.gt_pa_im_path) == False:
             os.system(f'mrconvert {self.gt_pa_im_path_mif} {self.gt_pa_im_path}')
 
-      
-    def calc_all_performance(self):
-        '''
-        This function calculates, and updates all of the perfromance metrics to be stored in the CSV files in the performance metrics folder.
-        The number of subjects and which ROIs are dictated by the self.ROI_names and self.subject_list attributes defined in self.__init__().
-        '''
-        self.allsub_preprocessing()
-        self.calc_allsub_acc()
-        self.calc_allsub_AFDE()
-        self.calc_allsub_PAE()
-        self.calc_allsub_SSE()
-        self.calc_allsub_fix_err()
-
     def allsub_preprocessing(self):
         '''
         Performs the neccessaary preprocessing steps for all subjects, making sure all necessary images exist
@@ -450,12 +446,17 @@ class ModelPerformance():
             self.create_subject_fixels()
             self.check_wm_mask()
             self.check_gt_fix_img()
-        
 
-# model_inference_dir = '/home/jxb1336/code/Project_1: HARDI_Recon/FOD-REG_NET/CSDNet_dir/checkpoints/test_tmp/inference'        
-# test_model_performance = ModelPerformance(model_inference_dir)
-# # test_model_performance.init_subject_paths('581450')
-# # test_model_performance.create_subject_fixels()
-
-
-# test_model_performance.calc_all_performance()
+      
+    def calc_all_performance(self):
+        '''
+        This function calculates, and updates all of the perfromance metrics to be stored in the CSV files in the performance metrics folder.
+        The number of subjects and which ROIs are dictated by the self.ROI_names and self.subject_list attributes defined in self.__init__().
+        '''
+        self.allsub_fixels()
+        self.allsub_preprocessing()
+        self.calc_allsub_acc()
+        self.calc_allsub_AFDE()
+        self.calc_allsub_PAE()
+        self.calc_allsub_SSE()
+        self.calc_allsub_fix_err()

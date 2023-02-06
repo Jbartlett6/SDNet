@@ -22,6 +22,7 @@ if __name__ == '__main__':
                     '318637',
                     '581450']
 
+
     experiment_name = 'test_tmp'
     inference_path = os.path.join('.','checkpoints',experiment_name,'inference')
     data_dir = '/media/duanj/F/joe/hcp_2'

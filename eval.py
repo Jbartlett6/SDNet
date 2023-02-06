@@ -22,9 +22,9 @@ if __name__ == '__main__':
     opts = options.network_options()
     print(opts.__dict__)
     print('arguments loaded')
-    setattr(opts,'experiment_name', 'final_model_classification_loss_1')
+    setattr(opts,'experiment_name', 'test_tmp_2')
     setattr(opts, 'inference', True)
-    setattr(opts, 'perform_inference', True)
+    setattr(opts, 'perform_inference', False)
 
 
     file_dir = opts.experiment_name

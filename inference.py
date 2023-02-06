@@ -29,9 +29,9 @@ def per_subject_inference(subject, opts, data):
     print('Loading options')
     opts = options.network_options()
     print(opts.__dict__)
-    setattr(opts,'experiment_name', 'final_model_classification_loss_1')
+    setattr(opts,'experiment_name', 'test_tmp_2')
     setattr(opts, 'inference', True)
-    setattr(opts, 'perform_inference', True)
+    setattr(opts, 'perform_inference', False)
 
 
     #Setting the paths to be used.

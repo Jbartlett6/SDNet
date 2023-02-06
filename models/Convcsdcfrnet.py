@@ -20,7 +20,7 @@ class CSDNet(nn.Module):
         self.init_dc_params()
 
         #Not currently used (needs tidying).
-        self.sampling_directions = torch.load(os.path.join('utils/300_predefined_directions.pt'))
+        self.sampling_directions = torch.load(os.path.join('utils/metadata/300_predefined_directions.pt'))
         self.order = 8 
         P = util.construct_sh_basis(self.sampling_directions, self.order)
         P_temp = torch.zeros((300,2))

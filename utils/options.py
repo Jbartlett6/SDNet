@@ -10,32 +10,37 @@ import torch
 
 class network_options():
     def __init__(self):
+        #Optimisation 
         self.lr = 1e-4
-        self.batch_size = 128
-        self.epochs = 10
         self.warmup_factor = 1
-
+        self.batch_size = 256
+        self.epochs = 1000
+        
         #Data consistency related hyperparameters
-        self.neg_reg = (0.7/0.1875)*0.25
         self.deep_reg = 0.25
-        self.dc_type = 'FOD_sig' #'CSD' or 'FOD_sig'
-        self.alpha = 150
         self.learn_lambda = True
-        self.fixel_lambda = (0.45/(140))
+        self.fixel_lambda = 0.000160
+        #self.fixel_lambda = 0
 
-        self.loss_type = 'sig'
-        self.init_type = 'orthogonal' #{'normal', 'xavier', 'kaiming', 'orthogonal'}
+        #Initialisation Parameters
+        self.init_type = None #{'normal', 'xavier', 'kaiming', 'orthogonal'}
         self.activation = 'prelu' #{'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
 
+        #Early Stopping Parameters
         self.early_stopping = False
-        self.early_stopping_threshold = inf
+        self.early_stopping_threshold = 0
+
+        #Checkpoint and model parameters
         self.continue_training = True
         self.experiment_name = 'test_tmp'
+        self.model_name = 'best_model.pth'
 
         #Computation related hyperparameters:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.train_workers = 16
         self.val_workers = 16
+        
+        #Data related hyperparameters
         self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp'
         self.train_subject_list = ['100206',
                     '100307',
@@ -44,6 +49,7 @@ class network_options():
                     '101006',
                     '101107',
                     '101309',
+                    '101410',
                     '101915',
                     '102311',
                     '102513',
@@ -61,24 +67,20 @@ class network_options():
                     '104416',
                     '104820']
 
-        self.test_subject_list = ['130821',
-                    '145127',
+        self.test_subject_list = ['145127',
                     '147737',
                     '174437',
                     '178849',
                     '318637',
-                    '581450']
+                    '581450',
+                    '130821']
 
-        #self.test_subject_list = ['102311']
+        self.dataset_type = 'all' #{'all', 'experiment'}
         
-        self.dataset_type = 'all'
-        self.model_name = 'best_model.pth'
-        self.network_width = 'normal'
-        self.inference=True
-        self.perform_inference=True
-        self.dwi_number = 30
-        self.dwi_folder_name = 'undersampled_fod'
-        self.scanner_type = '3T'
+        
+        self.inference=False
+        self.perform_inference=False
+        
         
         self.output_net = False
 
@@ -111,7 +113,6 @@ class network_options():
 
         #Network Specific Options:
         parser.add_argument('--model_name', type=str, help = 'The path at which the model is saved')
-        parser.add_argument('--network_width', type=str, help = 'The path at which the model is saved')
 
 
         #Config/Saving Arguments:

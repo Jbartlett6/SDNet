@@ -86,9 +86,7 @@ class InferenceClass():
                 if i%20 == 19:
                     print(i*256, '/', self.dataset_length)
 
-                
-                with torch.no_grad():
-                    out[coords[:,1], coords[:,2], coords[:,3], :] = self.net(signal_data, AQ).squeeze()
+                out[coords[:,1], coords[:,2], coords[:,3], :] = self.net(signal_data, AQ).squeeze()
 
         self.FOD = out
 

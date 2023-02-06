@@ -5,13 +5,13 @@ import pandas as pd
 import shutil
     
 class ModelPerformance():
-    def __init__(self, model_inference_dir):
+    def __init__(self,data_dir, model_inference_dir,subject_list):
         '''
         Initialise general paths and other general attributes for the class
         '''
         self.model_inference_dir = model_inference_dir
-        self.data_dir = '/media/duanj/F/joe/hcp_2'
-        self.subject_list = ['130821', '581450', '145127']
+        self.data_dir = data_dir
+        self.subject_list = subject_list
         self.ROI_names = ['wm','ROI1','ROI2','ROI3', 'ROI4', 'ROI5', 'ROI6']
         
 
@@ -452,10 +452,10 @@ class ModelPerformance():
             self.check_gt_fix_img()
         
 
-model_inference_dir = '/home/jxb1336/code/Project_1: HARDI_Recon/FOD-REG_NET/CSDNet_dir/checkpoints/test_tmp/inference'        
-test_model_performance = ModelPerformance(model_inference_dir)
-# test_model_performance.init_subject_paths('581450')
-# test_model_performance.create_subject_fixels()
+# model_inference_dir = '/home/jxb1336/code/Project_1: HARDI_Recon/FOD-REG_NET/CSDNet_dir/checkpoints/test_tmp/inference'        
+# test_model_performance = ModelPerformance(model_inference_dir)
+# # test_model_performance.init_subject_paths('581450')
+# # test_model_performance.create_subject_fixels()
 
 
-test_model_performance.calc_all_performance()
+# test_model_performance.calc_all_performance()

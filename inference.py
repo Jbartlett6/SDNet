@@ -23,10 +23,10 @@ import Convcsdnet
 import Convcsdcfrnet
 
 class InferenceClass():
-    def __init__(self):
-        self.experiment_name = 'test_tmp'
-        self.model_name = 'best_model.pth'
-        self.data_dir = '/media/duanj/F/joe/hcp_2'
+    def __init__(self, data_dir, model_name, experiment_name):
+        self.experiment_name = experiment_name
+        self.model_name = model_name
+        self.data_dir = data_dir
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     def set_paths(self):
@@ -80,18 +80,18 @@ class InferenceClass():
         out = F.pad(torch.zeros((145,174,145,47)),(0,0,5,5,5,5,5,5), mode='constant').to(self.device)
         
         
-        # with torch.no_grad():
-        #     print('Performing the inference loop')
-        #     for i , data in enumerate(self.dataloader):
-        #         signal_data, _, AQ, _,coords = data
-        #         signal_data, AQ, coords = signal_data.to(self.device), AQ.to(self.device), coords.to(self.device)
+        with torch.no_grad():
+            print('Performing the inference loop')
+            for i , data in enumerate(self.dataloader):
+                signal_data, _, AQ, _,coords = data
+                signal_data, AQ, coords = signal_data.to(self.device), AQ.to(self.device), coords.to(self.device)
                 
-        #         if i%20 == 19:
-        #             print(i*256, '/', self.dataset_length)
+                if i%20 == 19:
+                    print(i*256, '/', self.dataset_length)
 
                 
-        #         with torch.no_grad():
-        #             out[coords[:,1], coords[:,2], coords[:,3], :] = self.net(signal_data, AQ).squeeze()
+                with torch.no_grad():
+                    out[coords[:,1], coords[:,2], coords[:,3], :] = self.net(signal_data, AQ).squeeze()
 
         self.FOD = out
 
@@ -190,5 +190,5 @@ def per_subject_inference(subject, opts, data):
 
     #os.system('bash /home/jxb1336/code/postproc_funcs/ACC.sh'+ ' ' + str(args.save_path) + ' ' + str(gt_path))
 
-inf_obj = InferenceClass()
-inf_obj.run_seq('130821')
+# inf_obj = InferenceClass()
+# inf_obj.run_seq('130821')

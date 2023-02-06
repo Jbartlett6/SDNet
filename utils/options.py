@@ -25,7 +25,7 @@ class network_options():
 
         self.loss_type = 'sig'
         self.init_type = 'orthogonal' #{'normal', 'xavier', 'kaiming', 'orthogonal'}
-        self.activation = 'relu' #{'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
+        self.activation = 'prelu' #{'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
 
         self.early_stopping = False
         self.early_stopping_threshold = inf
@@ -80,6 +80,8 @@ class network_options():
         self.dwi_folder_name = 'undersampled_fod'
         self.scanner_type = '3T'
         
+        self.output_net = False
+
         #self.option_init()
         
         # if self.continue_training or self.inference:

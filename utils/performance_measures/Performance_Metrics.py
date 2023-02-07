@@ -12,7 +12,7 @@ class ModelPerformance():
         self.model_inference_dir = model_inference_dir
         self.data_dir = data_dir
         self.subject_list = subject_list
-        self.ROI_names = ['wm','ROI1','ROI2','ROI3', 'ROI4', 'ROI5', 'ROI6']
+        self.ROI_names = ['Subject','wm','ROI1','ROI2','ROI3', 'ROI4', 'ROI5', 'ROI6']
         
 
         #Initialising the Directories where the data is going to be stored. 
@@ -23,6 +23,8 @@ class ModelPerformance():
         '''
         For an individual subject update all of the subject specific paths paths.
         '''
+        self.current_subject = subject
+
         #General Directories
         self.inf_dir = os.path.join(self.model_inference_dir,subject)
         self.gt_diffusion_dir = os.path.join(self.data_dir, subject, 'T1w', 'Diffusion')
@@ -73,13 +75,28 @@ class ModelPerformance():
         '''
         Initialising the CSV paths which will be used to store each of the individual performance metrics.
         '''
-        self.AFDE_csv_path = os.path.join(self.performance_metric_dir, 'AFDE.csv')
-        self.PAE_csv_path = os.path.join(self.performance_metric_dir, 'PAE.csv')
-        self.MAE_csv_path = os.path.join(self.performance_metric_dir, 'MAE.csv')
+        self.AFDE_mean_csv_path = os.path.join(self.performance_metric_dir, 'AFDE_mean.csv')
+        self.AFDE_median_csv_path = os.path.join(self.performance_metric_dir, 'AFDE_median.csv')
+        self.AFDE_std_csv_path = os.path.join(self.performance_metric_dir, 'AFDE_std.csv')
+
+        self.PAE_mean_csv_path = os.path.join(self.performance_metric_dir, 'PAE_mean.csv')
+        self.PAE_median_csv_path = os.path.join(self.performance_metric_dir, 'PAE_median.csv')
+        self.PAE_std_csv_path = os.path.join(self.performance_metric_dir, 'PAE_std.csv')
+        
+        self.MAE_mean_csv_path = os.path.join(self.performance_metric_dir, 'MAE_mean.csv')
+        self.MAE_median_csv_path = os.path.join(self.performance_metric_dir, 'MAE_median.csv')
+        self.MAE_std_csv_path = os.path.join(self.performance_metric_dir, 'MAE_std.csv')
+
         self.fixel_accuracy_csv_path = os.path.join(self.performance_metric_dir, 'Fixel_Accuracy.csv')
 
-        self.SSE_csv_path = os.path.join(self.performance_metric_dir, 'SSE.csv')
-        self.ACC_csv_path = os.path.join(self.performance_metric_dir, 'ACC.csv')
+        self.SSE_mean_csv_path = os.path.join(self.performance_metric_dir, 'SSE_mean.csv')
+        self.SSE_median_csv_path = os.path.join(self.performance_metric_dir, 'SSE_median.csv')
+        self.SSE_std_csv_path = os.path.join(self.performance_metric_dir, 'SSE_std.csv')
+        
+        #ACC CSVs
+        self.ACC_mean_csv_path = os.path.join(self.performance_metric_dir, 'ACC_mean.csv')
+        self.ACC_median_csv_path = os.path.join(self.performance_metric_dir, 'ACC_median.csv')
+        self.ACC_std_csv_path = os.path.join(self.performance_metric_dir, 'ACC_std.csv')
 
     def init_fixel_paths(self):
         '''
@@ -128,8 +145,6 @@ class ModelPerformance():
         os.system('fixel2voxel -force -number 11 ' + f"\'{self.afd_path}\'" + ' none ' + f"\'{self.afd_im_path}\'")
         os.system('fixel2voxel -force -number 11 ' + f"\'{self.peak_amp_path}\'" + ' none ' + f"\'{self.peak_amp_im_path}\'")
 
-        
-
     def allsub_fixels(self):
         for i, subject in enumerate(self.subject_list):
             self.init_subject_paths(subject)
@@ -167,19 +182,29 @@ class ModelPerformance():
         '''
         afde_nifti = nib.load(self.afde_path)
         afde_np = np.array(afde_nifti.dataobj)
-        afde_ROIs = []
+
+        afde_mean_ROIs = [self.current_subject]
+        afde_median_ROIs = [self.current_subject]
+        afde_std_ROIs = [self.current_subject]
+        
         for mask_path in self.masks_list:
             mask_np = self.load_mask(mask_path)
-            afde_ROIs.append(np.mean(afde_np[mask_np[:,:,:] > 0.5]))
+            
+            afde_mean_ROIs.append(np.mean(afde_np[mask_np[:,:,:] >= 0.5]))
+            afde_median_ROIs.append(np.median(afde_np[mask_np[:,:,:] >= 0.5]))
+            afde_std_ROIs.append(np.std(afde_np[mask_np[:,:,:] >= 0.5]))
 
-        return afde_ROIs
+        return afde_mean_ROIs, afde_median_ROIs, afde_std_ROIs 
 
     def calc_allsub_AFDE(self):
         '''
         For all subjects in self.subject list this method calculates the average AFDE over all regions of interest, 
         saves them in the CSV file.
         '''
-        AFDE_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+        AFDE_mean_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+        AFDE_median_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+        AFDE_std_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+        
         for i, subject in enumerate(self.subject_list):
             
             self.init_subject_paths(subject)
@@ -187,10 +212,18 @@ class ModelPerformance():
             if os.path.exists(self.afde_path) == False:
                 self.calc_afde_image()
             #Calculate the AFDE for the ROI averages and add them to the array.    
-            AFDE_array[i,:] = self.afde_ROI_averages()
+            AFDE_mean_array[i,:], AFDE_median_array[i,:], AFDE_std_array[i,:]  = self.afde_ROI_averages()
 
-        AFDE_df = pd.DataFrame(AFDE_array, columns=self.ROI_names)
-        AFDE_df.to_csv(self.AFDE_csv_path, sep = ',')
+        AFDE_mean_df = pd.DataFrame(AFDE_mean_array, columns=self.ROI_names)
+        AFDE_mean_df[['Subject']] = AFDE_mean_df[['Subject']].astype(int) 
+        AFDE_median_df = pd.DataFrame(AFDE_median_array, columns=self.ROI_names)
+        AFDE_median_df[['Subject']] = AFDE_median_df[['Subject']].astype(int)
+        AFDE_std_df = pd.DataFrame(AFDE_std_array, columns=self.ROI_names)
+        AFDE_std_df[['Subject']] = AFDE_std_df[['Subject']].astype(int)
+        
+        AFDE_mean_df.to_csv(self.AFDE_mean_csv_path, sep = ',')
+        AFDE_median_df.to_csv(self.AFDE_median_csv_path, sep = ',')
+        AFDE_std_df.to_csv(self.AFDE_std_csv_path, sep = ',')
     ###PAE functions###
     def calc_pae_image(self):
         '''
@@ -213,19 +246,30 @@ class ModelPerformance():
         '''
         pae_nifti = nib.load(self.pae_path)
         pae_np = np.array(pae_nifti.dataobj)
-        pae_ROIs = []
+        
+        pae_mean_ROIs = [self.current_subject]
+        pae_median_ROIs = [self.current_subject]
+        pae_std_ROIs = [self.current_subject]
+
         for mask_path in self.masks_list:
             mask_np = self.load_mask(mask_path)
-            pae_ROIs.append(np.mean(pae_np[mask_np == 1]))
+            
+            pae_mean_ROIs.append(np.mean(pae_np[mask_np >= 0.5]))
+            pae_median_ROIs.append(np.median(pae_np[mask_np >= 0.5]))
+            pae_std_ROIs.append(np.std(pae_np[mask_np >= 0.5]))
 
-        return pae_ROIs
+        return pae_mean_ROIs, pae_median_ROIs, pae_std_ROIs 
     
     def calc_allsub_PAE(self):
         '''
         For all subjects in self.subject list this method calculates the average AFDE over all regions of interest, 
         saves them in the CSV file.
         '''
-        PAE_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+        
+        PAE_mean_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+        PAE_median_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+        PAE_std_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+
         for i, subject in enumerate(self.subject_list):
             
             self.init_subject_paths(subject)
@@ -233,10 +277,19 @@ class ModelPerformance():
             if os.path.exists(self.pae_path) == False:
                 self.calc_pae_image()
             #Calculate the AFDE for the ROI averages and add them to the array.    
-            PAE_array[i,:] = self.pae_ROI_averages()
+            PAE_mean_array[i,:], PAE_median_array[i,:], PAE_std_array[i,:] = self.pae_ROI_averages()
 
-        PAE_df = pd.DataFrame(PAE_array, columns=self.ROI_names)
-        PAE_df.to_csv(self.PAE_csv_path, sep = ',')
+        PAE_mean_df = pd.DataFrame(PAE_mean_array, columns=self.ROI_names)
+        PAE_mean_df[['Subject']] = PAE_mean_df[['Subject']].astype(int)
+        PAE_median_df = pd.DataFrame(PAE_median_array, columns=self.ROI_names)
+        PAE_median_df[['Subject']] = PAE_median_df[['Subject']].astype(int)
+        PAE_std_df = pd.DataFrame(PAE_std_array, columns=self.ROI_names)
+        PAE_std_df[['Subject']] = PAE_std_df[['Subject']].astype(int)
+
+
+        PAE_mean_df.to_csv(self.PAE_mean_csv_path, sep = ',')
+        PAE_median_df.to_csv(self.PAE_median_csv_path, sep = ',')
+        PAE_std_df.to_csv(self.PAE_std_csv_path, sep = ',')
     ###SSE functions###
     def calc_sse_image(self):
         '''
@@ -260,19 +313,29 @@ class ModelPerformance():
         '''
         sse_nifti = nib.load(self.sse_path)
         sse_np = np.array(sse_nifti.dataobj)
-        sse_ROIs = []
+
+        sse_mean_ROIs = [self.current_subject]
+        sse_median_ROIs = [self.current_subject]
+        sse_std_ROIs = [self.current_subject]
+
         for mask_path in self.masks_list:
             mask_np = self.load_mask(mask_path)
-            sse_ROIs.append(np.mean(sse_np[mask_np == 1]))
+            
+            sse_mean_ROIs.append(np.mean(sse_np[mask_np >= 0.5]))
+            sse_median_ROIs.append(np.median(sse_np[mask_np >= 0.5]))
+            sse_std_ROIs.append(np.std(sse_np[mask_np >= 0.5]))
 
-        return sse_ROIs
+        return sse_mean_ROIs, sse_median_ROIs, sse_std_ROIs
     
     def calc_allsub_SSE(self):
         '''
         For all subjects in self.subject list this method calculates the average AFDE over all regions of interest, 
         saves them in the CSV file.
         '''
-        SSE_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+        SSE_mean_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+        SSE_median_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+        SSE_std_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+        
         for i, subject in enumerate(self.subject_list):
             
             self.init_subject_paths(subject)
@@ -280,10 +343,18 @@ class ModelPerformance():
             if os.path.exists(self.sse_path) == False:
                 self.calc_sse_image()
             #Calculate the AFDE for the ROI averages and add them to the array.    
-            SSE_array[i,:] = self.sse_ROI_averages()
+            SSE_mean_array[i,:], SSE_median_array[i,:], SSE_std_array[i,:] = self.sse_ROI_averages()
 
-        SSE_df = pd.DataFrame(SSE_array, columns=self.ROI_names)
-        SSE_df.to_csv(self.SSE_csv_path, sep = ',')
+        SSE_mean_df = pd.DataFrame(SSE_mean_array, columns=self.ROI_names)
+        SSE_mean_df[['Subject']] = SSE_mean_df[['Subject']].astype(int) 
+        SSE_median_df = pd.DataFrame(SSE_median_array, columns=self.ROI_names)
+        SSE_median_df[['Subject']] = SSE_median_df[['Subject']].astype(int) 
+        SSE_std_df = pd.DataFrame(SSE_std_array, columns=self.ROI_names)
+        SSE_std_df[['Subject']] = SSE_std_df[['Subject']].astype(int) 
+
+        SSE_mean_df.to_csv(self.SSE_mean_csv_path, sep = ',')
+        SSE_median_df.to_csv(self.SSE_median_csv_path, sep = ',')
+        SSE_std_df.to_csv(self.SSE_std_csv_path, sep = ',')
     
     ###ACC functions###
     def calc_acc_image(self):
@@ -318,19 +389,29 @@ class ModelPerformance():
         acc_nifti = nib.load(self.acc_path)
         acc_np = np.array(acc_nifti.dataobj)
 
-        acc_ROIs = []
+        acc_mean_ROIs = [self.current_subject]
+        acc_median_ROIs = [self.current_subject]
+        acc_std_ROIs = [self.current_subject]
+
         for mask_path in self.masks_list:
             mask_np = self.load_mask(mask_path)
-            acc_ROIs.append(np.nanmean(acc_np[mask_np[:,:,:] >= 0.5]))
-        
-        return acc_ROIs
+            
+            acc_mean_ROIs.append(np.nanmean(acc_np[mask_np[:,:,:] >= 0.5]))
+            acc_median_ROIs.append(np.nanmedian(acc_np[mask_np[:,:,:] >= 0.5]))
+            acc_std_ROIs.append(np.nanstd(acc_np[mask_np[:,:,:] >= 0.5]))
+        return acc_mean_ROIs, acc_median_ROIs, acc_std_ROIs
 
     def calc_allsub_acc(self):
         '''
         For all subjects in self.subject list this method calculates the average ACC over all regions of interest, 
         saves them in the CSV file.
         '''
-        ACC_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+        #Creating the arrays to store the results in
+        ACC_mean_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+        ACC_median_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+        ACC_std_array = np.zeros((len(self.subject_list), len(self.ROI_names)))
+
+
         for i, subject in enumerate(self.subject_list):
             self.init_subject_paths(subject)
             #Only need to check wm mask once in the first case of it being used
@@ -340,10 +421,20 @@ class ModelPerformance():
             if os.path.exists(self.acc_path) == False:
                 self.calc_acc_image()
             #Calculate the AFDE for the ROI averages and add them to the array.    
-            ACC_array[i,:] = self.acc_ROI_averages()
+            ACC_mean_array[i,:], ACC_median_array[i,:], ACC_std_array[i,:] = self.acc_ROI_averages()
 
-        ACC_df = pd.DataFrame(ACC_array, columns=self.ROI_names)
-        ACC_df.to_csv(self.ACC_csv_path, sep = ',')
+        #Converting the result arrays to dataframes to be stored as CSVs
+        ACC_mean_df = pd.DataFrame(ACC_mean_array, columns=self.ROI_names)
+        ACC_mean_df[['Subject']] = ACC_mean_df[['Subject']].astype(int) 
+        ACC_median_df = pd.DataFrame(ACC_median_array, columns=self.ROI_names)
+        ACC_median_df[['Subject']] = ACC_median_df[['Subject']].astype(int) 
+        ACC_std_df = pd.DataFrame(ACC_std_array, columns=self.ROI_names)
+        ACC_std_df[['Subject']] = ACC_std_df[['Subject']].astype(int) 
+        
+        
+        ACC_mean_df.to_csv(self.ACC_mean_csv_path, sep = ',')
+        ACC_median_df.to_csv(self.ACC_median_csv_path, sep = ',')
+        ACC_std_df.to_csv(self.ACC_std_csv_path, sep = ',')
 
     ###Fixel Accuracy functions ###
     def calc_fix_err_image(self):
@@ -373,7 +464,9 @@ class ModelPerformance():
         '''
         fix_err_nifti = nib.load(self.fix_err_path)
         fix_err_np = np.array(fix_err_nifti.dataobj)
-        fix_err_ROIs = []
+
+        fix_err_ROIs = [self.current_subject]
+        
         for mask_path in self.masks_list:
             mask_np = self.load_mask(mask_path)
             
@@ -400,6 +493,7 @@ class ModelPerformance():
             fix_err_array[i,:] = self.fix_err_ROI_averages()
 
             fix_err_df = pd.DataFrame(fix_err_array, columns=self.ROI_names)
+            fix_err_df[['Subject']] = fix_err_df[['Subject']].astype(int) 
             fix_err_df.to_csv(self.fixel_accuracy_csv_path, sep = ',')
     
     def load_mask(self, mask_path):

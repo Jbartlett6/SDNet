@@ -1,4 +1,8 @@
 # CSDNet
+![alt text]([https://github.com/[username]/[reponame]/blob/[branch]/image.jpg](https://github.com/Jbartlett6/CSDNet/blob/master/SDNet%20(2).jpg)?raw=true)
+
+
+
 The directory the code comes in is named CSDNet_dir, and will have the following structure:
 ```bash
 .

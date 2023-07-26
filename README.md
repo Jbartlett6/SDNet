@@ -72,8 +72,10 @@ The network is designed to be trained on the WU-MINN human connectome project da
 ```
 
 ## Network Training
+Prior to network training, ensure the file paths have been set up as above and the options.py script contains the desired network configuration. To train the network run the `train.py` script. 
 
 ## Network Inference
+Prior to using the network for inference, ensure the file paths have been set up as above and the options.py script contains the desired network configuration. To perform inference update the `test_subject_list` attribute in the `options.py` script and run the `eval.py` script.
 
 ## Network Configuration:
-    The network options are set up in a hierarchical manner - the default options are set in the options.py script - it is not recommended that the user interacts with this file and instead uses the two other methods to change the network options. The first method is to use the comman line options - each option can be input to the train or test script as a command line option. A config file/path can also be input to the script as an option, which can then have the options formatted as a yaml file - see the documentation for more details. Due to the nature of the nesting any options specified in the config file will overwrite the options input via the command line, and the command line overwrites any options already in the options script. Note that the white space needs to be considered when inputting lists. 
+Network configuration is performed by changing the attributes in `options.py`; documentation is included in the form of comments in this script. 

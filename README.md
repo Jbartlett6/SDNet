@@ -11,25 +11,25 @@ Figure 1 **SDNet achitecture**
 ## File Structure
 The directory the code comes in is named CSDNet_dir, and will have the following structure:
 ```bash
-.
-├── data.py
-├── util.py
-└── inference checkpoints
-    └── experiment_name
-        └── inference
-        └── runs
-        └── model_saves
-└── models
-    └── csdnet
-└── model_app
-    ├── inference.py
-    └── train.py
+SDNet_dir
+    └── data.py
+    └── util.py
+    └── inference checkpoints
+        └── experiment_name
+            └── inference
+            └── runs
+            └── model_saves
+    └── models
+        └── csdnet
+    └── model_app
+        ├── inference.py
+        └── train.py
 ```
-The structure of the data directory is as follows for training subject. The data directory contains all of the subjects which you have access to. Which of these subjects are used for training, validation and testing is then determined by lists which are input into the script/dataset. The subjects in the test set are much the same only with an additional directory 'tractseg' in the Diffusion folder which is used for evaluation in certain white matter tracts. 
+The network is designed to be trained on the WU-MINN human connectome project dataset, as a consequence the data directory is designed to be similar to the HCP data when downloaded. The main data directory, named hcp in this case, subjects labeled as per the HCP. The file path of this directory should be specified in options.py under the attribute `data_dir`. To specify the subjects in `data_dir` to be used for training, validation and testing adjust the `train_subject_list`, `val_subject_list`, and `test_subject_list` attributes.
 
 ```bash
 .
-└── data_directory
+└── hcp
     └── subject
         └── T1w
             └── T1w_acpc_dc_restore_1.25.nii.gz
@@ -64,7 +64,11 @@ The structure of the data directory is as follows for training subject. The data
                     └── csf.nii.gz
                     └── gm.nii.gz
                     └── wm.nii.gz
-                └── tractseg (Only necessary for test subjects)    
+                └── tractseg *
+                    └── peaks.nii.gz *
+                    └── bundle_segmentations *
+                        └── ** bundle_segmnetation_masks **
+                    
 ```
 
 ## Network Training

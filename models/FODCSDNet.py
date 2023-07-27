@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import time
 import numpy as np
 import util 
-import data
+import utils.data as data
 
 class ceblock(nn.Module):
     def __init__(self, num_coeff):

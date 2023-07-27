@@ -5,7 +5,7 @@ sys.path.append(os.path.join(sys.path[0],'utils'))
 import util
 import torch 
 import matplotlib.pyplot as plt 
-import data
+import utils.data as data
 import options
 #import FODCSDNet as csdnet
 import Convcsdnet

@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import time
 import numpy as np
 import util 
-import data
+import utils.data as data
 
 class FCCascadeLayer(nn.Module):
     """Cascade Layer"""

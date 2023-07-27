@@ -18,7 +18,7 @@ import time
 import numpy as np
 import argparse
 import csdnet
-import data
+import utils.data as data
 import Convcsdnet
 import Convcsdcfrnet
 

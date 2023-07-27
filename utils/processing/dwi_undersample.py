@@ -10,7 +10,7 @@ import random
 import numpy as np
 import sys 
 import argparse
-import data
+import utils.data as data
 import argparse
 
 class UndersampleDataset(torch.utils.data.Dataset):

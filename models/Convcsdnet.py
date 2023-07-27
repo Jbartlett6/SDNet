@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import time
 import numpy as np
 import util 
-import data
+import utils.data as data
 
 class ConvCascadeLayer(nn.Module):
     """Cascade Layer"""

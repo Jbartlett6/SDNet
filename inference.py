@@ -23,11 +23,12 @@ import Convcsdnet
 import Convcsdcfrnet
 
 class InferenceClass():
-    def __init__(self, data_dir, model_name, experiment_name):
+    def __init__(self, data_dir, model_name, experiment_name, opts):
         self.experiment_name = experiment_name
         self.model_name = model_name
         self.data_dir = data_dir
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.opts = opts
 
     def set_paths(self):
         #Setting the paths to be used.
@@ -64,7 +65,7 @@ class InferenceClass():
         print('Initialising the inference dataset and dataloader')
         inf_tmp = [subject]
         
-        dataset =  data.DWIPatchDataset(self.data_dir, inf_tmp, True, False)
+        dataset =  data.DWIPatchDataset(self.data_dir, inf_tmp, True, False, self.opts)
         self.dataset_length = len(dataset)
         self.dataset_affine = dataset.aff
 

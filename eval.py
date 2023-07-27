@@ -15,15 +15,14 @@ if __name__ == '__main__':
     # Loading Network Options
     opts = options.network_options()
 
-
     inference_path = os.path.join('.','checkpoints',opts.experiment_name,'inference')
 
     #Include all measures of accuracy in this loop and save them to the appropriate destination
-    inf_obj = inference.InferenceClass(opts.data_dir, 'best_model.pth', opts.experiment_name)
-    model_performance = PM.ModelPerformance(opts.data_dir, inference_path, opts.test_subject_list)
+    inf_obj = inference.InferenceClass(opts.data_dir, 'best_model.pth', opts.experiment_name, opts)
+    # model_performance = PM.ModelPerformance(opts.data_dir, inference_path, opts.test_subject_list)
 
     for subj in opts.test_subject_list:
         print('Performing inference for subject: '+subj)
         inf_obj.run_seq(subj)
     
-    model_performance.calc_all_performance()
+    # model_performance.calc_all_performance()

@@ -69,7 +69,7 @@ class network_options():
                     # '104416',
                     # '104820']
 
-        self.test_subject_list = ['145127']
+        self.test_subject_list = ['145127', '147737']
                     # '147737',
                     # '174437',
                     # '178849',

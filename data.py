@@ -16,9 +16,27 @@ import h5py
 
 class DWIPatchDataset(torch.utils.data.Dataset):
     '''
-    Description:    A dataset class for the purpose of FOD reconstruction. This class
-                    is used to load the data into RAM.  The data must be in the same format as 
-                    outlined in the repository. 
+    Description:    
+                - A dataset class for the purpose of FOD reconstruction. This class
+                is used to load the data into RAM.  The data must be in the same format as 
+                outlined in the repository. 
+    Methods:
+                __init__                    - Initialising the parameters of the dataset. Some of this method 
+                                            involves setting the options which will be used later in the data-set, 
+                                            such as data paths and sizes, majority of work is done in init_data_tensors
+                                            which loads the data into RAM.
+                __len__                     - The number of coords in self.coords. 
+                __getitem__                 - Retrieves item by using co-ords to convert idx to indices. 
+                init_data_tensors           - Method to load the data into RAM
+                load_input_signal           - Loads the input DWI signals into RAM
+                load_gt_fixel               - Loads the target fiel values (calculated in MRtrix3) into RAM
+                load_gt_fod                 - Loads the ground truth target FODs into RAM
+                load_brain_masks            - Loads the 5ttgen and whole brain masks into RAM
+                load_convolution_matricies  - Loads the convolution matrices - these componenets are needed for DWI cosnsitency layers.
+                load_coords                 - The co-ordinates (with respect to the whole dataset) of voxels which will be loaded by 
+                                            the dataset. Depending on whether the dataset is being used for training or inference these 
+                                            will be the co-ordinates of voxels in wm and gm only or the whole brain. 
+
     '''
     def __init__(self, data_dir, subject_list, inference, training_voxels, opts):
         
@@ -28,13 +46,6 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         self.inference = inference
         self.training_voxels = training_voxels
         self.opts = opts
-
-        # #Setting parameters for loading in the data
-        # self.diffusion_dir = 'Diffusion'
-        # self.shell_number = 4
-        # self.data_file = 'normalised_data.nii.gz'
-        # self.dwi_number = 30
-        # self.dwi_folder_name = 'undersampled_fod'
         
         #Setting the padding tensor for the image - key if the brain mask is less than 9 voxels away from the edge of the image.
         self.spatial_resolution = [len(subject_list),145,174,145]

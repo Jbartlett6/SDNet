@@ -13,8 +13,10 @@ class network_options():
         #Optimisation 
         self.lr = 1e-4
         self.warmup_factor = 1
+        self.warmup_epoch_iter = (0,10000)
         self.batch_size = 256
         self.epochs = 1000
+        self.val_freq = 20
         
         #Data consistency related hyperparameters
         self.deep_reg = 0.25

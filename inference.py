@@ -23,11 +23,10 @@ import Convcsdnet
 import Convcsdcfrnet
 
 class InferenceClass():
-    def __init__(self, data_dir, model_name, experiment_name, opts):
-        self.experiment_name = experiment_name
-        self.model_name = model_name
-        self.data_dir = data_dir
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    def __init__(self, model_name, experiment_name, opts):
+        # self.experiment_name = experiment_name
+        # self.model_name = model_name
+        # self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.opts = opts
 
     def set_paths(self):
@@ -35,12 +34,12 @@ class InferenceClass():
         print('Setting paths')
 
         #Creating the inference directory to save the inferred FODs
-        if os.path.isdir(os.path.join('checkpoints',self.experiment_name, 'inference')) == False:
-            os.mkdir(os.path.join('checkpoints',self.experiment_name, 'inference'))
-        self.save_dir = os.path.join('checkpoints',self.experiment_name, 'inference')
+        if os.path.isdir(os.path.join('checkpoints',self.opts.experiment_name, 'inference')) == False:
+            os.mkdir(os.path.join('checkpoints',self.opts.experiment_name, 'inference'))
+        self.save_dir = os.path.join('checkpoints',self.opts.experiment_name, 'inference')
 
         #Setting the model path name (where the weights of the model are saved)
-        self.model_path = os.path.join('checkpoints', self.experiment_name, 'models', self.model_name)
+        self.model_path = os.path.join('checkpoints', self.opts.experiment_name, 'models', self.opts.model_name)
 
     def print_paths(self):
         print(self.save_dir)
@@ -58,14 +57,14 @@ class InferenceClass():
         net = nn.DataParallel(net)
         net.load_state_dict(torch.load(self.model_path))
 
-        net = net.to(self.device)
+        net = net.to(self.opts.device)
         self.net = net.eval()
 
     def load_data(self,subject):
         print('Initialising the inference dataset and dataloader')
         inf_tmp = [subject]
         
-        dataset =  data.DWIPatchDataset(self.data_dir, inf_tmp, True, False, self.opts)
+        dataset =  data.DWIPatchDataset(inf_tmp, True, False, self.opts)
         self.dataset_length = len(dataset)
         self.dataset_affine = dataset.aff
 
@@ -75,14 +74,14 @@ class InferenceClass():
     def perform_inference(self):
         #Initialising the output
         print('Initialising the output image')
-        out = F.pad(torch.zeros((145,174,145,47)),(0,0,5,5,5,5,5,5), mode='constant').to(self.device)
+        out = F.pad(torch.zeros((145,174,145,47)),(0,0,5,5,5,5,5,5), mode='constant').to(self.opts.device)
         
         
         with torch.no_grad():
             print('Performing the inference loop')
             for i , data in enumerate(self.dataloader):
                 signal_data, _, AQ, _,coords = data
-                signal_data, AQ, coords = signal_data.to(self.device), AQ.to(self.device), coords.to(self.device)
+                signal_data, AQ, coords = signal_data.to(self.opts.device), AQ.to(self.opts.device), coords.to(self.opts.device)
                 
                 if i%20 == 19:
                     print(i*256, '/', self.dataset_length)

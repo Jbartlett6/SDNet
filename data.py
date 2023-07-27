@@ -38,11 +38,10 @@ class DWIPatchDataset(torch.utils.data.Dataset):
                                             will be the co-ordinates of voxels in wm and gm only or the whole brain. 
 
     '''
-    def __init__(self, data_dir, subject_list, inference, training_voxels, opts):
+    def __init__(self, subject_list, inference, training_voxels, opts):
         
         #Initialising the parameters for the dataset class.
         self.subject_list = subject_list
-        self.data_dir = data_dir
         self.inference = inference
         self.training_voxels = training_voxels
         self.opts = opts
@@ -96,7 +95,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
 
         for i, subject in enumerate(self.subject_list):
 
-            path = os.path.join(self.data_dir, subject, 'T1w', self.opts.diffusion_dir, self.opts.dwi_folder_name, self.opts.data_file)
+            path = os.path.join(self.opts.data_dir, subject, 'T1w', self.opts.diffusion_dir, self.opts.dwi_folder_name, self.opts.data_file)
             nifti = nib.load(path)
             self.data_tensor[i,:,:,:,:] = F.pad(torch.tensor(np.array(nifti.dataobj)),self.pad_tens, mode = 'constant')
 
@@ -115,7 +114,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         self.gt_fixel_tensor = F.pad(torch.zeros(self.spatial_resolution), (5,5,5,5,5,5), mode = 'constant')
 
         for i, subject in enumerate(self.subject_list):
-            path = os.path.join(self.data_dir, subject, 'T1w', self.opts.diffusion_dir, 'fixel_directory', 'fixnet_targets', 'gt_threshold_fixels.nii.gz')
+            path = os.path.join(self.opts.data_dir, subject, 'T1w', self.opts.diffusion_dir, 'fixel_directory', 'fixnet_targets', 'gt_threshold_fixels.nii.gz')
             nifti = nib.load(path)
             self.gt_fixel_tensor[i,:,:,:] = F.pad(torch.tensor(np.array(nifti.dataobj).astype(np.uint8)[:,:,:,0]),(5,5,5,5,5,5), mode = 'constant')
 
@@ -128,7 +127,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
 
         for i, subject in enumerate(self.subject_list):
             #Should move the ground truth FOD to outside the undersampled folder to avoid this problem (note that it needs to be the who mrcat gt rather than just wm FOD)
-            path = os.path.join(self.data_dir, subject,'T1w','Diffusion','gt_fod.nii.gz')
+            path = os.path.join(self.opts.data_dir, subject,'T1w','Diffusion','gt_fod.nii.gz')
             nifti = nib.load(path)
             self.gt_tensor[i,:,:,:,:] = F.pad(torch.tensor(np.array(nifti.dataobj)),self.pad_tens, mode = 'constant')
         print(f'The shape of the ground truth tensor is {self.gt_tensor.shape}')
@@ -143,12 +142,12 @@ class DWIPatchDataset(torch.utils.data.Dataset):
 
         for i, subject in enumerate(self.subject_list):
             #Importing the whole brain mask
-            path_wb = os.path.join(self.data_dir,subject,'T1w',self.opts.diffusion_dir,'nodif_brain_mask.nii.gz')
+            path_wb = os.path.join(self.opts.data_dir,subject,'T1w',self.opts.diffusion_dir,'nodif_brain_mask.nii.gz')
             nifti_wb = nib.load(path_wb)
             self.wb_mask_tensor[i,:,:,:] = F.pad(torch.tensor(np.array(nifti_wb.dataobj)),(5,5,5,5,5,5), mode = 'constant')
             
             #Importing the 5ttgen mask
-            path_5ttgen = os.path.join(self.data_dir,subject,'T1w','5ttgen.nii.gz')
+            path_5ttgen = os.path.join(self.opts.data_dir,subject,'T1w','5ttgen.nii.gz')
             nifti_5ttgen = nib.load(path_5ttgen)
             self.ttgen_mask_tensor[i,:,:,:,:] = F.pad(torch.tensor(np.array(nifti_5ttgen.dataobj))[:,:,:,:],self.pad_tens, mode = 'constant')
        
@@ -162,21 +161,21 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         
         for i, subject in enumerate(self.subject_list):
             #Extracting the undersampled b-vectors and b-values:
-            bvecs = util.bvec_extract(self.data_dir, subject, self.opts.diffusion_dir, self.opts.dwi_folder_name)
+            bvecs = util.bvec_extract(self.opts.data_dir, subject, self.opts.diffusion_dir, self.opts.dwi_folder_name)
             bvecs_sph = util.ss_sph_coords(bvecs)
             bvecs_sph[bvecs_sph[:,0]<0,0] = bvecs_sph[bvecs_sph[:,0]<0,0]+2*math.pi
-            bvals = util.bval_extract(self.data_dir, subject, self.opts.diffusion_dir, self.opts.dwi_folder_name)
+            bvals = util.bval_extract(self.opts.data_dir, subject, self.opts.diffusion_dir, self.opts.dwi_folder_name)
             
             #Extracting the ground truth b-vectors and b-values:
-            gt_bvecs = util.bvec_extract(self.data_dir, subject, self.opts.diffusion_dir)
+            gt_bvecs = util.bvec_extract(self.opts.data_dir, subject, self.opts.diffusion_dir)
             gt_bvecs_sph = util.ss_sph_coords(gt_bvecs)
             gt_bvecs_sph[gt_bvecs_sph[:,0]<0,0] = gt_bvecs_sph[gt_bvecs_sph[:,0]<0,0]+2*math.pi
-            gt_bvals = util.bval_extract(self.data_dir, subject, self.opts.diffusion_dir)
+            gt_bvals = util.bval_extract(self.opts.data_dir, subject, self.opts.diffusion_dir)
             
             
             #White matter response function extraction:
             order = 8
-            with open(os.path.join(self.data_dir, subject,'T1w',self.opts.diffusion_dir,self.opts.dwi_folder_name,'wm_response.txt'), 'r') as txt:
+            with open(os.path.join(self.opts.data_dir, subject,'T1w',self.opts.diffusion_dir,self.opts.dwi_folder_name,'wm_response.txt'), 'r') as txt:
                 x = txt.read()
             x = x.split('\n')[2:-1]
             
@@ -185,12 +184,12 @@ class DWIPatchDataset(torch.utils.data.Dataset):
                 g_wm[j] = torch.tensor([float(resp) for resp in x[j].split(' ')])
 
             #Grey matter response function extraction:
-            with open(os.path.join(self.data_dir, subject,'T1w',self.opts.diffusion_dir,self.opts.dwi_folder_name,'gm_response.txt'), 'r') as txt:
+            with open(os.path.join(self.opts.data_dir, subject,'T1w',self.opts.diffusion_dir,self.opts.dwi_folder_name,'gm_response.txt'), 'r') as txt:
                 x = txt.read()
             g_gm = [float(resp) for resp in x.split('\n')[2:-1]]
 
             #CSF response function extraction:
-            with open(os.path.join(self.data_dir, subject, 'T1w', self.opts.diffusion_dir, self.opts.dwi_folder_name, 'csf_response.txt'), 'r') as txt:
+            with open(os.path.join(self.opts.data_dir, subject, 'T1w', self.opts.diffusion_dir, self.opts.dwi_folder_name, 'csf_response.txt'), 'r') as txt:
                 x = txt.read()
             g_csf = [float(resp) for resp in x.split('\n')[2:-1]]    
         

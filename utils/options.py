@@ -77,12 +77,16 @@ class network_options():
                     # '581450',
                     # '130821']
 
+        # Dataset parameters.
         self.dataset_type = 'all' #{'all', 'experiment'}
-        
+        self.diffusion_dir = 'Diffusion'
+        self.shell_number = 4
+        self.data_file = 'normalised_data.nii.gz'
+        self.dwi_number = 30
+        self.dwi_folder_name = 'undersampled_fod'
         
         self.inference=False
         self.perform_inference=False
-        
         
         self.output_net = False
 

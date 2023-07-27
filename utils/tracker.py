@@ -103,8 +103,7 @@ def update_details(losses, current_training_details, model_save_path, net, epoch
                             'neg_reg':float(net.module.neg_reg),
                             'alpha':float(net.module.alpha),
                             'learn_lambda':opts.learn_lambda,
-                            'Number of Parameters':param_num,
-                            'dataset_type':opts.dataset_type}
+                            'Number of Parameters':param_num}
 
         with open(os.path.join(model_save_path,'training_details.yml'), 'w') as file:
             documents = yaml.dump(training_details, file)

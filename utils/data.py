@@ -216,8 +216,8 @@ class DWIPatchDataset(torch.utils.data.Dataset):
 
 def init_dataloaders(opts):
     #Write a function in data.py to initialise the dataset and dataloader. - Clean up this part of the code.
-    d_train = DWIPatchDataset(opts.data_dir, opts.train_subject_list, training_voxels = True, inference=False, opts=opts)
-    d_val = DWIPatchDataset(opts.data_dir, opts.val_subject_list, training_voxels = True, inference=False, opts=opts)
+    d_train = DWIPatchDataset(opts.train_subject_list, training_voxels = True, inference=False, opts=opts)
+    d_val = DWIPatchDataset(opts.val_subject_list, training_voxels = True, inference=False, opts=opts)
 
     train_dataloader = torch.utils.data.DataLoader(d_train, batch_size=opts.batch_size,
                                             shuffle=True, num_workers=opts.train_workers, 

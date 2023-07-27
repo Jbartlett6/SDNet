@@ -15,13 +15,14 @@ import h5py
 
 
 class DWIPatchDataset(torch.utils.data.Dataset):
-    def __init__(self, data_dir, subject_list, inference, training_voxels):
+    def __init__(self, data_dir, subject_list, inference, training_voxels, opts):
         
         #Initialising the parameters for the dataset class.
         self.subject_list = subject_list
         self.data_dir = data_dir
         self.inference = inference
         self.training_voxels = training_voxels
+        self.opts = opts
 
         #Setting parameters for loading in the data
         self.diffusion_dir = 'Diffusion'
@@ -355,8 +356,8 @@ class ExperimentPatchDataset(torch.utils.data.Dataset):
 def init_dataloaders(opts):
     #Write a function in data.py to initialise the dataset and dataloader. - Clean up this part of the code.
     if opts.dataset_type == 'all':
-        d_train = DWIPatchDataset(opts.data_dir, opts.train_subject_list, inference=False, opts=opts)
-        d_val = DWIPatchDataset(opts.data_dir, opts.val_subject_list, inference=False, opts=opts)
+        d_train = DWIPatchDataset(opts.data_dir, opts.train_subject_list, training_voxels = True, inference=False, opts=opts)
+        d_val = DWIPatchDataset(opts.data_dir, opts.val_subject_list, training_voxels = True, inference=False, opts=opts)
     elif opts.dataset_type == 'experiment':
         d_train = ExperimentPatchDataset(opts.data_dir, ['100206'], inference=False, opts=opts)
         d_val = ExperimentPatchDataset(opts.data_dir, ['100307'], inference=False, opts=opts)

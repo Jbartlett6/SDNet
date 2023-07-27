@@ -31,8 +31,8 @@ class network_options():
         self.early_stopping_threshold = 0
 
         #Checkpoint and model parameters
-        self.continue_training = True
-        self.experiment_name = 'test_tmp'
+        self.continue_training = False
+        self.experiment_name = 'debugging'
         self.model_name = 'best_model.pth'
 
         #Computation related hyperparameters:
@@ -42,38 +42,38 @@ class network_options():
         
         #Data related hyperparameters
         self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp'
-        self.train_subject_list = ['100206',
-                    '100307',
-                    '100408',
-                    '100610',
-                    '101006',
-                    '101107',
-                    '101309',
-                    '101410',
-                    '101915',
-                    '102311',
-                    '102513',
-                    '102614',
-                    '102715',
-                    '102816',
-                    '103010',
-                    '103111',
-                    '103212',
-                    '103414',
-                    '103515',
-                    '103818']
+        self.train_subject_list = ['100206']
+                    # '100307',
+                    # '100408',
+                    # '100610',
+                    # '101006',
+                    # '101107',
+                    # '101309',
+                    # '101410',
+                    # '101915',
+                    # '102311',
+                    # '102513',
+                    # '102614',
+                    # '102715',
+                    # '102816',
+                    # '103010',
+                    # '103111',
+                    # '103212',
+                    # '103414',
+                    # '103515',
+                    # '103818']
         #102109 has been removed from the test list due to the fixel directory - can be readded providing the fixles are correct.
-        self.val_subject_list = ['104012',
-                    '104416',
-                    '104820']
+        self.val_subject_list = ['104012']
+                    # '104416',
+                    # '104820']
 
-        self.test_subject_list = ['145127',
-                    '147737',
-                    '174437',
-                    '178849',
-                    '318637',
-                    '581450',
-                    '130821']
+        self.test_subject_list = ['145127']
+                    # '147737',
+                    # '174437',
+                    # '178849',
+                    # '318637',
+                    # '581450',
+                    # '130821']
 
         self.dataset_type = 'all' #{'all', 'experiment'}
         

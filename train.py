@@ -76,59 +76,66 @@ class NetworkTrainer():
                 
                 # Adding the loss calculated for the current minibatch to the running training loss
                 self.loss_tracker.add_running_loss(loss, fod_loss, fixel_loss, fixel_accuracy)
+
+                if i%self.opts.val_freq == self.opts.val_freq-1:
+                    print(f'Epoch:{epoch}, Minibatch:{i}/{len(self.train_dataloader)}')
+                    self.validation_loop(epoch, i)
+                    print('validation')
                 
 
-                # if i%20 == 19:    
-                #     # #Calculating the average validation loss over 10 random batches from the validation set.
-                #     with torch.no_grad():
-                #         #Forward pass for calculating validation loss
-                #         val_temp_dataloader = iter(val_dataloader)
-                #         for j in range(10):
-                #             data_list = val_temp_dataloader.next()
-                #             inputs, labels, AQ, gt_fixel, _ = data_list
-                #             inputs, labels, AQ, gt_fixel = inputs.to(opts.device), labels.to(opts.device), AQ.to(opts.device), gt_fixel.to(opts.device)
-
-                #             #Could put this in a function connected with the model or alternatively put it in a function on its own
-                #             net.eval()
-                #             outputs = net(inputs, AQ)
-
-                #             #Calculating the fixel based statistics. 
-                #             fix_est = class_network(outputs.squeeze()[:,:45])
-                #             fixel_loss = opts.fixel_lambda*class_criterion(fix_est, gt_fixel.long())
-                #             fixel_accuracy = tracker.fixel_accuracy(fix_est, gt_fixel)
-
-                            
-
-                #             loss_tracker.add_val_losses(outputs,labels, fixel_loss, fixel_accuracy)
-                            
-
-                #     #Plotting the results using tensorboard using the visualiser class.
-                #     visualiser.add_scalars(loss_tracker.loss_dict, net, current_training_details, i, epoch)
-
-                #     #Printing the current best validation loss, and the early stopping counter
-                #     print('Best Loss', current_training_details['best_loss'])
-                #     print('Early stopping counter', es.early_stopping_counter)
-
-                #     #Updating the training details.
-                #     current_training_details = tracker.update_details(loss_tracker.loss_dict, current_training_details, model_save_path,
-                #                                                 net, epoch, i, opts, optimizer, param_num, train_dataloader)        
-                    
-                #     #Resetting the losses for the next set of minibatches
-                #     loss_tracker.reset_losses()
-
-                #     if i%200 == 199:
-                #         torch.save(net.state_dict(), os.path.join(model_save_path, 'most_recent_model.pth'))
-            
+                
             #Resetting the losses at the end of an epoch to prevent a spike on the graphs.
             self.loss_tracker.reset_losses()
             
             #Updating the early stopping values at the end of the epoch.
             self.current_training_details['previous_loss'] = self.es.early_stopping_update(self.current_training_details,self.opts,epoch,i)
-            
-            
+                    
+        print('Finished Training')
+
+
+    def validation_loop(self, epoch, i):
+        with torch.no_grad():
+
+            #Forward pass for calculating validation loss
+            val_temp_dataloader = iter(self.val_dataloader)
+            for j in range(10):
+
+                #Loading this iterations data into the GPU
+                data_list = val_temp_dataloader.next()
+                inputs, labels, AQ, gt_fixel, _ = data_list
+                inputs, labels, AQ, gt_fixel = inputs.to(self.opts.device), labels.to(self.opts.device), AQ.to(self.opts.device), gt_fixel.to(self.opts.device)
+
+                #Could put this in a function connected with the model or alternatively put it in a function on its own
+                self.net.eval()
+                outputs = self.net(inputs, AQ)
+
+                #Calculating the fixel based statistics. 
+                fix_est = self.class_network(outputs.squeeze()[:,:45])
+                fixel_loss = self.opts.fixel_lambda*self.class_criterion(fix_est, gt_fixel.long())
+                fixel_accuracy = tracker.fixel_accuracy(fix_est, gt_fixel)
+
+                self.loss_tracker.add_val_losses(outputs,labels, fixel_loss, fixel_accuracy)
                 
-    print('Finished Training')
-    # def validation_loop(self):
+
+        #Plotting the results using tensorboard using the visualiser class.
+        self.visualiser.add_scalars(self.loss_tracker.loss_dict, self.net, self.current_training_details, i, epoch)
+
+        #Printing the current best validation loss, and the early stopping counter
+        print('Best Loss', self.current_training_details['best_loss'])
+        print('Early stopping counter', self.es.early_stopping_counter)
+
+        #Updating the training details.
+        self.current_training_details = tracker.update_details(self.loss_tracker.loss_dict, self.current_training_details, self.model_save_path,
+                                                    self.net, epoch, i, self.opts, self.optimizer, self.param_num, self.train_dataloader)        
+        
+        #Resetting the losses for the next set of minibatches
+        self.loss_tracker.reset_losses()
+
+        if i%200 == 199:
+            torch.save(self.net.state_dict(), os.path.join(self.model_save_path, 'most_recent_model.pth'))
+
+
+
     def lr_warmup_check(self, epoch, i):
         if epoch == 0:
             if i > 10000:

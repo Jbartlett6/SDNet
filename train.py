@@ -18,9 +18,21 @@ sys.path.append(os.path.join(sys.path[0],'..', 'fixel_loss'))
 import network
 
 class NetworkTrainer():
+    '''
+    Description:    Class to carry out network training accoridng to the configuration options 
+                    defined in options.py as well as the various pytorch modules required within the class such as
+                    data, network etc. 
+    Methods:
+                __init__()      - Initialising the torch modules which are key for training the network. The dataloaders,
+                                SDNet and fixel classification networks are all initialised using this method. 
+                training_loop   - The training loop   
+                validation_loop - The validation loop that is called within the training loop. This method validates
+                                the performance of the network on the validation subjects as specified in the
+                                options.py script.
+    '''
     def __init__(self, opts):
         '''
-        Description:    Initialising the torch modules which ar key for training the network. The dataloaders,
+        Description:    Initialising the torch modules which are key for training the network. The dataloaders,
                         SDNet and fixel classification networks are all initialised using this method. 
         '''
         

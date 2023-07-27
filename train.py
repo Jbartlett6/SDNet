@@ -46,11 +46,9 @@ class NetworkTrainer():
 
             #The training loop
             for i, data_list in enumerate(self.train_dataloader, 0):
-                #After one epoch, increase the learning rate
-                if epoch == 0:
-                    if i > 10000:
-                        for g in self.optimizer.param_groups:
-                            g['lr'] = self.opts.lr
+                
+                self.lr_warmup_check(epoch, i)
+                
                 
                 inputs, labels, AQ, gt_fixel, _ = data_list
                 inputs, labels, AQ, gt_fixel = inputs.to(self.opts.device), labels.to(self.opts.device), AQ.to(self.opts.device), gt_fixel.to(self.opts.device)
@@ -131,6 +129,11 @@ class NetworkTrainer():
                 
     print('Finished Training')
     # def validation_loop(self):
+    def lr_warmup_check(self, epoch, i):
+        if epoch == 0:
+            if i > 10000:
+                for g in self.optimizer.param_groups:
+                    g['lr'] = self.opts.lr
 
 if __name__ == '__main__':
     opts = options.network_options()

@@ -4,7 +4,7 @@ The code is this repository implements SDNet, a model-driven FOD reconstruction 
 ## Abstract
 Fibre orientation distribution (FOD) reconstruction using deep learning has the potential to produce accurate FODs from a reduced number of diffusion-weighted images (DWIs), decreasing total imaging time. Diffusion acquisition invariant representations of the DWI signals are typically used as input to these methods to ensure that they can be applied flexibly to data with different b-vectors and b-values; however, this means the network cannot condition its output directly on the DWI signal. In this work, we propose a spherical deconvolution network, a model-driven deep learning FOD reconstruction architecture, that ensures intermediate and output FODs produced by the network are consistent with the input DWI signals. Furthermore, we implement a fixel classification penalty within our loss function, encouraging the network to produce FODs that can subsequently be segmented into the correct number of fixels and improve downstream fixel-based analysis. Our results show that the model-based deep learning architecture achieves competitive performance compared to a state-of-the-art FOD super-resolution network, FOD-Net. Moreover, we show that the fixel classification penalty can be tuned to offer improved performance with respect to metrics that rely on accurately segmented of FODs.
 
-<img src="SDNet%20(2).jpg" width="1000"><br>
+<img src="Figures/SDNet%20(2).jpg" width="1000"><br>
 Figure 1 **SDNet achitecture**
 
 # User Guide 

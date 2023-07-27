@@ -1,4 +1,3 @@
-from cmath import inf
 import yaml
 import os
 import argparse
@@ -34,7 +33,7 @@ class network_options():
 
         #Checkpoint and model parameters
         self.continue_training = False
-        self.experiment_name = 'debugging'
+        self.experiment_name = 'Inference_Baskerville_Test'
         self.model_name = 'best_model.pth'
 
         #Computation related hyperparameters:

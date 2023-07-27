@@ -2,20 +2,15 @@ import sys
 import os 
 sys.path.append(os.path.join(sys.path[0],'models'))
 sys.path.append(os.path.join(sys.path[0],'utils'))
-import util
 import torch 
 import matplotlib.pyplot as plt 
 import utils.data as data
 import options
-#import FODCSDNet as csdnet
-import Convcsdnet
-import Convcsdcfrnet
-from torch.utils.tensorboard import SummaryWriter
+from models import Convcsdcfrnet
 import torch.optim.lr_scheduler 
-import tracker 
-import nibabel as nib
+from utils import tracker 
 sys.path.append(os.path.join(sys.path[0],'..', 'fixel_loss'))
-import network
+from fixel_loss import network
 
 class NetworkTrainer():
     '''

@@ -1,26 +1,14 @@
-
-from genericpath import isdir
 import sys 
 import os
 sys.path.append(os.path.join(sys.path[0],'models'))
-# sys.path.append(os.path.join(sys.path[0],))
 sys.path.append(os.path.join(sys.path[0],'utils'))
 import options
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F
-import math
-import scipy.special
 import nibabel as nib
-import random 
-import matplotlib.pyplot as plt 
-import time
-import numpy as np
-import argparse
-import csdnet
 import utils.data as data
-import Convcsdnet
-import Convcsdcfrnet
+from models import Convcsdcfrnet
 
 class InferenceClass():
     '''

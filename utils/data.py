@@ -1,18 +1,12 @@
 import torch 
-import torch.nn as nn
 import torch.nn.functional as F
 import math
 import os 
 import sys
-import nibabel as nib
-import matplotlib.pyplot as plt 
+import nibabel as nib 
 import numpy as np
 sys.path.append(os.path.join(sys.path[0],'utils'))
 import util 
-import h5py
-
-#Hello world
-
 
 class DWIPatchDataset(torch.utils.data.Dataset):
     '''

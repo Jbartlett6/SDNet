@@ -78,7 +78,6 @@ class network_options():
                     # '130821']
 
         # Dataset parameters.
-        self.dataset_type = 'all' #{'all', 'experiment'}
         self.diffusion_dir = 'Diffusion'
         self.shell_number = 4
         self.data_file = 'normalised_data.nii.gz'

@@ -17,8 +17,36 @@ import nibabel as nib
 sys.path.append(os.path.join(sys.path[0],'..', 'fixel_loss'))
 import network
 
+class NetworkTrainer():
+    def __init__(self, opts):
+        
+        #Initialising modules for the network:
+        self.opts = opts
+        self.train_dataloader, self.val_dataloader = data.init_dataloaders(self.opts)
+        
+        #Initialising SDNet, criterion and optimiser.
+        self.criterion = torch.nn.MSELoss(reduction='mean')
+        self.net, self.P, self.param_num, self.current_training_details, self.model_save_path = Convcsdcfrnet.init_network(opts)
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr = self.opts.warmup_factor*self.opts.lr, betas = (0.9,0.999), eps = 1e-8)
+        
+        #Initialising trackers
+        self.loss_tracker = tracker.LossTracker(self.P,self.criterion)    
+        self.visualiser = tracker.Vis(self.opts, self.train_dataloader)
+        self.es = tracker.EarlyStopping()
+
+        #Initialising the classification network:
+        self.class_network = network.init_fixnet(self.opts)
+        self.class_criterion = torch.nn.CrossEntropyLoss()
+        print(f'The training state of the network is: {self.class_network.training}')
+        print(f'The gradient state of the network is: {self.class_network.casc[0].weight.requires_grad}')
+        print(self.optimizer.param_groups[0]['lr'])
+
+    # def training_loop(self):
+    # def validation_loop(self):
+
 if __name__ == '__main__':
     opts = options.network_options()
+    NT = NetworkTrainer(opts)
 
     #Initalising the tensorboard writer
     plt.switch_backend('agg')
@@ -38,9 +66,9 @@ if __name__ == '__main__':
     #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
     #Initialising the classification network:
     class_network = network.init_fixnet(opts)
+    class_criterion = torch.nn.CrossEntropyLoss()
     print(f'The training state of the network is: {class_network.training}')
     print(f'The gradient state of the network is: {class_network.casc[0].weight.requires_grad}')
-    class_criterion = torch.nn.CrossEntropyLoss()
     
     
     print(optimizer.param_groups[0]['lr'])

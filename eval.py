@@ -12,28 +12,18 @@ import nibabel as nib
 import inference
 
 if __name__ == '__main__':
-    
-    ## Input the options for the classes to take as input - options are used for experiment_name
-    test_subjects = ['130821',
-                    '145127',
-                    '147737',
-                    '174437',
-                    '178849',
-                    '318637',
-                    '581450']
-    
+    # Loading Network Options
+    opts = options.network_options()
 
 
-    experiment_name = 'test_tmp'
-    inference_path = os.path.join('.','checkpoints',experiment_name,'inference')
-    data_dir = '/media/duanj/F/joe/hcp_2'
+    inference_path = os.path.join('.','checkpoints',opts.experiment_name,'inference')
 
     #Include all measures of accuracy in this loop and save them to the appropriate destination
-    # inf_obj = inference.InferenceClass(data_dir, 'best_model.pth', experiment_name)
-    model_performance = PM.ModelPerformance(data_dir,inference_path,test_subjects)
+    inf_obj = inference.InferenceClass(opts.data_dir, 'best_model.pth', opts.experiment_name)
+    model_performance = PM.ModelPerformance(opts.data_dir, inference_path, opts.test_subject_list)
 
-    # for subj in test_subjects:
-    #     print('Performing inference for subject: '+subj)
-    #     inf_obj.run_seq(subj)
+    for subj in opts.test_subject_list:
+        print('Performing inference for subject: '+subj)
+        inf_obj.run_seq(subj)
     
     model_performance.calc_all_performance()

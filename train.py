@@ -31,9 +31,11 @@ class NetworkTrainer():
                         SDNet and fixel classification networks are all initialised using this method. 
         '''
         
-        #Initialising modules for the network:
+        #Initialising configuration and dataloaders:
         self.opts = opts
         self.train_dataloader, self.val_dataloader = data.init_dataloaders(self.opts)
+        self.val_temp_dataloader = iter(self.val_dataloader)
+        
         
         #Initialising SDNet, criterion and optimiser.
         self.criterion = torch.nn.MSELoss(reduction='mean')
@@ -44,6 +46,7 @@ class NetworkTrainer():
         self.loss_tracker = tracker.LossTracker(self.P,self.criterion)    
         self.visualiser = tracker.Vis(self.opts, self.train_dataloader)
         self.es = tracker.EarlyStopping()
+        self.init_runtime_trackers(5)
 
         #Initialising the classification network:
         self.class_network = network.init_fixnet(self.opts)
@@ -60,8 +63,9 @@ class NetworkTrainer():
 
             #The training loop
             for i, data_list in enumerate(self.train_dataloader, 0):
-                
+                self.rttracker.stop_timer('training dataload')
                 # Checking whether leraning rate warm up has ended
+                self.rttracker.start_timer('training iter')
                 self.lr_warmup_check(epoch, i)
                 
                 #Loading data to GPUs
@@ -71,9 +75,13 @@ class NetworkTrainer():
                 # Zero the parameter gradients and setting network to train
                 self.optimizer.zero_grad()
                 self.net.train()
-                outputs = self.net(inputs, AQ)
-                fix_est = self.class_network(outputs.squeeze()[:,:45])
                 
+                self.rttracker.start_timer('sdnet forward pass')
+                outputs = self.net(inputs, AQ)
+                self.rttracker.stop_timer('sdnet forward pass')
+                self.rttracker.start_timer('fix forward pass')
+                fix_est = self.class_network(outputs.squeeze()[:,:45])
+                self.rttracker.stop_timer('fix forward pass')
                 #Calculating the loss function, backpropagation and stepping the optimizer
                 fod_loss = self.criterion(outputs.squeeze()[:,:45], labels[:,:45])
                 fixel_loss = self.opts.fixel_lambda*self.class_criterion(fix_est, gt_fixel.long())
@@ -81,16 +89,24 @@ class NetworkTrainer():
                 
                 #loss = fod_loss+fixel_loss
                 loss = fod_loss + fixel_loss
+
+                self.rttracker.start_timer('grad and step')
                 loss.backward()
                 self.optimizer.step()
-                
+                self.rttracker.stop_timer('grad and step')
+
                 # Adding the loss calculated for the current minibatch to the running training loss
                 self.loss_tracker.add_running_loss(loss, fod_loss, fixel_loss, fixel_accuracy)
+                self.rttracker.stop_timer('training iter')
 
                 if i%self.opts.val_freq == self.opts.val_freq-1:
+                    self.rttracker.start_timer('validation loop')
                     print(f'Epoch:{epoch}, Minibatch:{i}/{len(self.train_dataloader)}')
                     self.validation_loop(epoch, i)
-                    print('validation')
+                    self.rttracker.stop_timer('validation loop')
+                
+                self.rttracker.write_runtimes()
+                self.rttracker.start_timer('training dataload')
                 
             self.loss_tracker.reset_losses()
             self.current_training_details['previous_loss'] = self.es.early_stopping_update(self.current_training_details,self.opts,epoch,i)
@@ -107,11 +123,21 @@ class NetworkTrainer():
         with torch.no_grad():
 
             #Forward pass for calculating validation loss
-            val_temp_dataloader = iter(self.val_dataloader)
+            # self.rttracker.start_timer('val dataloader step')
+            # val_temp_dataloader = iter(self.val_dataloader)
+            # self.rttracker.stop_timer('val dataloader step')
+            
             for j in range(10):
-
+                self.rttracker.start_timer('validation iter')
                 #Loading this iterations data into the GPU
-                data_list = val_temp_dataloader.next()
+                
+                if next(self.val_temp_dataloader, 'reset_val_dataloader') == 'reset_val_dataloader':
+                    self.val_temp_dataloader = iter(self.val_dataloader)
+                    data_list = self.val_temp_dataloader.next()
+                else:
+                    data_list = self.val_temp_dataloader.next()
+
+                
                 inputs, labels, AQ, gt_fixel, _ = data_list
                 inputs, labels, AQ, gt_fixel = inputs.to(self.opts.device), labels.to(self.opts.device), AQ.to(self.opts.device), gt_fixel.to(self.opts.device)
 
@@ -125,7 +151,9 @@ class NetworkTrainer():
                 fixel_accuracy = tracker.fixel_accuracy(fix_est, gt_fixel)
 
                 self.loss_tracker.add_val_losses(outputs,labels, fixel_loss, fixel_accuracy)
-                
+                self.rttracker.stop_timer('validation iter')
+
+        self.rttracker.start_timer('post val steps')        
         #Plotting the results using tensorboard using the visualiser class.
         self.visualiser.add_scalars(self.loss_tracker.loss_dict, self.net, self.current_training_details, i, epoch)
 
@@ -143,6 +171,8 @@ class NetworkTrainer():
         if i%200 == 199:
             torch.save(self.net.state_dict(), os.path.join(self.model_save_path, 'most_recent_model.pth'))
 
+        self.rttracker.stop_timer('post val steps')
+
 
     def lr_warmup_check(self, epoch, i):
         '''
@@ -155,6 +185,20 @@ class NetworkTrainer():
             if i > opts.warmup_epoch_iter[1]:
                 for g in self.optimizer.param_groups:
                     g['lr'] = self.opts.lr
+
+    def init_runtime_trackers(self, runtime_mem):
+        self.rttracker = tracker.RuntimeTracker(runtime_mem, os.path.join('logs', 'runtime.log'), self.opts, len(self.train_dataloader))
+        self.rttracker.add_runtime_tracker('training iter')
+        self.rttracker.add_runtime_tracker('validation iter')
+        self.rttracker.add_runtime_tracker('validation loop')
+
+        self.rttracker.add_runtime_tracker('post val steps')
+
+        self.rttracker.add_runtime_tracker('sdnet forward pass')
+        self.rttracker.add_runtime_tracker('fix forward pass')
+        self.rttracker.add_runtime_tracker('grad and step')
+        self.rttracker.add_runtime_tracker('training dataload')
+        
 
 if __name__ == '__main__':
     plt.switch_backend('agg')

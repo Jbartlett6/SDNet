@@ -15,7 +15,7 @@ class network_options():
         self.warmup_factor = 1              # When the network is warming up the effective learning rate is set to warmup_factor*lr
         self.warmup_epoch_iter = (0,10000)  # (epochs, iterations) when the network should stop warming up.
         self.batch_size = 256               # Training batch_size.
-        self.epochs = 1000                  # Maxium number of epochs
+        self.epochs = 20                  # Maxium number of epochs
         self.val_freq = 20                  # How often (iterations) to run the validation loop inside the training loop
         
         #Data consistency related hyperparameters
@@ -39,8 +39,8 @@ class network_options():
 
         #Computation related hyperparameters:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.train_workers = 16             # Number of workers used for the training dataloader.
-        self.val_workers = 16               # Number of workers used for the validation dataloader. 
+        self.train_workers = 8            # Number of workers used for the training dataloader.
+        self.val_workers = 8 # Number of workers used for the validation dataloader. 
         
         #Data related hyperparameters
         self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp' # Data directory see github repo for more details.

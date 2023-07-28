@@ -6,7 +6,8 @@ import util
 import torch
 import yaml
 import sys
-
+import numpy as np
+import time
 
 class Vis():
     def __init__(self, opts, train_dataloader):
@@ -233,6 +234,47 @@ class EarlyStopping():
             sys.exit()
 
         return current_loss
+
+class RuntimeTracker():
+    def __init__(self, runtime_memory, runtime_log_path, opts, iterations_per_epoch):
+        self.opts = opts
+        self.runtimes = {}
+        self.starttimes = {}
+        self.timerbool = {}
+
+        self.runtime_memory = runtime_memory
+        self.runtime_log_path = runtime_log_path
+        self.iterations_per_epoch = iterations_per_epoch
+
+        self.add_runtime_tracker('training iter')
+    
+    def add_runtime_tracker(self, name):
+        self.runtimes[name] = [0 for i in range(self.runtime_memory)]
+        self.starttimes[name] = 0
+        self.timerbool[name] = False
+
+    def start_timer(self, name):
+        #assert self.timerbool{name} == False:
+        self.timerbool[name] = True
+        self.starttimes[name] = time.time()
+
+    def stop_timer(self, name):
+        self.timerbool[name] = False
+
+        new_runtimes = self.runtimes[name][1:]
+        new_runtimes.append(time.time() - self.starttimes[name])
+        self.runtimes[name] = new_runtimes
+
+    def write_runtimes(self):
+        
+        single_epoch_time = (np.mean(self.runtimes['training iter'])*self.iterations_per_epoch)/3600
+        
+        string_list = [f'Average runtime for {name} is {np.mean(value)} seconds \n' for name, value in self.runtimes.items()]
+        with open(self.runtime_log_path, 'w') as rtlog:
+            [rtlog.write(entry) for entry in string_list]
+            rtlog.write('\n')
+            rtlog.write(f'Approximate time to run 1 epoch (excluding validation loop): {round(single_epoch_time,2)} hours \n')
+            rtlog.write(f'Time to run all {self.opts.epochs} epochs: {round(single_epoch_time*self.opts.epochs, 2)} hours')
 
     
 

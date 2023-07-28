@@ -9,41 +9,42 @@ import torch
 
 class network_options():
     def __init__(self):
+        
         #Optimisation 
-        self.lr = 1e-4
-        self.warmup_factor = 1
-        self.warmup_epoch_iter = (0,10000)
-        self.batch_size = 256
-        self.epochs = 1000
-        self.val_freq = 20
+        self.lr = 1e-4                      # Learning rate - set to this value post learning rate warmup.
+        self.warmup_factor = 1              # When the network is warming up the effective learning rate is set to warmup_factor*lr
+        self.warmup_epoch_iter = (0,10000)  # (epochs, iterations) when the network should stop warming up.
+        self.batch_size = 256               # Training batch_size.
+        self.epochs = 1000                  # Maxium number of epochs
+        self.val_freq = 20                  # How often (iterations) to run the validation loop inside the training loop
         
         #Data consistency related hyperparameters
-        self.deep_reg = 0.25
-        self.learn_lambda = True
-        self.fixel_lambda = 0.000160
-        #self.fixel_lambda = 0
+        self.deep_reg = 0.25                # The deep regularisation parameter. If learn_lambda = True this is only the initial value. 
+        self.learn_lambda = True            # Whether to optimise lambda within the network.
+        self.fixel_lambda = 0.000160        # kappa.
 
         #Initialisation Parameters
-        self.init_type = None #{'normal', 'xavier', 'kaiming', 'orthogonal'}
-        self.activation = 'prelu' #{'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
+        self.init_type = None               # {'normal', 'xavier', 'kaiming', 'orthogonal'}
+        self.activation = 'prelu'           # {'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
 
         #Early Stopping Parameters
-        self.early_stopping = False
-        self.early_stopping_threshold = 0
+        self.early_stopping = False         # Whether to include early stopping in the network.
+        self.early_stopping_threshold = 0   # When early_stopping_counter reaches this value training will stop.
 
         #Checkpoint and model parameters
-        self.continue_training = False
-        self.experiment_name = 'debugging'
-        self.model_name = 'best_model.pth'
+        self.continue_training = False      # Whether to continue training using existing model weights
+        self.experiment_name = 'debugging'  # Directory name to be stored in the checkpoint directory.
+        self.model_name = 'best_model.pth'  # Working model name - will be stored within the experiment name directory found within the 
+                                            # checkpoints directory. 
 
         #Computation related hyperparameters:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.train_workers = 16
-        self.val_workers = 16
+        self.train_workers = 16             # Number of workers used for the training dataloader.
+        self.val_workers = 16               # Number of workers used for the validation dataloader. 
         
         #Data related hyperparameters
-        self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp'
-        self.train_subject_list = ['100206']
+        self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp' # Data directory see github repo for more details.
+        self.train_subject_list = ['100206'] # Subjects to be used for training
                     # '100307',
                     # '100408',
                     # '100610',
@@ -64,11 +65,11 @@ class network_options():
                     # '103515',
                     # '103818']
         #102109 has been removed from the test list due to the fixel directory - can be readded providing the fixles are correct.
-        self.val_subject_list = ['104012']
+        self.val_subject_list = ['104012']  # Subjects to be used for validation
                     # '104416',
                     # '104820']
 
-        self.test_subject_list = ['145127', '147737']
+        self.test_subject_list = ['145127', '147737'] # Subjects to be used for testing.
                     # '147737',
                     # '174437',
                     # '178849',
@@ -76,16 +77,17 @@ class network_options():
                     # '581450',
                     # '130821']
 
-        # Dataset parameters.
+        # Dataset parameters - if the data directory structure found in github repo is used then leave these values as 
+        # found
         self.diffusion_dir = 'Diffusion'
         self.shell_number = 4
         self.data_file = 'normalised_data.nii.gz'
         self.dwi_number = 30
         self.dwi_folder_name = 'undersampled_fod'
         
+        #Miscelaneous
         self.inference=False
         self.perform_inference=False
-        
         self.output_net = False
 
         #self.option_init()
@@ -187,24 +189,3 @@ class network_options():
         subs_list = subs.split('\n')
         return subs_list
 
-# parser.add_argument('--model_path', type=str, help = 'The path at which the model is saved')
-#     parser.add_argument('--save_path',type=str, help = 'The directory to which to save the final images once inference has been performed.')
-#     parser.add_argument('--epochs',type=int, help = 'The number of epochs to train the model for')
-#     #parser.add_argument('--lr',type=int, help = 'The initial learning rate used by the ADAM optimiser')
-#     #parser.add_argument('--batch_size',type=int, help = 'The batch size which is used to train the model.')
-#     #parser.add_argument('--deep_reg',type=float, help = 'The deep regularisation parameter which is used in the data consistency term')
-#     #parser.add_argument('--neg_reg',type=float, help = 'The non-negativity regularisation parameter which is used in the data consistency term')
-#     #Early stopping needs some work so I can make the units something meaningful, e..g the number of minibatches or epochs rather than 
-#     #the number of 20 minibatches which is what it would currently be.
-#     #parser.add_argument('--early_stopping',type=float, help = 'The non-negativity regularisation parameter which is used in the data consistency term')
-#     parser.add_argument('--lr_decay_rate',type=float, help = 'The exponential learning rate decay parameter - often referred to as gamma')
-#     parser.add_argument('--val_freq',type=int, help = 'How often the accuracy of the method is tested on the validation set.')
-#     parser.add_argument('--train_workers',type=int, help = 'The number of workers for the training dataloader')
-#     parser.add_argument('--val_workers',type=int, help = 'The number of workers for the validation dataloader')
-
-#     # parser.add_argument('--data_path',type=str, help = 'The location of the hcp data, where the subject folders can be found')
-#     # parser.add_argument('--train_subject_list',type=str, help = 'The subject numbers which will be used to train the network')
-#     # parser.add_argument('--val_subject_list',type=str, help = 'The subject numbers which will be used to calculate the validation loss')
-#     # #parser.add_argument('--experiment_name',type=str, help = 'The experiment name, this will be used to create the folder to save the model, as well as the tensorboard logs.')
-
-#     parser.add_argument('--save_frequency',type=int, help = 'After how many evaluations to save the model.')

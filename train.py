@@ -36,14 +36,13 @@ class NetworkTrainer():
         self.train_dataloader, self.val_dataloader = data.init_dataloaders(self.opts)
         self.val_temp_dataloader = iter(self.val_dataloader)
         
-        
         #Initialising SDNet, criterion and optimiser.
         self.criterion = torch.nn.MSELoss(reduction='mean')
         self.net, self.P, self.param_num, self.current_training_details, self.model_save_path = Convcsdcfrnet.init_network(opts)
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr = self.opts.warmup_factor*self.opts.lr, betas = (0.9,0.999), eps = 1e-8)
         
         #Initialising trackers
-        self.loss_tracker = tracker.LossTracker(self.P,self.criterion)    
+        self.loss_tracker = tracker.LossTracker(self.criterion)    
         self.visualiser = tracker.Vis(self.opts, self.train_dataloader)
         self.es = tracker.EarlyStopping()
         self.init_runtime_trackers(5)
@@ -127,17 +126,16 @@ class NetworkTrainer():
             # val_temp_dataloader = iter(self.val_dataloader)
             # self.rttracker.stop_timer('val dataloader step')
             
-            for j in range(10):
+            for j in range(self.opts.val_iters):
+                
                 self.rttracker.start_timer('validation iter')
                 #Loading this iterations data into the GPU
                 
-                if next(self.val_temp_dataloader, 'reset_val_dataloader') == 'reset_val_dataloader':
+                data_list = next(self.val_temp_dataloader, 'reset_val_dataloader')
+                if data_list == 'reset_val_dataloader':
                     self.val_temp_dataloader = iter(self.val_dataloader)
-                    data_list = self.val_temp_dataloader.next()
-                else:
-                    data_list = self.val_temp_dataloader.next()
+                    data_list = next(self.val_temp_dataloader)
 
-                
                 inputs, labels, AQ, gt_fixel, _ = data_list
                 inputs, labels, AQ, gt_fixel = inputs.to(self.opts.device), labels.to(self.opts.device), AQ.to(self.opts.device), gt_fixel.to(self.opts.device)
 
@@ -155,20 +153,20 @@ class NetworkTrainer():
 
         self.rttracker.start_timer('post val steps')        
         #Plotting the results using tensorboard using the visualiser class.
-        self.visualiser.add_scalars(self.loss_tracker.loss_dict, self.net, self.current_training_details, i, epoch)
+        self.visualiser.add_scalars(self.loss_tracker.train_loss_dict, self.loss_tracker.val_loss_dict, self.current_training_details, i, epoch)
 
         #Printing the current best validation loss, and the early stopping counter
         print('Best Loss', self.current_training_details['best_loss'])
         print('Early stopping counter', self.es.early_stopping_counter)
 
         #Updating the training details.
-        self.current_training_details = tracker.update_details(self.loss_tracker.loss_dict, self.current_training_details, self.model_save_path,
+        self.current_training_details = tracker.update_details(self.loss_tracker.train_loss_dict, self.loss_tracker.val_loss_dict, self.current_training_details, self.model_save_path,
                                                     self.net, epoch, i, self.opts, self.optimizer, self.param_num, self.train_dataloader)        
         
         #Resetting the losses for the next set of minibatches
         self.loss_tracker.reset_losses()
 
-        if i%200 == 199:
+        if i%self.opts.save_freq == self.opts.save_freq-1:
             torch.save(self.net.state_dict(), os.path.join(self.model_save_path, 'most_recent_model.pth'))
 
         self.rttracker.stop_timer('post val steps')

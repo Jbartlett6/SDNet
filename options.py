@@ -15,9 +15,10 @@ class network_options():
         self.warmup_factor = 1              # When the network is warming up the effective learning rate is set to warmup_factor*lr
         self.warmup_epoch_iter = (0,10000)  # (epochs, iterations) when the network should stop warming up.
         self.batch_size = 256               # Training batch_size.
-        self.epochs = 20                  # Maxium number of epochs
-        self.val_freq = 20                  # How often (iterations) to run the validation loop inside the training loop
-        
+        self.epochs = 20                    # Maxium number of epochs
+        self.val_freq = 100                 # How often (iterations) to run the validation loop inside the training loop
+        self.val_iters = 10     # How many iterations of validation data to loop through when the validation loop is called.
+
         #Data consistency related hyperparameters
         self.deep_reg = 0.25                # The deep regularisation parameter. If learn_lambda = True this is only the initial value. 
         self.learn_lambda = True            # Whether to optimise lambda within the network.
@@ -36,6 +37,7 @@ class network_options():
         self.experiment_name = 'debugging'  # Directory name to be stored in the checkpoint directory.
         self.model_name = 'best_model.pth'  # Working model name - will be stored within the experiment name directory found within the 
                                             # checkpoints directory. 
+        self.save_freq = 1000               # How many iterations to save the model weights after.
 
         #Computation related hyperparameters:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

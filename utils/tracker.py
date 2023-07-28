@@ -17,77 +17,72 @@ class Vis():
                 add_scalars     
     '''
     def __init__(self, opts, train_dataloader):
+        self.opts = opts
         self.writer = SummaryWriter(os.path.join('checkpoints', opts.experiment_name,'runs'))
         self.dataloader_length = len(train_dataloader)
+        self.train_losses = ['Training Loss', 'FOD Loss', 'Fixel Loss', 'Fixel Accuracy']
+        self.val_losses = ['Validation Loss', 'Validation ACC', 'Validation Fixel Loss', 'Validation Fixel Accuracy']
         
-    def add_scalars(self,losses,net,current_training_details,i,epoch):
+    def add_scalars(self, train_losses, val_losses, current_training_details, i, epoch):
         step = (self.dataloader_length*epoch)+i+current_training_details['plot_offset']
         # step = (self.dataloader_length*epoch)+i
+
         #Training loss and its decomposition :
-        self.writer.add_scalar('Training Loss', losses['running_loss']/20, step)
-        self.writer.add_scalar('FOD Loss', losses['fod_loss']/20, step)
-        self.writer.add_scalar('Fixel Loss', losses['fixel_loss']/20, step)
-        self.writer.add_scalar('Fixel Accuracy', losses['fixel_accuracy']/20, step)
-        
+        for loss_name, loss_value in train_losses.items():
+            self.writer.add_scalar(loss_name, loss_value/self.opts.val_freq, step)
+
         #The validation losses
-        self.writer.add_scalar('Validation Loss', losses['val_loss']/10,step)
-        self.writer.add_scalar('Validation ACC', losses['acc_loss']/10 ,step)        
-        #self.writer.add_scalar('Deep Regularisation Lambda', net.module.deep_reg, step)
-        self.writer.add_scalar('Validation Fixel Loss', losses['val_fixel_loss']/10,step)
-        self.writer.add_scalar('Validation Fixel Accuracy', losses['val_fixel_accuracy']/10,step)
-        print(f'[{current_training_details["global_epochs"]+epoch + 1}, {i + 1:5d}] training loss: {losses["running_loss"]/20:.7f} training fod loss {losses["fod_loss"]/20:.7f}')
-        
+        for loss_name, loss_value in val_losses.items():
+            self.writer.add_scalar(loss_name, loss_value/self.opts.val_iters, step)
+ 
+        # #self.writer.add_scalar('Deep Regularisation Lambda', net.module.deep_reg, step)
 
-    
-    
-        
 
+        print(f'[{current_training_details["global_epochs"]+epoch + 1}, {i + 1:5d}] training loss: {train_losses["Training Loss"]/self.opts.val_freq:.7f} training fod loss {train_losses["FOD Loss"]/self.opts.val_freq:.7f}')
         
 
 class LossTracker():
-    def __init__(self,P,criterion):
-        loss_keys = ['running_loss',
-                         'val_loss',
-                         'acc_loss',
-                         'non_neg',
-                         'fod_loss', 
-                         'fixel_loss',
-                         'fixel_accuracy',
-                         'val_fixel_loss',
-                         'val_fixel_accuracy']
-
-        self.loss_dict = dict.fromkeys(loss_keys, 0.0)
-        self.P = P
+    def __init__(self,criterion):
+        
+        self.train_losses = ['Training Loss', 'FOD Loss', 'Fixel Loss', 'Fixel Accuracy']
+        self.val_losses = ['Validation Loss', 'Validation ACC', 'Validation Fixel Loss', 'Validation Fixel Accuracy']
+        
+        self.train_loss_dict = dict.fromkeys(self.train_losses, 0.0)
+        self.val_loss_dict = dict.fromkeys(self.val_losses, 0.0)
+        
         self.criterion=criterion
 
     def reset_losses(self):
-        self.loss_dict = dict.fromkeys(self.loss_dict.keys(), 0.0)
+        self.train_loss_dict = dict.fromkeys(self.train_losses, 0.0)
+        self.val_loss_dict = dict.fromkeys(self.val_losses, 0.0)
 
     
     def add_val_losses(self, outputs, labels, val_fixel_loss, val_fixel_accuracy):
+        
         loss = self.criterion(outputs.squeeze()[:,:45], labels[:,:45])
-        #loss = self.criterion(outputs.squeeze(), labels)
-        self.loss_dict['val_loss'] += loss.item()
-        self.loss_dict['acc_loss'] += util.ACC(outputs,labels).mean()
-        self.loss_dict['non_neg'] += torch.sum((torch.matmul(self.P, outputs)<-0.01).squeeze(),axis = -1).float().mean()
-        self.loss_dict['val_fixel_loss'] += val_fixel_loss.item()
-        self.loss_dict['val_fixel_accuracy'] += val_fixel_accuracy.item()
+        
+        self.val_loss_dict['Validation Loss'] += loss.item()
+        self.val_loss_dict['Validation ACC'] += util.ACC(outputs,labels).mean()
+        self.val_loss_dict['Validation Fixel Loss'] += val_fixel_loss.item()
+        self.val_loss_dict['Validation Fixel Accuracy'] += val_fixel_accuracy.item()
 
     def add_running_loss(self,loss,fod_loss,fixel_loss, fixel_accuracy):
-        self.loss_dict['running_loss'] += loss.item()
-        self.loss_dict['fod_loss'] += fod_loss.item()
-        self.loss_dict['fixel_loss'] += fixel_loss.item()
-        self.loss_dict['fixel_accuracy'] += fixel_accuracy.item()
+        
+        self.train_loss_dict['Training Loss'] += loss.item()
+        self.train_loss_dict['FOD Loss'] += fod_loss.item()
+        self.train_loss_dict['Fixel Loss'] += fixel_loss.item()
+        self.train_loss_dict['Fixel Accuracy'] += fixel_accuracy.item()
+        
 
 
 
-def update_details(losses, current_training_details, model_save_path, net, epoch, i, opts, optimizer, param_num, train_dataloader):
-    if losses['acc_loss']/10 > current_training_details['best_val_ACC']:
-        current_training_details['best_val_ACC'] = losses['acc_loss']/10
+def update_details(train_losses, val_losses, current_training_details, model_save_path, net, epoch, i, opts, optimizer, param_num, train_dataloader):
+    if val_losses['Validation ACC']/opts.val_iters > current_training_details['best_val_ACC']:
+        current_training_details['best_val_ACC'] = val_losses['Validation ACC']/opts.val_iters
 
-    if losses['val_loss']/10 < current_training_details['best_loss']:
+    if val_losses['Validation Loss']/opts.val_iters < current_training_details['best_loss']:
                     
-        current_training_details['best_loss'] = losses['val_loss']/10
+        current_training_details['best_loss'] = val_losses['Validation Loss']/opts.val_iters
         save_path = os.path.join(model_save_path, 'best_model.pth')
         torch.save(net.state_dict(), save_path)
 
@@ -106,10 +101,6 @@ def update_details(losses, current_training_details, model_save_path, net, epoch
 
         with open(os.path.join(model_save_path,'training_details.yml'), 'w') as file:
             documents = yaml.dump(training_details, file)
-    
-    #Keeping track of the best validation score and implementing early stopping.
-        
-        
 
     return current_training_details
 

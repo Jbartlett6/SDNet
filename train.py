@@ -185,7 +185,7 @@ class NetworkTrainer():
                     g['lr'] = self.opts.lr
 
     def init_runtime_trackers(self, runtime_mem):
-        self.rttracker = tracker.RuntimeTracker(runtime_mem, os.path.join('logs', 'runtime.log'), self.opts, len(self.train_dataloader))
+        self.rttracker = tracker.RuntimeTracker(runtime_mem, os.path.join('checkpoints', opts.experiment_name , 'logs', 'runtime.log'), self.opts, len(self.train_dataloader))
         self.rttracker.add_runtime_tracker('training iter')
         self.rttracker.add_runtime_tracker('validation iter')
         self.rttracker.add_runtime_tracker('validation loop')

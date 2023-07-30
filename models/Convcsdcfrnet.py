@@ -324,5 +324,6 @@ def init_network(opts):
         assert not os.path.isdir(os.path.join('checkpoints', opts.experiment_name)), f'The experiment {opts.experiment_name} already exists, please select another experiment name'
         os.mkdir(os.path.join('checkpoints', opts.experiment_name))
         os.mkdir(os.path.join('checkpoints', opts.experiment_name, 'models'))
+        os.mkdir(os.path.join('checkpoints', opts.experiment_name, 'logs'))
 
     return net, P, param_num, current_training_details, model_save_path

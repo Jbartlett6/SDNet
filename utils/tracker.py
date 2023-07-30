@@ -14,7 +14,8 @@ class Vis():
     Description: 
                 Class for visualising the training curves in tensorboard.
     Methods:
-                add_scalars     
+                __init__    - Initialising the Summary writer and losses to be tracked
+                add_scalars - Adding the scalar to be tracked to the trensorboard writer.
     '''
     def __init__(self, opts, train_dataloader):
         self.opts = opts
@@ -36,8 +37,6 @@ class Vis():
             self.writer.add_scalar(loss_name, loss_value/self.opts.val_iters, step)
  
         # #self.writer.add_scalar('Deep Regularisation Lambda', net.module.deep_reg, step)
-
-
         print(f'[{current_training_details["global_epochs"]+epoch + 1}, {i + 1:5d}] training loss: {train_losses["Training Loss"]/self.opts.val_freq:.7f} training fod loss {train_losses["FOD Loss"]/self.opts.val_freq:.7f}')
         
 
@@ -98,6 +97,12 @@ def update_details(train_losses, val_losses, current_training_details, model_sav
                             'alpha':float(net.module.alpha),
                             'learn_lambda':opts.learn_lambda,
                             'Number of Parameters':param_num}
+        
+        training_details_string = [f'{name}: {value} \n' for name, value in training_details.items()]
+
+        train_log_path = os.path.join('checkpoints', opts.experiment_name, 'logs', 'training.log')
+        with open(train_log_path, 'w') as trainlog:
+            [trainlog.write(entry) for entry in training_details_string]
 
         with open(os.path.join(model_save_path,'training_details.yml'), 'w') as file:
             documents = yaml.dump(training_details, file)

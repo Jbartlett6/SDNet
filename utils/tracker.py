@@ -104,11 +104,11 @@ def update_training_logs(train_losses, val_losses, current_training_details, mod
 
     with open(train_log_path, 'w') as trainlog:
         [trainlog.write(entry) for entry in training_details_string]
-        trainlog.write('\n\nEarly stopping statistics')
-        trainlog.write(f'The current early stopping counter is {es.early_stopping_counter}/{opts.early_stopping_threshold}\n')
-        trainlog.write(f'The current best validation loss is {es.best_loss} which occured at iteration {es.best_loss_iter}\n')
-        trainlog.write(f'We are currently on iteration {epoch*es.epoch_length + i} the best loss occured {(epoch*es.epoch_length + i)-es.best_loss_iter} iterations ago\n')
-            
+        trainlog.write('\n\nEarly stopping statistics \n')
+        trainlog.write(f'Current early stopping counter: {es.early_stopping_counter}/{opts.early_stopping_threshold}\n')
+        trainlog.write(f'Current best validation loss: {round(es.best_loss*1000,3)} x 10^-4 at iteration: {es.best_loss_iter}\n')
+        trainlog.write(f'Current iteration: {epoch*es.epoch_length + i}, best loss occured {(epoch*es.epoch_length + i)-es.best_loss_iter} iterations ago\n')
+        trainlog.write(f'Highest early stopping counter: {es.highest_counter}/{opts.early_stopping_threshold}, which occured at iteration: {es.highest_counter_iter}\n')
 
     with open(os.path.join(model_save_path,'training_details.yml'), 'w') as file:
         documents = yaml.dump(training_details, file)

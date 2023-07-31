@@ -175,15 +175,14 @@ class NetworkTrainer():
 
     def lr_warmup_check(self, epoch, i):
         '''
-        Description:    Checking whether the learning rate warm up period has ended. Initially the llearning rate 
+        Description:    Checking whether the learning rate warm up period has ended. Initially the learning rate 
                         will be set to the warmup factor*learning rate. Once the network has been training for 
-                        opts.warmup_epoch_iter[0] epochs and opts.warmup_epoch_iter[1] iterations the learning 
-                        rate will increase to its final value. 
+                        opts.warmup_iter iterations the learning rate will increase to its final value. 
         '''
-        if epoch == opts.warmup_epoch_iter[0]:
-            if i > opts.warmup_epoch_iter[1]:
-                for g in self.optimizer.param_groups:
-                    g['lr'] = self.opts.lr
+
+        if i+(epoch*len(self.train_dataloader))> opts.warmup_iter:
+            for g in self.optimizer.param_groups:
+                g['lr'] = self.opts.lr
 
     def init_runtime_trackers(self, runtime_mem):
         self.rttracker = tracker.RuntimeTracker(runtime_mem, os.path.join('checkpoints', opts.experiment_name , 'logs', 'runtime.log'), self.opts, len(self.train_dataloader))

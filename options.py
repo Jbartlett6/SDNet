@@ -13,11 +13,11 @@ class network_options():
         #Optimisation 
         self.lr = 1e-4                      # Learning rate - set to this value post learning rate warmup.
         self.warmup_factor = 1              # When the network is warming up the effective learning rate is set to warmup_factor*lr
-        self.warmup_epoch_iter = (0,10000)  # (epochs, iterations) when the network should stop warming up.
+        self.warmup_iter = 5000             # Number of iterations after which the network stops warming up.
         self.batch_size = 256               # Training batch_size.
-        self.epochs = 20                    # Maxium number of epochs
+        self.epochs = 100                   # Maxium number of epochs
         self.val_freq = 100                 # How often (iterations) to run the validation loop inside the training loop
-        self.val_iters = 10     # How many iterations of validation data to loop through when the validation loop is called.
+        self.val_iters = 20                 # How many iterations of validation data to loop through when the validation loop is called.
 
         #Data consistency related hyperparameters
         self.deep_reg = 0.25                # The deep regularisation parameter. If learn_lambda = True this is only the initial value. 
@@ -29,12 +29,13 @@ class network_options():
         self.activation = 'prelu'           # {'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
 
         #Early Stopping Parameters
-        self.early_stopping = True         # Whether to include early stopping in the network.
-        self.early_stopping_threshold = 20 # When early_stopping_counter reaches this value training will stop.
+        self.early_stopping = True          # Whether to include early stopping in the network.
+        self.early_stopping_threshold = 30  # When early_stopping_counter reaches this value training will stop. This counter is updated every validation loop, therefore
+                                            # training will be stopped due to early stopping when the network hasn't improved for early_stopping_threshold validation loops. 
 
         #Checkpoint and model parameters
         self.continue_training = False      # Whether to continue training using existing model weights
-        self.experiment_name = 'debugging'  # Directory name to be stored in the checkpoint directory.
+        self.experiment_name = 'ss_benchmark_2023-31-07 (3)'  # Directory name to be stored in the checkpoint directory.
         self.model_name = 'best_model.pth'  # Working model name - will be stored within the experiment name directory found within the 
                                             # checkpoints directory. 
         self.save_freq = 1000               # How many iterations to save the model weights after.
@@ -67,9 +68,9 @@ class network_options():
                     # '103515',
                     # '103818']
         #102109 has been removed from the test list due to the fixel directory - can be readded providing the fixles are correct.
-        self.val_subject_list = ['104012']  # Subjects to be used for validation
-                    # '104416',
-                    # '104820']
+        self.val_subject_list = ['104012',  # Subjects to be used for validation
+                    '104416',
+                    '104820']
 
         self.test_subject_list = ['145127', '147737'] # Subjects to be used for testing.
                     # '147737',

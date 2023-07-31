@@ -44,7 +44,7 @@ class NetworkTrainer():
         #Initialising trackers
         self.loss_tracker = tracker.LossTracker(self.criterion)    
         self.visualiser = tracker.Vis(self.opts, self.train_dataloader)
-        self.es = tracker.EarlyStopping()
+        self.es = tracker.EarlyStopping(self.opts, len(self.train_dataloader))
         self.init_runtime_trackers(5)
 
         #Initialising the classification network:
@@ -103,12 +103,13 @@ class NetworkTrainer():
                     print(f'Epoch:{epoch}, Minibatch:{i}/{len(self.train_dataloader)}')
                     self.validation_loop(epoch, i)
                     self.rttracker.stop_timer('validation loop')
+                    self.es.early_stopping_update(self.current_training_details, epoch,i)
                 
                 self.rttracker.write_runtimes()
                 self.rttracker.start_timer('training dataload')
                 
             self.loss_tracker.reset_losses()
-            self.current_training_details['previous_loss'] = self.es.early_stopping_update(self.current_training_details,self.opts,epoch,i)
+            # self.current_training_details['previous_loss'] = self.es.early_stopping_update(self.current_training_details,self.opts,epoch,i)
                     
         print('Finished Training')
 
@@ -160,8 +161,8 @@ class NetworkTrainer():
         print('Early stopping counter', self.es.early_stopping_counter)
 
         #Updating the training details.
-        self.current_training_details = tracker.update_details(self.loss_tracker.train_loss_dict, self.loss_tracker.val_loss_dict, self.current_training_details, self.model_save_path,
-                                                    self.net, epoch, i, self.opts, self.optimizer, self.param_num, self.train_dataloader)        
+        self.current_training_details = tracker.update_training_logs(self.loss_tracker.train_loss_dict, self.loss_tracker.val_loss_dict, self.current_training_details, self.model_save_path,
+                                                    self.net, epoch, i, self.opts, self.optimizer, self.param_num, self.train_dataloader, self.es)        
         
         #Resetting the losses for the next set of minibatches
         self.loss_tracker.reset_losses()

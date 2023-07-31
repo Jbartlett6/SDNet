@@ -8,6 +8,7 @@ import yaml
 import sys
 import numpy as np
 import time
+import math
 
 class Vis():
     '''
@@ -75,7 +76,7 @@ class LossTracker():
 
 
 
-def update_details(train_losses, val_losses, current_training_details, model_save_path, net, epoch, i, opts, optimizer, param_num, train_dataloader):
+def update_training_logs(train_losses, val_losses, current_training_details, model_save_path, net, epoch, i, opts, optimizer, param_num, train_dataloader, es):
     if val_losses['Validation ACC']/opts.val_iters > current_training_details['best_val_ACC']:
         current_training_details['best_val_ACC'] = val_losses['Validation ACC']/opts.val_iters
 
@@ -85,27 +86,32 @@ def update_details(train_losses, val_losses, current_training_details, model_sav
         save_path = os.path.join(model_save_path, 'best_model.pth')
         torch.save(net.state_dict(), save_path)
 
-        training_details = {'epochs_count': epoch,
-                            'batch_size':opts.batch_size, 
-                            'minibatch': i, 
-                            'lr': optimizer.state_dict()['param_groups'][0]['lr'],
-                            'best loss': current_training_details['best_loss'],
-                            'best ACC': float(current_training_details['best_val_ACC']),
-                            'plot_step':(len(train_dataloader)*epoch)+i+current_training_details['plot_offset'],
-                            'deep_reg': float(net.module.deep_reg),
-                            'neg_reg':float(net.module.neg_reg),
-                            'alpha':float(net.module.alpha),
-                            'learn_lambda':opts.learn_lambda,
-                            'Number of Parameters':param_num}
+    training_details = {'epochs_count': epoch,
+                        'batch_size':opts.batch_size, 
+                        'minibatch': i, 
+                        'lr': optimizer.state_dict()['param_groups'][0]['lr'],
+                        'best loss': current_training_details['best_loss'],
+                        'best ACC': float(current_training_details['best_val_ACC']),
+                        'plot_step':(len(train_dataloader)*epoch)+i+current_training_details['plot_offset'],
+                        'deep_reg': float(net.module.deep_reg),
+                        'neg_reg':float(net.module.neg_reg),
+                        'alpha':float(net.module.alpha),
+                        'learn_lambda':opts.learn_lambda,
+                        'Number of Parameters':param_num}
         
-        training_details_string = [f'{name}: {value} \n' for name, value in training_details.items()]
+    training_details_string = [f'{name}: {value} \n' for name, value in training_details.items()]
+    train_log_path = os.path.join('checkpoints', opts.experiment_name, 'logs', 'training.log')
 
-        train_log_path = os.path.join('checkpoints', opts.experiment_name, 'logs', 'training.log')
-        with open(train_log_path, 'w') as trainlog:
-            [trainlog.write(entry) for entry in training_details_string]
+    with open(train_log_path, 'w') as trainlog:
+        [trainlog.write(entry) for entry in training_details_string]
+        trainlog.write('\n\nEarly stopping statistics')
+        trainlog.write(f'The current early stopping counter is {es.early_stopping_counter}/{opts.early_stopping_threshold}\n')
+        trainlog.write(f'The current best validation loss is {es.best_loss} which occured at iteration {es.best_loss_iter}\n')
+        trainlog.write(f'We are currently on iteration {epoch*es.epoch_length + i} the best loss occured {(epoch*es.epoch_length + i)-es.best_loss_iter} iterations ago\n')
+            
 
-        with open(os.path.join(model_save_path,'training_details.yml'), 'w') as file:
-            documents = yaml.dump(training_details, file)
+    with open(os.path.join(model_save_path,'training_details.yml'), 'w') as file:
+        documents = yaml.dump(training_details, file)
 
     return current_training_details
 
@@ -130,19 +136,37 @@ def fixel_accuracy(fix_est, gt_fixel):
 
 
 class EarlyStopping():
-    def __init__(self):
+    def __init__(self, opts, epoch_length):
         self.early_stopping_counter = 0
+        self.best_loss = math.inf
+        self.best_loss_iter = 0
+        self.highest_counter = 0
+        self.highest_counter_iter = 0
+        
+        self.opts = opts
+        self.epoch_length = epoch_length
 
-    def early_stopping_update(self,current_training_details,opts,epoch,i):
-        current_loss = current_training_details['best_loss']
-        if current_loss > current_training_details['previous_loss']:
-            self.early_stopping_counter = self.early_stopping_counter+1
+    def early_stopping_update(self,current_training_details,epoch,i):
+      
+        if self.opts.early_stopping == True:
+            current_loss = current_training_details['best_loss']
+            current_iter = (self.epoch_length*epoch)+i
 
-        if self.early_stopping_counter > opts.early_stopping_threshold:
-            print(f'Training stopped at epoch {current_training_details["global_epochs"]+epoch} due to Early stopping and minibatch {i}, the best validation loss achieved is: {current_training_details["best_loss"]}')
-            sys.exit()
+            if current_loss < self.best_loss:
+                self.best_loss = current_loss
+                self.early_stopping_counter = 0
+                self.best_loss_iter = current_iter
+            else:
+                self.early_stopping_counter += 1
 
-        return current_loss
+            if self.early_stopping_counter > self.opts.early_stopping_threshold:
+                print(f'Training stopped at epoch {current_training_details["global_epochs"]+epoch} due to Early stopping and minibatch {i}, the best validation loss achieved is: {current_training_details["best_loss"]}')
+                sys.exit()
+            elif self.early_stopping_counter > self.highest_counter:
+                self.highest_counter = self.early_stopping_counter
+                self.highest_counter_iter = current_iter
+            
+
 
 class RuntimeTracker():
     def __init__(self, runtime_memory, runtime_log_path, opts, iterations_per_epoch):
@@ -151,6 +175,7 @@ class RuntimeTracker():
         self.starttimes = {}
         self.timerbool = {}
 
+        self.init_time = time.time()
         self.runtime_memory = runtime_memory
         self.runtime_log_path = runtime_log_path
         self.iterations_per_epoch = iterations_per_epoch
@@ -177,13 +202,15 @@ class RuntimeTracker():
     def write_runtimes(self):
         
         single_epoch_time = (np.mean(self.runtimes['training iter'])*self.iterations_per_epoch)/3600
-        
+        current_time = time.time()
+
         string_list = [f'Average runtime for {name} is {np.mean(value)} seconds \n' for name, value in self.runtimes.items()]
         with open(self.runtime_log_path, 'w') as rtlog:
             [rtlog.write(entry) for entry in string_list]
             rtlog.write('\n')
             rtlog.write(f'Approximate time to run 1 epoch (excluding validation loop): {round(single_epoch_time,2)} hours \n')
-            rtlog.write(f'Time to run all {self.opts.epochs} epochs: {round(single_epoch_time*self.opts.epochs, 2)} hours')
+            rtlog.write(f'Time to run all {self.opts.epochs} epochs: {round(single_epoch_time*self.opts.epochs, 2)} hours\n')
+            rtlog.write(f'Current total runtime: {(current_time - self.init_time)/60} mins')
 
     
 

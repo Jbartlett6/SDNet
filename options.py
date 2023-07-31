@@ -29,8 +29,8 @@ class network_options():
         self.activation = 'prelu'           # {'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
 
         #Early Stopping Parameters
-        self.early_stopping = False         # Whether to include early stopping in the network.
-        self.early_stopping_threshold = 0   # When early_stopping_counter reaches this value training will stop.
+        self.early_stopping = True         # Whether to include early stopping in the network.
+        self.early_stopping_threshold = 20 # When early_stopping_counter reaches this value training will stop.
 
         #Checkpoint and model parameters
         self.continue_training = False      # Whether to continue training using existing model weights

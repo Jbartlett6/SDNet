@@ -18,7 +18,7 @@ def fully_sampled_FOD(path):
     
     # 5 tissue segmentation
     subprocess.run(['5ttgen', 'fsl', os.path.join(path, '..', 'T1w_acpc_dc_restore_1.25.nii.gz'), os.path.join(path, '..', '5ttgen.nii.gz'), '-nocrop'])
-    subprocess.run(['mrconvert', os.path.join(path, '..', '5ttgen.nii.gz', '-coord', '3', '2', os.path.join(path,'..','white_matter_mask.nii.gz'))])
+    subprocess.run(['mrconvert', os.path.join(path, '..', '5ttgen.nii.gz'), '-coord', '3', '2', os.path.join(path,'..','white_matter_mask.nii.gz')])
 
     # FOD segmentation
     subprocess.run(['fod2fixel', '-afd', 'afd.mif', '-peak_amp', 'peak_amp.mif', os.path.join(path, 'wmfod.nii.gz'), 
@@ -30,7 +30,16 @@ def fully_sampled_FOD(path):
     subprocess.run(['fixel2voxel', '-number', '11', os.path.join(path, 'fixel_directory', 'afd.mif'), 'none', 
                     os.path.join(path, 'fixel_directory', 'afd_im.mif')])
 
+    # Tractseg
+    subprocess.run(['TractSeg', '-i', os.path.join(path, 'data.nii.gz'), '-o', os.path.join(path, 'tractseg'), 
+                    '--bvals', os.path.join(path, 'bvals'), '--bvecs', os.path.join(path, 'bvecs'), '--raw_diffusion_input',
+                    '--csd_type', 'csd_msmt'])
+
 def undersampled_FOD(path):
+    # If the undersampled_fod directory doesn't exist, make it
+    if os.path.exists(os.path.join(path, 'undersampled_fod')) == False:
+        os.mkdir(os.path.join(path, 'undersampled_fod'))
+
     UspDset = dwiusamp.UndersampleDataset(path, os.path.join(path, 'undersampled_fod'))
     UspDset.all_save()
 
@@ -67,5 +76,5 @@ def reset_HCP_dir(path):
 if __name__ == '__main__':
     diffusion_dir = '/media/duanj/F/joe/hcp_2/100206_copy/T1w/Diffusion'
     print(diffusion_dir)
-    fully_sampled_FOD(diffusion_dir)
+    # fully_sampled_FOD(diffusion_dir)
     undersampled_FOD(diffusion_dir)

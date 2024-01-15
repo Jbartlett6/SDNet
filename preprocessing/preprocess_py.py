@@ -5,16 +5,16 @@ import os
 
 def fully_sampled_FOD(path):
     # Fully sampled FOD
-    # subprocess.run(['dwi2response', 'dhollander', os.path.join(path, 'data.nii.gz'), 
-    #                 os.path.join(path, 'wm_response.txt'), os.path.join(path, 'gm_response.txt'), 
-    #                 os.path.join(path, 'csf_response.txt'), '-fslgrad', 
-    #                 os.path.join(path, 'bvecs'), os.path.join(path, 'bvals')])
+    subprocess.run(['dwi2response', 'dhollander', os.path.join(path, 'data.nii.gz'), 
+                    os.path.join(path, 'wm_response.txt'), os.path.join(path, 'gm_response.txt'), 
+                    os.path.join(path, 'csf_response.txt'), '-fslgrad', 
+                    os.path.join(path, 'bvecs'), os.path.join(path, 'bvals')])
     
     
-    # subprocess.run(['dwi2fod', '-fslgrad', os.path.join(path, 'bvecs'), os.path.join(path, 'bvals'),
-    #                 'msmt_csd', os.path.join(path, 'data.nii.gz'), os.path.join(path, 'wm_response.txt'),
-    #                 os.path.join(path, 'wmfod.nii.gz'), os.path.join(path, 'gm_response.txt'), os.path.join(path, 'gm.nii.gz'), 
-    #                 os.path.join(path, 'csf_response.txt'), os.path.join(path, 'csf.nii.gz')])
+    subprocess.run(['dwi2fod', '-fslgrad', os.path.join(path, 'bvecs'), os.path.join(path, 'bvals'),
+                    'msmt_csd', os.path.join(path, 'data.nii.gz'), os.path.join(path, 'wm_response.txt'),
+                    os.path.join(path, 'wmfod.nii.gz'), os.path.join(path, 'gm_response.txt'), os.path.join(path, 'gm.nii.gz'), 
+                    os.path.join(path, 'csf_response.txt'), os.path.join(path, 'csf.nii.gz')])
     
     # 5 tissue segmentation
     subprocess.run(['5ttgen', 'fsl', os.path.join(path, '..', 'T1w_acpc_dc_restore_1.25.nii.gz'), os.path.join(path, '..', '5ttgen.nii.gz'), '-nocrop'])
@@ -41,14 +41,14 @@ def undersampled_FOD(path):
                     '-intensity', '1'])
     
     # Calculating the undersampled FODs
-    subprocess.run(['dwi2response', 'dhollander', os.path.join(path, 'undersampled_fod', 'normalised_data'), os.path.join(path, 'undersampled_fod', 'wm_response.txt'),
+    subprocess.run(['dwi2response', 'dhollander', os.path.join(path, 'undersampled_fod', 'normalised_data.nii.gz'), os.path.join(path, 'undersampled_fod', 'wm_response.txt'),
                     os.path.join(path, 'undersampled_fod', 'gm_response.txt'), os.path.join(path, 'undersampled_fod', 'csf_response.txt'), '-fslgrad',
                     os.path.join(path, 'undersampled_fod', 'bvecs'), os.path.join(path, 'undersampled_fod', 'bvals')])
     
     subprocess.run(['dwi2fod', '-fslgrad', os.path.join(path, 'undersampled_fod', 'bvecs'), os.path.join(path, 'undersampled_fod', 'bvals'),
                  'msmt_csd', os.path.join(path, 'undersampled_fod', 'normalised_data.nii.gz'), os.path.join(path, 'undersampled_fod', 'wm_response.txt'),
                  os.path.join(path, 'undersampled_fod', 'wm.nii.gz'), os.path.join(path, 'undersampled_fod', 'gm_response.txt'), os.path.join(path, 'undersampled_fod', 'gm.nii.gz'),
-                 os.path.join(path, 'undersampled_fod', 'csf_response.txt'), os.path.join(path, 'undersampled_fod', 'csf_response.txt')])
+                 os.path.join(path, 'undersampled_fod', 'csf_response.txt'), os.path.join(path, 'undersampled_fod', 'csf.nii.gz')])
     
     return 0
 
@@ -65,7 +65,7 @@ def reset_HCP_dir(path):
     os.remove( os.path.join(path, 'csf.nii.gz'))
      	                
 if __name__ == '__main__':
-    diffusion_dir = '/mnt/d/Project_1_SDNet/SDNet_data/100610_non_preproc/T1w/Diffusion'
+    diffusion_dir = '/media/duanj/F/joe/hcp_2/100206_copy/T1w/Diffusion'
     print(diffusion_dir)
-    # fully_sampled_FOD(diffusion_dir)
-    undersampled_FOD()
+    fully_sampled_FOD(diffusion_dir)
+    undersampled_FOD(diffusion_dir)

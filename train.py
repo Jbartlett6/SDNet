@@ -103,7 +103,7 @@ class NetworkTrainer():
                     print(f'Epoch:{epoch}, Minibatch:{i}/{len(self.train_dataloader)}')
                     self.validation_loop(epoch, i)
                     self.rttracker.stop_timer('validation loop')
-                    self.es.early_stopping_update(self.current_training_details, epoch,i)
+                    self.optimizer = self.es.early_stopping_update(self.current_training_details, epoch,i, self.optimizer)
                 
                 self.rttracker.write_runtimes()
                 self.rttracker.start_timer('training dataload')

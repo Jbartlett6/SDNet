@@ -109,6 +109,7 @@ def update_training_logs(train_losses, val_losses, current_training_details, mod
         trainlog.write(f'Current best validation loss: {round(es.best_loss*1000,3)} x 10^-4 at iteration: {es.best_loss_iter}\n')
         trainlog.write(f'Current iteration: {epoch*es.epoch_length + i}, best loss occured {(epoch*es.epoch_length + i)-es.best_loss_iter} iterations ago\n')
         trainlog.write(f'Highest early stopping counter: {es.highest_counter}/{opts.early_stopping_threshold}, which occured at iteration: {es.highest_counter_iter}\n')
+        trainlog.write(f'Number of Learning rate decays: {es.lr_scheduler_count}')
 
     with open(os.path.join(model_save_path,'training_details.yml'), 'w') as file:
         documents = yaml.dump(training_details, file)
@@ -140,13 +141,18 @@ class EarlyStopping():
         self.early_stopping_counter = 0
         self.best_loss = math.inf
         self.best_loss_iter = 0
+        
+        
         self.highest_counter = 0
         self.highest_counter_iter = 0
+        
+        
+        self.lr_scheduler_count = 0
         
         self.opts = opts
         self.epoch_length = epoch_length
 
-    def early_stopping_update(self,current_training_details,epoch,i):
+    def early_stopping_update(self,current_training_details,epoch,i, optimizer):
       
         if self.opts.early_stopping == True:
             current_loss = current_training_details['best_loss']
@@ -159,13 +165,25 @@ class EarlyStopping():
             else:
                 self.early_stopping_counter += 1
 
-            if self.early_stopping_counter > self.opts.early_stopping_threshold:
-                print(f'Training stopped at epoch {current_training_details["global_epochs"]+epoch} due to Early stopping and minibatch {i}, the best validation loss achieved is: {current_training_details["best_loss"]}')
-                sys.exit()
+
+            if self.early_stopping_counter >= self.opts.early_stopping_threshold:
+                
+                if self.lr_scheduler_count >= self.opts.lr_decay_limit:
+                    print(f'Training stopped at epoch {current_training_details["global_epochs"]+epoch} due to Early stopping and minibatch {i}, the best validation loss achieved is: {current_training_details["best_loss"]}')
+                    sys.exit()
+                else:
+                    self.early_stopping_counter = 0
+                    self.highest_counter = 0
+                    self.lr_scheduler_count += 1
+                    
+                    for g in optimizer.param_groups:
+                        g['lr'] = g['lr']*self.opts.lr_decay_factor
+            
             elif self.early_stopping_counter > self.highest_counter:
                 self.highest_counter = self.early_stopping_counter
                 self.highest_counter_iter = current_iter
-            
+
+        return optimizer 
 
 
 class RuntimeTracker():

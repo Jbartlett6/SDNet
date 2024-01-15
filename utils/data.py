@@ -166,7 +166,7 @@ class DWIPatchDataset(torch.utils.data.Dataset):
             gt_bvecs_sph[gt_bvecs_sph[:,0]<0,0] = gt_bvecs_sph[gt_bvecs_sph[:,0]<0,0]+2*math.pi
             gt_bvals = util.bval_extract(self.opts.data_dir, subject, self.opts.diffusion_dir)
             
-            
+        
             #White matter response function extraction:
             order = 8
             with open(os.path.join(self.opts.data_dir, subject,'T1w',self.opts.diffusion_dir,self.opts.dwi_folder_name,'wm_response.txt'), 'r') as txt:

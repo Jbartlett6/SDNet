@@ -68,9 +68,9 @@ def bvec_extract(data_dir, subject, diffusion_dir = 'Diffusion', sub_dir = None)
     else:
         path = os.path.join(data_dir, subject, 'T1w', diffusion_dir, sub_dir,'bvecs')
 
-    bvecs = open(path ,'r')
+    with open(path, 'r') as f:
+        bvecs_str = f.read()
 
-    bvecs_str = bvecs.read()
     bvecsxyz = bvecs_str.split('\n')
     
     xvals = [float(x) for x in bvecsxyz[0].split()]
@@ -181,6 +181,7 @@ def construct_sh_basis_msmt_all(bvecs_sph, order, g_wm, g_gm, g_csf, bvals):
             temp.append(g_csf[i]/real_sh_eval(0,0,0,0))
             G[i,:] = torch.tensor(temp)
 
+        # Combine straight away to make a single matrix. 
         for i in range(A.shape[0]):
             if bvals[i]<20:
                 A[i] *= G[0,:]

@@ -47,38 +47,38 @@ class network_options():
         
         #Data related hyperparameters
         self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp' # Data directory see github repo for more details.
-        self.train_subject_list = ['100206'] # Subjects to be used for training
-                    # '100307',
-                    # '100408',
-                    # '100610',
-                    # '101006',
-                    # '101107',
-                    # '101309',
-                    # '101410',
-                    # '101915',
-                    # '102311',
-                    # '102513',
-                    # '102614',
-                    # '102715',
-                    # '102816',
-                    # '103010',
-                    # '103111',
-                    # '103212',
-                    # '103414',
-                    # '103515',
-                    # '103818']
+        self.train_subject_list = ['100206', # Subjects to be used for training
+                    '100307',
+                    '100408',
+                    '100610',
+                    '101006',
+                    '101107',
+                    '101309',
+                    '101410',
+                    '101915',
+                    '102311',
+                    '102513',
+                    '102614',
+                    '102715',
+                    '102816',
+                    '103010',
+                    '103111',
+                    '103212',
+                    '103414',
+                    '103515',
+                    '103818']
         #102109 has been removed from the test list due to the fixel directory - can be readded providing the fixles are correct.
         self.val_subject_list = ['104012',  # Subjects to be used for validation
                     '104416',
                     '104820']
 
-        self.test_subject_list = ['145127', '147737'] # Subjects to be used for testing.
-                    # '147737',
-                    # '174437',
-                    # '178849',
-                    # '318637',
-                    # '581450',
-                    # '130821']
+        self.test_subject_list = ['145127', # Subjects to be used for testing.
+                    '147737',
+                    '174437',
+                    '178849',
+                    '318637',
+                    '581450',
+                    '130821']
 
         # Dataset parameters - if the data directory structure found in github repo is used then leave these values as 
         # found

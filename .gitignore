@@ -2,3 +2,4 @@ SphericalDeconvolution.py
 requirements.txt
 *cpython*
 to_sort/*
+dwi2response-tmp*

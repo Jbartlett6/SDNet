@@ -49,27 +49,27 @@ class network_options():
         self.val_workers = 8 # Number of workers used for the validation dataloader. 
         
         #Data related hyperparameters
-        self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp' # Data directory see github repo for more details.
-        self.train_subject_list = ['100206', # Subjects to be used for training
-                    '100307',
-                    '100408',
-                    '100610',
-                    '101006',
-                    '101107',
-                    '101309',
-                    '101410',
-                    '101915',
-                    '102311',
-                    '102513',
-                    '102614',
-                    '102715',
-                    '102816',
-                    '103010',
-                    '103111',
-                    '103212',
-                    '103414',
-                    '103515',
-                    '103818']
+        self.data_dir = '/media/duanj/F/joe/hcp_2' # Data directory see github repo for more details.
+        self.train_subject_list = ['100206'] #, # Subjects to be used for training
+                    # '100307',
+                    # '100408',
+                    # '100610',
+                    # '101006',
+                    # '101107',
+                    # '101309',
+                    # '101410',
+                    # '101915',
+                    # '102311',
+                    # '102513',
+                    # '102614',
+                    # '102715',
+                    # '102816',
+                    # '103010',
+                    # '103111',
+                    # '103212',
+                    # '103414',
+                    # '103515',
+                    # '103818']
         #102109 has been removed from the test list due to the fixel directory - can be readded providing the fixles are correct.
         self.val_subject_list = ['104012',  # Subjects to be used for validation
                     '104416',

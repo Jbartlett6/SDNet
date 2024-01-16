@@ -1,16 +1,15 @@
-import sys
-import os 
-sys.path.append(os.path.join(sys.path[0],'models'))
-sys.path.append(os.path.join(sys.path[0],'utils'))
-import torch 
-import matplotlib.pyplot as plt 
 import utils.data as data
-import options
 from models import Convcsdcfrnet
-import torch.optim.lr_scheduler 
-from utils import tracker 
-sys.path.append(os.path.join(sys.path[0],'..', 'fixel_loss'))
+import options
+from utils import tracker
 from fixel_loss import network
+
+import os 
+
+import torch 
+import torch.optim.lr_scheduler 
+import matplotlib.pyplot as plt 
+
 
 class NetworkTrainer():
     '''

@@ -47,6 +47,7 @@ The network is designed to be trained on the WU-MINN human connectome project da
                 └── csf.nii.gz
                 └── gm.nii.gz
                 └── wmfod.nii.gz
+                └── gt_fod.nii.gz
                 ├──fixel_directory
                     └── afd.nii.gz
                     └── peak_amp.nii.gz

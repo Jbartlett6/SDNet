@@ -40,7 +40,6 @@ The network is designed to be trained on the WU-MINN human connectome project da
                 └── bvecs 
                 └── data.nii.gz
                 └── nodif_brain_mask.nii.gz
-                └── normalised_data.nii.gz
                 └── csf_response.txt
                 └── gm_response.txt
                 └── wm_response.txt

@@ -40,7 +40,6 @@ The network is designed to be trained on the WU-MINN human connectome project da
                 └── bvecs 
                 └── data.nii.gz
                 └── nodif_brain_mask.nii.gz
-                └── normalised_data.nii.gz
                 └── csf_response.txt
                 └── gm_response.txt
                 └── wm_response.txt
@@ -53,7 +52,8 @@ The network is designed to be trained on the WU-MINN human connectome project da
                     └── peak_amp.nii.gz
                     └── index.nii.gz
                     └── directions.nii.gz
-                    └── gt_threshold_fixels.nii.gz
+                    └── fixnet_targets
+                        └── gt_threshold_fixels.nii.gz
                 └── undersampled_fod
                     └── bvals
                     └── bvecs

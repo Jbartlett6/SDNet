@@ -146,11 +146,9 @@ def preprocessing_test(path):
     assert os.path.exists(path), "The path being tested for does not exist"
 
     T1w_bool = (os.path.exists(os.path.join(path, '..', '5ttgen.nii.gz'))
-                   and os.path.exists(os.path.join(path, '..', 'white_matter_mask.nii.gz'))
                    )
 
-    diffusion_bool = (os.path.exists(os.path.join(path, 'normalised_data.nii.gz'))
-                         and os.path.exists(os.path.join(path, 'wm_response.txt'))
+    diffusion_bool = (os.path.exists(os.path.join(path, 'wm_response.txt'))
                          and os.path.exists(os.path.join(path, 'gm_response.txt'))
                          and os.path.exists(os.path.join(path, 'csf_response.txt'))
                          and os.path.exists(os.path.join(path, 'wmfod.nii.gz'))
@@ -159,18 +157,23 @@ def preprocessing_test(path):
                         and os.path.exists(os.path.join(path, 'gt_fod.nii.gz'))
                         )
     
-    fixel_directory_bool = (os.path.exists(os.path.join(path, 'fixel_directory', 'index.nii.gz'))
-                       and os.path.exists(os.path.join(path, 'fixel_directory', 'directions.nii.gz'))
-                       and os.path.exists(os.path.join(path, 'fixel_directory', 'afd.nii.gz'))
-                       and os.path.exists(os.path.join(path, 'fixel_directory', 'peak_amp.nii.gz'))
-                       and os.path.exists(os.path.join(path, 'fixel_directory', 'gt_threshold_fixels.nii.gz'))
+    fixel_directory_train_bool = (os.path.exists(os.path.join(path, 'fixel_directory', 'index.nii.gz'))
+                       and os.path.exists(os.path.join(path, 'fixel_directory', 'fixnet_targets'))
+                       and os.path.exists(os.path.join(path, 'fixel_directory', 'fixnet_targets', 'gt_threshold_fixels.nii.gz'))
+                       )
+
+    fixel_directory_test_bool = (os.path.exists(os.path.join(path, 'fixel_directory', 'index.nii.gz'))
+                       and os.path.exists(os.path.join(path, 'fixel_directory', 'afd_im.nii.gz'))
+                       and os.path.exists(os.path.join(path, 'fixel_directory', 'peak_amp_im.nii.gz'))
                        )
     
-    undersampled_fod_bool = (os.path.exists(os.path.join(path, 'undersampled_fod', 'bvals'))
+    undersampled_fod_train_bool = (os.path.exists(os.path.join(path, 'undersampled_fod', 'bvals'))
                         and os.path.exists(os.path.join(path, 'undersampled_fod', 'bvecs'))
                         and os.path.exists(os.path.join(path, 'undersampled_fod', 'data.nii.gz'))
                         and os.path.exists(os.path.join(path, 'undersampled_fod', 'normalised_data.nii.gz'))
-                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'wm_response.txt'))
+                        )
+    
+    undersampled_fod_test_bool = (os.path.exists(os.path.join(path, 'undersampled_fod', 'wm_response.txt'))
                         and os.path.exists(os.path.join(path, 'undersampled_fod', 'gm_response.txt'))
                         and os.path.exists(os.path.join(path, 'undersampled_fod', 'csf_response.txt'))
                         and os.path.exists(os.path.join(path, 'undersampled_fod', 'wm.nii.gz'))
@@ -186,18 +189,24 @@ def preprocessing_test(path):
                      and os.path.exists(os.path.join(path, 'tractseg', 'peaks.nii.gz', 'bundle_segmentations', 'CC_CST_SLF_3fixel.nii.gz'))
                     )
 
-    training_bool = diffusion_bool and undersampled_fod_bool and T1w_bool
-    training_and_testing_bool = training_bool and tractseg_bool and fixel_directory_bool
+    training_bool = diffusion_bool and undersampled_fod_train_bool and T1w_bool and fixel_directory_train_bool
+    training_and_testing_bool = training_bool and tractseg_bool and fixel_directory_test_bool
 
     report =f'''
             Report for path: {path} \n
+            *** TRAINING STATUS ***\n
             T1w folder status: {T1w_bool} \n
             Diffusion status: {diffusion_bool} \n
-            Fixel directory status: {fixel_directory_bool}\n
-            Undersampled FOD status: {undersampled_fod_bool}\n
-            Tractseg status: {tractseg_bool}\n
-            Training status: {training_bool}\n
-            Training and Testing status: {training_and_testing_bool}\n
+            Fixel directory status: {fixel_directory_train_bool}\n
+            Undersampled FOD status: {undersampled_fod_train_bool}\n\n
+
+            *** TESTING STATUS ***\n
+            Fixel directory status: {fixel_directory_test_bool}\n
+            Undersampled FOD status: {undersampled_fod_test_bool}\n
+            Tractseg status: {tractseg_bool}\n\n
+
+            TRAINING STATUS: {training_bool}
+            TRAINING AND TESTING STATUS: {training_and_testing_bool}\n
             '''
     print(report) 
 

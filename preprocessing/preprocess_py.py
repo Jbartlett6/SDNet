@@ -98,7 +98,7 @@ def fixels_and_masks(path):
     
     os.remove(os.path.join(path, 'fixel_directory', 'index_1.nii.gz'))
 
-
+    return 0
     
 def reset_HCP_dir(path):
     '''
@@ -124,7 +124,84 @@ def reset_HCP_dir(path):
     
     if os.path.exists(path, 'fixel_directory'):
         shutil.rmtree(os.path.exists(path, 'fixel_directory'))
+
+    return 0
     
+def HCP_download_test(path):
+    folders_present = (os.path.exists(os.path.join(path, '..', 'T1w_acpc_dc_restore_1.25.nii.gz'))
+    and os.path.exists(os.path.join(path, 'bvecs'))
+    and os.path.exists(os.path.join(path, 'bvals'))
+    and os.path.exists(os.path.join(path, 'data.nii.gz'))
+    and os.path.exists(os.path.join(path, 'nodif_brain_mask.nii.gz')))
+
+    return folders_present
+
+def preprocessing_test(path):
+    '''
+    Function to test that pre-processing has been performed and all of the correct files have been created. 
+    For the given path each folder is checked that it contains the files that should have been calculated 
+    during the pre-processing. The output is a tuple, the first is whether the files exist to use the 
+    subject for training, and the second whether all of the necessary files exist. 
+    '''
+    assert os.path.exists(path), "The path being tested for does not exist"
+
+    T1w_bool = (os.path.exists(os.path.join(path, '..', '5ttgen.nii.gz'))
+                   and os.path.exists(os.path.join(path, '..', 'white_matter_mask.nii.gz'))
+                   )
+
+    diffusion_bool = (os.path.exists(os.path.join(path, 'normalised_data.nii.gz'))
+                         and os.path.exists(os.path.join(path, 'wm_response.txt'))
+                         and os.path.exists(os.path.join(path, 'gm_response.txt'))
+                         and os.path.exists(os.path.join(path, 'csf_response.txt'))
+                         and os.path.exists(os.path.join(path, 'wmfod.nii.gz'))
+                         and os.path.exists(os.path.join(path, 'gm.nii.gz'))
+                         and os.path.exists(os.path.join(path, 'csf.nii.gz'))
+                        and os.path.exists(os.path.join(path, 'gt_fod.nii.gz'))
+                        )
+    
+    fixel_directory_bool = (os.path.exists(os.path.join(path, 'fixel_directory', 'index.nii.gz'))
+                       and os.path.exists(os.path.join(path, 'fixel_directory', 'directions.nii.gz'))
+                       and os.path.exists(os.path.join(path, 'fixel_directory', 'afd.nii.gz'))
+                       and os.path.exists(os.path.join(path, 'fixel_directory', 'peak_amp.nii.gz'))
+                       and os.path.exists(os.path.join(path, 'fixel_directory', 'gt_threshold_fixels.nii.gz'))
+                       )
+    
+    undersampled_fod_bool = (os.path.exists(os.path.join(path, 'undersampled_fod', 'bvals'))
+                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'bvecs'))
+                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'data.nii.gz'))
+                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'normalised_data.nii.gz'))
+                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'wm_response.txt'))
+                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'gm_response.txt'))
+                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'csf_response.txt'))
+                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'wm.nii.gz'))
+                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'gm.nii.gz'))
+                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'csf.nii.gz'))
+                        )
+
+    tractseg_bool = (os.path.exists(os.path.join(path, 'tractseg'))
+                     and os.path.exists(os.path.join(path, 'tractseg', 'peaks.nii.gz'))
+                     and os.path.exists(os.path.join(path, 'tractseg', 'peaks.nii.gz', 'bundle_segmentations'))
+                     and os.path.exists(os.path.join(path, 'tractseg', 'peaks.nii.gz', 'bundle_segmentations', 'CC_1fixel.nii.gz'))
+                     and os.path.exists(os.path.join(path, 'tractseg', 'peaks.nii.gz', 'bundle_segmentations', 'MCP_CST_2fixel.nii.gz'))
+                     and os.path.exists(os.path.join(path, 'tractseg', 'peaks.nii.gz', 'bundle_segmentations', 'CC_CST_SLF_3fixel.nii.gz'))
+                    )
+
+    training_bool = diffusion_bool and undersampled_fod_bool and T1w_bool
+    training_and_testing_bool = training_bool and tractseg_bool and fixel_directory_bool
+
+    report =f'''
+            Report for path: {path} \n
+            T1w folder status: {T1w_bool} \n
+            Diffusion status: {diffusion_bool} \n
+            Fixel directory status: {fixel_directory_bool}\n
+            Undersampled FOD status: {undersampled_fod_bool}\n
+            Tractseg status: {tractseg_bool}\n
+            Training status: {training_bool}\n
+            Training and Testing status: {training_and_testing_bool}\n
+            '''
+    print(report) 
+
+    return training_bool, training_and_testing_bool
 
 
 def mif_to_nifti(mif_path):
@@ -137,11 +214,16 @@ def mif_to_nifti(mif_path):
     subprocess.run(['mrconvert', mif_path, nifti_path])
     os.remove(mif_path)
 
+    return 0
+
 
      	                
 if __name__ == '__main__':
-    diffusion_dir = '/media/duanj/F/joe/ton_multi/hcp_like/T1w/Diffusion'
+
+    
+    diffusion_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp/100206/T1w/Diffusion'
+    preprocessing_test(diffusion_dir)
     # print(diffusion_dir)
-    fully_sampled_FOD(diffusion_dir)
+    # fully_sampled_FOD(diffusion_dir)
     # fixels_and_masks(diffusion_dir)
     # undersampled_FOD(diffusion_dir)

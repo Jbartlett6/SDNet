@@ -6,8 +6,6 @@ import torch
 import numpy as np
 import scipy.special 
 
-
-
 #Tic toc functions useful for timing
 #############################################################################
 def TicTocGenerator():

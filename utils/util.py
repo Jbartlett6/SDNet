@@ -1,13 +1,8 @@
 import time
-import sys
 import os 
-sys.path.append(os.path.join(sys.path[0],'models'))
-import torch 
-import torch.nn as nn
-import torch.nn.functional as F
 import math
-import nibabel as nib
-import matplotlib.pyplot as plt 
+
+import torch 
 import numpy as np
 import scipy.special 
 

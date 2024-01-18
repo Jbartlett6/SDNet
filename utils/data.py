@@ -1,12 +1,13 @@
-import torch 
-import torch.nn.functional as F
+import util 
+
 import math
 import os 
-import sys
+
+import torch 
+import torch.nn.functional as F
 import nibabel as nib 
 import numpy as np
-sys.path.append(os.path.join(sys.path[0],'utils'))
-import util 
+
 
 class DWIPatchDataset(torch.utils.data.Dataset):
     '''

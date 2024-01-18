@@ -1,14 +1,15 @@
-from torch.utils.tensorboard import SummaryWriter
-import torch.nn.functional as F
-import nibabel as nib
-import os
 import util
-import torch
-import yaml
-import sys
-import numpy as np
+
 import time
 import math
+import yaml
+import sys
+import os
+
+from torch.utils.tensorboard import SummaryWriter
+import torch
+import numpy as np
+
 
 class Vis():
     '''

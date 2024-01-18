@@ -20,6 +20,7 @@ that preprocessing has been run correctly.
 
 
 import dwi_undersample as dwiusamp
+import fixel_threshold as fixel_threshold
 
 import subprocess 
 import os
@@ -102,6 +103,8 @@ def fixels_and_masks(path):
     subprocess.run(['fixel2voxel', '-number', '11', os.path.join(path, 'fixel_directory', 'afd.nii.gz'), 'none', 
                     os.path.join(path, 'fixel_directory', 'afd_im.nii.gz')])
 
+    fixel_threshold.fixel_threshold(path)    
+    
     # Tractseg
     subprocess.run(['TractSeg', '-i', os.path.join(path, 'data.nii.gz'), '-o', os.path.join(path, 'tractseg'), 
                     '--bvals', os.path.join(path, 'bvals'), '--bvecs', os.path.join(path, 'bvecs'), '--raw_diffusion_input',
@@ -253,6 +256,7 @@ def preprocessing_test(path):
     print(report) 
 
     return training_bool, training_and_testing_bool
+
      	                
 # if __name__ == '__main__':
 

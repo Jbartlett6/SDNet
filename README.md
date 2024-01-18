@@ -73,7 +73,7 @@ The network is designed to be trained on the WU-MINN human connectome project da
 ```
 
 ## Network Training
-Prior to network training, ensure the file paths have been set up as above and the options.py script contains the desired network configuration. To train the network run the `train.py` script. 
+Prior to network training, ensure the file paths have been set up as above and the options.py script contains the desired network configuration. To train the network run `train.py`. 
 
 ## Network Inference
 Prior to using the network for inference, ensure the file paths have been set up as above and the options.py script contains the desired network configuration. To perform inference update the `test_subject_list` attribute in the `options.py` script and run the `eval.py` script.

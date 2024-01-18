@@ -28,129 +28,13 @@ class CSDNet(nn.Module):
           
         activation_mod = self.set_activation()
 
-        # self.csdcascade_1 = netblocks.SHConvCascadeLayer(activation_mod)
-        # self.csdcascade_2 = netblocks.SHConvCascadeLayer(activation_mod)
-        # self.csdcascade_3 = netblocks.SHConvCascadeLayer(activation_mod)
-        # self.csdcascade_4 = netblocks.SHConvCascadeLayer(activation_mod)
-        # self.output_net = netblocks.OutputLayer()
-
-        # if self.opts.output_net:
-        #     self.output_net = netblocks.OutputLayer()
-
         self.csdcascade_1 = netblocks.SHConvCascadeLayer(activation_mod)
         self.csdcascade_2 = netblocks.SHConvCascadeLayer_MS(activation_mod)
         self.csdcascade_3 = netblocks.SHConvCascadeLayer_MS(activation_mod)
         self.csdcascade_4 = netblocks.SHConvCascadeLayer_MS(activation_mod)
-        
-        # self.csdcascade_1 = netblocks.GLUConvCascadeLayer()
-        # self.csdcascade_2 = netblocks.GLUConvCascadeLayer()
-        # self.csdcascade_3 = netblocks.GLUConvCascadeLayer()
-        # self.csdcascade_4 = netblocks.GLUConvCascadeLayer()
-        
+    
         self.init_weight(self.opts.activation)
         
-        
-    # def forward(self, b, AQ):
-    #     #Initialising some matricies which will be used throughout the forward pass for given data.
-    #     AQ_Tb = torch.matmul(AQ.transpose(1,2).unsqueeze(1).unsqueeze(1).unsqueeze(1),b)
-    #     AQ_TAQ = torch.matmul(AQ.transpose(1,2).unsqueeze(1).unsqueeze(1).unsqueeze(1),AQ.unsqueeze(1).unsqueeze(1).unsqueeze(1))
-        
-    #     #Initialising c using only lower order spsheircal harmonics
-    #     c = self.c_init(AQ, AQ_Tb, b)
-    #     #dc = c
-        
-        
-    #     #First cascade
-    #     c_csd = self.csdcascade_1(c)
-    #     # curr_feat = torch.zeros([128, 512, 9,9,9]).to(b.device)
-    #     # c_csd, curr_feat = self.csdcascade_1(c_inp, curr_feat)
-        
-    #     c_csd = torch.mul(c_csd[:,:,:,:,:47,:], torch.sigmoid(c_csd[:,:,:,:,47:,:]))
-    #     c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,1)
-    #     # c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
-    #     # dc = c
-        
-    #     #Second Cascade
-    #     c_csd = self.csdcascade_2(c)
-    #     # c_csd, curr_feat = self.csdcascade_2(c_inp, curr_feat)
-    #     c_csd = self.res_con(c_csd,c)
-    #     c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,2)
-    #     # c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
-    #     # dc = c
-        
-        
-    #     #Third Cascade
-    #     c_csd = self.csdcascade_3(c)
-    #     # c_csd, curr_feat = self.csdcascade_3(c_inp, curr_feat)
-    #     c_csd = self.res_con(c_csd,c)
-    #     c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,3)
-    #     # c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
-    #     # dc = c
-        
-        
-    #     #Final Cascade
-    #     c_csd = self.csdcascade_4(c)
-    #     # c_csd, curr_feat = self.csdcascade_4(c_inp, curr_feat)
-    #     c_csd = self.res_con(c_csd,c)
-    #     c = self.dc(c,c_csd, AQ_Tb, AQ_TAQ, b,4)
-       
-    #     #A small network to just allow the network extra freedom
-    #     c = c.squeeze()
-    #     c = c + self.output_net(c)
-    #     c = c.unsqueeze(-1)
-
-    #     return c
-
-    # def forward(self, b, AQ):
-    #     #Initialising some matricies which will be used throughout the forward pass for given data.
-    #     AQ_Tb = torch.matmul(AQ.transpose(1,2).unsqueeze(1).unsqueeze(1).unsqueeze(1),b)
-    #     AQ_TAQ = torch.matmul(AQ.transpose(1,2).unsqueeze(1).unsqueeze(1).unsqueeze(1),AQ.unsqueeze(1).unsqueeze(1).unsqueeze(1))
-        
-    #     #Initialising c using only lower order spsheircal harmonics
-    #     c = self.c_init(AQ, AQ_Tb, b)
-    #     #dc = c
-        
-        
-    #     #First cascade
-    #     #c_csd = self.csdcascade_1(c)
-    #     curr_feat = torch.zeros([256, 512, 9,9,9]).to(b.device)
-    #     c_csd, curr_feat = self.csdcascade_1(c, curr_feat)
-        
-    #     c_csd = torch.mul(c_csd[:,:,:,:,:47,:], torch.sigmoid(c_csd[:,:,:,:,47:,:]))
-    #     c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,1)
-    #     # c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
-    #     # dc = c
-        
-    #     #Second Cascade
-    #     #c_csd = self.csdcascade_2(c)
-    #     c_csd, curr_feat = self.csdcascade_2(c, curr_feat)
-    #     c_csd = self.res_con(c_csd,c)
-    #     c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,2)
-    #     # c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
-    #     # dc = c
-        
-        
-    #     #Third Cascade
-    #     #c_csd = self.csdcascade_3(c)
-    #     c_csd, curr_feat = self.csdcascade_3(c, curr_feat)
-    #     c_csd = self.res_con(c_csd,c)
-    #     c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,3)
-    #     # c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
-    #     # dc = c
-        
-        
-    #     #Final Cascade
-    #     #c_csd = self.csdcascade_4(c)
-    #     c_csd, curr_feat = self.csdcascade_4(c, curr_feat)
-    #     c_csd = self.res_con(c_csd,c)
-    #     c = self.dc(c,c_csd, AQ_Tb, AQ_TAQ, b,4)
-       
-    #     # #A small network to just allow the network extra freedom
-    #     # c = c.squeeze()
-    #     # c = c + self.output_net(c)
-    #     # c = c.unsqueeze(-1)
-
-    #     return c
 
     def forward(self, b, AQ):
         #Initialising some matricies which will be used throughout the forward pass for given data.
@@ -160,7 +44,6 @@ class CSDNet(nn.Module):
         #Initialising c using only lower order spsheircal harmonics
         c = self.c_init(AQ, AQ_Tb, b)
         dc = c
-        
         
         #First cascade
         c_csd = self.csdcascade_1(c)
@@ -180,7 +63,6 @@ class CSDNet(nn.Module):
         c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
         dc = c
         
-        
         #Third Cascade
         c_csd = self.csdcascade_3(c_cat)
         # c_csd, curr_feat = self.csdcascade_3(c, curr_feat)
@@ -188,18 +70,12 @@ class CSDNet(nn.Module):
         c = self.dc(c, c_csd, AQ_Tb, AQ_TAQ, b,3)
         c_cat = torch.cat((c,dc[:,1:-1,1:-1,1:-1,:]), dim = 4)
         dc = c
-        
-        
+            
         #Final Cascade
         c_csd = self.csdcascade_4(c_cat)
         # c_csd, curr_feat = self.csdcascade_4(c, curr_feat)
         c_csd = self.res_con(c_csd,c)
         c = self.dc(c,c_csd, AQ_Tb, AQ_TAQ, b,4)
-        
-        # #A small network to just allow the network extra freedom
-        # c = c.squeeze()
-        # c = c + self.output_net(c)
-        # c = c.unsqueeze(-1)
 
         return c
 
@@ -250,17 +126,18 @@ class CSDNet(nn.Module):
                 elif self.opts.init_type == 'orthogonal':
                     nn.init.orthogonal_(m.weight, gain=init_gain)
     
-    def set_activation(self):
-        if self.opts.activation == 'sigmoid':
+    @staticmethod
+    def set_activation(activation, device):
+        if activation == 'sigmoid':
             mod = nn.Sigmoid()
-        elif self.opts.activation == 'relu':
+        elif activation == 'relu':
             mod = nn.ReLU(inplace=True)
-        elif self.opts.activation == 'tanh':
+        elif activation == 'tanh':
             mod = nn.Tanh()
-        elif self.opts.activation == 'leaky_relu':
+        elif activation == 'leaky_relu':
             mod = nn.LeakyReLU(inplace = True)
-        elif self.opts.activation == 'prelu':
-            mod = torch.nn.PReLU(num_parameters=1, init=0.25, device=self.opts.device)
+        elif activation == 'prelu':
+            mod = torch.nn.PReLU(num_parameters=1, init=0.25, device=device)
         return mod
 
     def init_dc_params(self):
@@ -274,9 +151,6 @@ class CSDNet(nn.Module):
             self.register_buffer('neg_reg', torch.tensor(0.0))
             self.register_buffer('alpha', torch.tensor(0.0).float())
 
-        
-                
-
 
 def init_network(opts):
     #Initialising the network and moving it to the correct device.
@@ -286,12 +160,6 @@ def init_network(opts):
     net = nn.DataParallel(net)
     net = net.to(opts.device)
     
-    #Loading state dict (Identity has to be added due to changes made to the network) 
-    #loaded_state_dict = torch.load('/bask/projects/d/duanj-ai-imaging/jxb1336/code/CSDNet/checkpoints/benchmark/models/best_model.pth')
-    # loaded_state_dict = torch.load('/bask/projects/d/duanj-ai-imaging/jxb1336/code/CSDNet/checkpoints/deep_sh_casc/models/best_model.pth')
-    # loaded_state_dict['module.I'] = torch.eye(47)
-    # net.load_state_dict(loaded_state_dict)
-    
     #Printing the layers and number of parameters of the network.
     print(net)
     param_num = sum(p.numel() for p in net.parameters() if p.requires_grad)
@@ -299,6 +167,7 @@ def init_network(opts):
 
     model_save_path = os.path.join('checkpoints', opts.experiment_name, 'models')
     current_training_details = {'plot_offset':0, 'previous_loss':math.inf, 'best_loss':math.inf, 'best_val_ACC':0, 'global_epochs':0}
+    
     if opts.continue_training:
         assert os.path.isdir(os.path.join('checkpoints', opts.experiment_name)), 'The experiment ' + opts.experiment_name + ''' does not exist so model parameters cannot be loaded. 
                                                                             Either change continue training flag to create another experiment, or change the experiment name

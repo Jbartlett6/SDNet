@@ -1,3 +1,24 @@
+'''
+A collection of functions to be used for preprocessing, and manipulating resetting the HCP directories and testing 
+that preprocessing has been run correctly. 
+
+    fully_sampled_FOD - Calculate the fully sampled FODs
+    
+    undersampled_FOD - Undersampled the data (data.nii.gz, bvecs and bvals) and calculate the subsequent FODs. 
+    
+    fixels_and_mask - Populating the fixel directry for the fully sampled FODs and the masks which will be used to evaluate performance
+    as well as ensure only white matter and grey matter voxels are used in training. Tractseg is used in this 
+    function. 
+
+    reset_HCP_dir - Removes the files and directories that are created in teh HCP subject's folder due to preprocessing. 
+
+    HCP_download_test - Tests that all of the files that are required to perform preprocessing can be found in the directory.
+
+    preprocessing_test - Check that preprocessing has een performed correctly and that the data necessary to run 
+    training and test are available. 
+'''
+
+
 import dwi_undersample as dwiusamp
 
 import subprocess 
@@ -48,6 +69,19 @@ def undersampled_FOD(path):
     return 0
 
 def fixels_and_masks(path):
+    
+    def mif_to_nifti(mif_path):
+        '''
+        Converts a mif file at location mif_path (MRtrix3 native file type) to a nifti file
+        in the same location and deletes the mif file.
+        '''
+        assert os.path.exists(mif_path), f"The mif file {mif_path} doesn't exist." 
+        nifti_path = ''.join(mif_path.split('.')[:-1])+'.nii.gz'
+        subprocess.run(['mrconvert', mif_path, nifti_path])
+        os.remove(mif_path)
+
+        return 0
+    
     # 5 tissue segmentation
     subprocess.run(['5ttgen', 'fsl', os.path.join(path, '..', 'T1w_acpc_dc_restore_1.25.nii.gz'), os.path.join(path, '..', '5ttgen.nii.gz'), '-nocrop'])
     subprocess.run(['mrconvert', os.path.join(path, '..', '5ttgen.nii.gz'), '-coord', '3', '2', os.path.join(path,'..','white_matter_mask.nii.gz')])
@@ -105,25 +139,33 @@ def reset_HCP_dir(path):
     A utility function for returning a HCP directory to its original state i.e. removing all 
     processing. This script is useful for testing the above processing functions.
     '''
-    os.remove(os.path.join(path, 'wm_response.txt'))
-    os.remove(os.path.join(path, 'gm_response.txt'))
-    os.remove(os.path.join(path, 'csf_response.txt'))
+    print(f'Resetting {path}')
 
-    os.remove(os.path.join(path, 'wmfod.nii.gz'))
-    os.remove(os.path.join(path, 'gm.nii.gz'))
-    os.remove(os.path.join(path, 'csf.nii.gz'))
+    def custom_rm(path_rm):
+        if os.path.exists(path_rm):
+            os.remove(path_rm)
+        
+    custom_rm(os.path.join(path, 'wm_response.txt'))
+    custom_rm(os.path.join(path, 'gm_response.txt'))
+    custom_rm(os.path.join(path, 'csf_response.txt'))
 
-    os.remove(os.path.join(path, '..', '5ttgen.nii.gz'))
-    os.remove(os.path.join(path, '..', 'white_matter_mask.nii.gz'))
+    custom_rm(os.path.join(path, 'wmfod.nii.gz'))
+    custom_rm(os.path.join(path, 'gm.nii.gz'))
+    custom_rm(os.path.join(path, 'csf.nii.gz'))
+
+    custom_rm(os.path.join(path, '..', '5ttgen.nii.gz'))
+    custom_rm(os.path.join(path, '..', 'white_matter_mask.nii.gz'))
     
-    if os.path.exists(path, 'undersampled_fod'):
-        shutil.rmtree(os.path.exists(path, 'undersampled_fod'))
+    if os.path.exists(os.path.join(path, 'undersampled_fod')):
+        shutil.rmtree(os.path.join(path, 'undersampled_fod'))
 
-    if os.path.exists(path, 'tractseg'):
-        shutil.rmtree(os.path.exists(path, 'tractseg'))
+    if os.path.exists(os.path.join(path, 'tractseg')):
+        shutil.rmtree(os.path.join(path, 'tractseg'))
     
-    if os.path.exists(path, 'fixel_directory'):
-        shutil.rmtree(os.path.exists(path, 'fixel_directory'))
+    if os.path.exists(os.path.join(path, 'fixel_directory')):
+        shutil.rmtree(os.path.join(path, 'fixel_directory'))
+
+    print(f'Finished resetting {path}')
 
     return 0
     
@@ -211,27 +253,11 @@ def preprocessing_test(path):
     print(report) 
 
     return training_bool, training_and_testing_bool
-
-
-def mif_to_nifti(mif_path):
-    '''
-    Converts a mif file at location mif_path (MRtrix3 native file type) to a nifti file
-    in the same location and deletes the mif file.
-    '''
-    assert os.path.exists(mif_path), f"The mif file {mif_path} doesn't exist." 
-    nifti_path = ''.join(mif_path.split('.')[:-1])+'.nii.gz'
-    subprocess.run(['mrconvert', mif_path, nifti_path])
-    os.remove(mif_path)
-
-    return 0
-
-
      	                
-if __name__ == '__main__':
+# if __name__ == '__main__':
 
-    
-    diffusion_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp/100206/T1w/Diffusion'
-    preprocessing_test(diffusion_dir)
+    # diffusion_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp/100206/T1w/Diffusion'
+    # preprocessing_test(diffusion_dir)
     # print(diffusion_dir)
     # fully_sampled_FOD(diffusion_dir)
     # fixels_and_masks(diffusion_dir)

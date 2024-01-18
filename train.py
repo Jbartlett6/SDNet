@@ -44,7 +44,7 @@ class NetworkTrainer():
         self.loss_tracker = tracker.LossTracker(self.criterion)    
         self.visualiser = tracker.Vis(self.opts, self.train_dataloader)
         self.es = tracker.EarlyStopping(self.opts, len(self.train_dataloader))
-        self.init_runtime_trackers(5)
+        self.init_runtime_trackers(runtime_mem = 5)
 
         #Initialising the classification network:
         self.class_network = network.init_fixnet(self.opts)

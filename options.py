@@ -38,13 +38,13 @@ class network_options():
 
         #Checkpoint and model parameters
         self.continue_training = False      # Whether to continue training using existing model weights
-        self.experiment_name = 'ny_test'  # Directory name to be stored in the checkpoint directory.
-        self.model_name = 'best_model.pth'  # Working model name - will be stored within the experiment name directory found within the 
+        self.experiment_name = 'ny_test'  # Directory name to be stored in the checkpoint directory. **General**
+        self.model_name = 'best_model.pth'  # Working model name - will be stored within the experiment name directory found within the ** General **
                                             # checkpoints directory. 
         self.save_freq = 1000               # How many iterations to save the model weights after.
 
         #Computation related hyperparameters:
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # **General**
         self.train_workers = 8            # Number of workers used for the training dataloader.
         self.val_workers = 8 # Number of workers used for the validation dataloader. 
         
@@ -75,7 +75,8 @@ class network_options():
                     '104416',
                     '104820']
 
-        self.test_subject_list = ['145127', # Subjects to be used for testing.
+        ### Inference Option ###
+        self.test_subject_list = ['145127', # Subjects to be used for testing. **Inference**
                     '147737',
                     '174437',
                     '178849',

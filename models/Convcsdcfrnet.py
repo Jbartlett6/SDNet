@@ -1,13 +1,12 @@
-import sys
+import utils.util as util 
+import models.netblocks as netblocks
+
 import os 
-sys.path.append(os.path.join(sys.path[0],'..'))
-import torch 
-import torch.nn as nn
-import util 
-import netblocks
 import math
 import yaml
 
+import torch 
+import torch.nn as nn
 
 class CSDNet(nn.Module):
     def __init__(self, opts):
@@ -26,7 +25,7 @@ class CSDNet(nn.Module):
         P_temp = torch.zeros((300,2))
         self.register_buffer('P',torch.cat((P,P_temp),1))
           
-        activation_mod = self.set_activation()
+        activation_mod = self.set_activation(opts.activation, opts.device)
 
         self.csdcascade_1 = netblocks.SHConvCascadeLayer(activation_mod)
         self.csdcascade_2 = netblocks.SHConvCascadeLayer_MS(activation_mod)

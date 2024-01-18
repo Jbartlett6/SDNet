@@ -1,4 +1,4 @@
-import util
+import utils.util as util
 
 import time
 import math
@@ -28,7 +28,6 @@ class Vis():
         
     def add_scalars(self, train_losses, val_losses, current_training_details, i, epoch):
         step = (self.dataloader_length*epoch)+i+current_training_details['plot_offset']
-        # step = (self.dataloader_length*epoch)+i
 
         #Training loss and its decomposition :
         for loss_name, loss_value in train_losses.items():

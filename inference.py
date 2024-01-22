@@ -12,6 +12,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import nibabel as nib
+from tqdm import tqdm
 
 
 class InferenceClass():
@@ -73,7 +74,7 @@ class InferenceClass():
 
         return net
 
-    def perform_inference(self, dataloader, dataset_length):
+    def perform_inference(self, dataloader):
         #Initialising the output
         print('Initialising the output image')
         out = F.pad(torch.zeros((145,174,145,47)),(0,0,5,5,5,5,5,5), mode='constant').to(self.device)
@@ -81,12 +82,9 @@ class InferenceClass():
         
         with torch.no_grad():
             print(f'Performing the inference loop for subject {self.current_subject}')
-            for i , data in enumerate(dataloader):
+            for i , data in enumerate(tqdm(dataloader)):
                 signal_data, _, AQ, _,coords = data
                 signal_data, AQ, coords = signal_data.to(self.device), AQ.to(self.device), coords.to(self.device)
-                
-                if i%20 == 19:
-                    print(i*256, '/', dataset_length, f'for subject {self.current_subject}')
 
                 out[coords[:,1], coords[:,2], coords[:,3], :] = self.net(signal_data, AQ).squeeze()
 
@@ -107,7 +105,7 @@ class InferenceClass():
         for subject in self.subject_list:
             self.current_subject = subject
             dataset_length, dataset_affine, dataloader = load_data(subject, self.opts)
-            FOD = self.perform_inference(dataloader, dataset_length)
+            FOD = self.perform_inference(dataloader)
             self.save_FOD(self.save_dir, subject, FOD, dataset_affine)
 
 

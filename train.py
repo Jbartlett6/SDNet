@@ -9,7 +9,7 @@ import os
 import torch 
 import torch.optim.lr_scheduler 
 import matplotlib.pyplot as plt 
-
+from tqdm import tqdm
 
 class NetworkTrainer():
     '''
@@ -60,7 +60,8 @@ class NetworkTrainer():
         for epoch in range(self.opts.epochs):  # loop over the dataset multiple times
 
             #The training loop
-            for i, data_list in enumerate(self.train_dataloader, 0):
+            for i, data_list in enumerate(tqdm(self.train_dataloader)):
+                
                 self.rttracker.stop_timer('training dataload')
                 # Checking whether leraning rate warm up has ended
                 self.rttracker.start_timer('training iter')
@@ -99,7 +100,6 @@ class NetworkTrainer():
 
                 if i%self.opts.val_freq == self.opts.val_freq-1:
                     self.rttracker.start_timer('validation loop')
-                    print(f'Epoch:{epoch}, Minibatch:{i}/{len(self.train_dataloader)}')
                     self.validation_loop(epoch, i)
                     self.rttracker.stop_timer('validation loop')
                     self.optimizer = self.es.early_stopping_update(self.current_training_details, epoch,i, self.optimizer)

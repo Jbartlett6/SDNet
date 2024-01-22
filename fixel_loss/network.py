@@ -54,7 +54,7 @@ class FixelNet(nn.Module):
 
 def init_fixnet(opts):
     #Initialising the network and loading the parameters:
-    parameter_path = '/home/jxb1336/code/Project_1: HARDI_Recon/SDNet/SDNet/fixel_loss/checkpoints/sh-bignet/model_dict.pt'
+    parameter_path = '/home/jxb1336/code/project_1/SDNet/SDNet/fixel_loss/checkpoints/sh-bignet/model_dict.pt'
     net = FixelNet()
     net.load_state_dict(torch.load(parameter_path))
     

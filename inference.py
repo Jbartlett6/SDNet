@@ -104,7 +104,7 @@ class InferenceClass():
     def inference_loop(self):
         for subject in self.subject_list:
             self.current_subject = subject
-            dataset_length, dataset_affine, dataloader = load_data(subject, self.opts)
+            dataset_affine, dataloader = load_data(subject, self.opts)
             FOD = self.perform_inference(dataloader)
             self.save_FOD(self.save_dir, subject, FOD, dataset_affine)
 
@@ -115,13 +115,12 @@ def load_data(current_subject, opts):
     
     dataset =  data.DWIPatchDataset(inf_tmp, True, False, opts)
     
-    dataset_length = len(dataset)
     dataset_affine = dataset.aff
 
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=256,
                                         shuffle=False, num_workers=8)
     
-    return dataset_length, dataset_affine, dataloader
+    return dataset_affine, dataloader
 
 
 if __name__ == '__main__':

@@ -19,8 +19,8 @@ that preprocessing has been run correctly.
 '''
 
 
-import dwi_undersample as dwiusamp
-import fixel_threshold as fixel_threshold
+import preprocessing.dwi_undersample as dwiusamp
+import preprocessing.fixel_threshold as fixel_threshold
 
 import subprocess 
 import os
@@ -179,6 +179,8 @@ def HCP_download_test(path):
     and os.path.exists(os.path.join(path, 'data.nii.gz'))
     and os.path.exists(os.path.join(path, 'nodif_brain_mask.nii.gz')))
 
+    print(folders_present)
+
     return folders_present
 
 def preprocessing_test(path):
@@ -228,10 +230,10 @@ def preprocessing_test(path):
 
     tractseg_bool = (os.path.exists(os.path.join(path, 'tractseg'))
                      and os.path.exists(os.path.join(path, 'tractseg', 'peaks.nii.gz'))
-                     and os.path.exists(os.path.join(path, 'tractseg', 'peaks.nii.gz', 'bundle_segmentations'))
-                     and os.path.exists(os.path.join(path, 'tractseg', 'peaks.nii.gz', 'bundle_segmentations', 'CC_1fixel.nii.gz'))
-                     and os.path.exists(os.path.join(path, 'tractseg', 'peaks.nii.gz', 'bundle_segmentations', 'MCP_CST_2fixel.nii.gz'))
-                     and os.path.exists(os.path.join(path, 'tractseg', 'peaks.nii.gz', 'bundle_segmentations', 'CC_CST_SLF_3fixel.nii.gz'))
+                     and os.path.exists(os.path.join(path, 'tractseg', 'bundle_segmentations'))
+                     and os.path.exists(os.path.join(path, 'tractseg', 'bundle_segmentations', 'CC_1fixel.nii.gz'))
+                     and os.path.exists(os.path.join(path, 'tractseg', 'bundle_segmentations', 'MCP_CST_2fixel.nii.gz'))
+                     and os.path.exists(os.path.join(path, 'tractseg', 'bundle_segmentations', 'CC_CST_SLF_3fixel.nii.gz'))
                     )
 
     training_bool = diffusion_bool and undersampled_fod_train_bool and T1w_bool and fixel_directory_train_bool

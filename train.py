@@ -168,6 +168,7 @@ class NetworkTrainer():
 
         if i%self.opts.save_freq == self.opts.save_freq-1:
             torch.save(self.net.state_dict(), os.path.join(self.model_save_path, 'most_recent_model.pth'))
+            torch.save(self.optimizer.state_dict(), os.path.join(self.model_save_path, 'most_recent_optim.pth'))
 
         self.rttracker.stop_timer('post val steps')
 

@@ -83,8 +83,9 @@ def update_training_logs(train_losses, val_losses, current_training_details, mod
     if val_losses['Validation Loss']/opts.val_iters < current_training_details['best_loss']:
                     
         current_training_details['best_loss'] = val_losses['Validation Loss']/opts.val_iters
-        save_path = os.path.join(model_save_path, 'best_model.pth')
-        torch.save(net.state_dict(), save_path)
+        
+        torch.save(net.state_dict(), os.path.join(model_save_path, 'best_model.pth'))
+        torch.save(optimizer.state_dict(), os.path.join(model_save_path, 'best_optim.pth'))
 
     training_details = {'epochs_count': epoch,
                         'batch_size':opts.batch_size, 

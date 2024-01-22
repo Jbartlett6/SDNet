@@ -1,9 +1,7 @@
 import utils.util as util
 
 import time
-import math
 import yaml
-import sys
 import os
 
 from torch.utils.tensorboard import SummaryWriter
@@ -74,8 +72,6 @@ class LossTracker():
         self.train_loss_dict['Fixel Accuracy'] += fixel_accuracy.item()
         
 
-
-
 def update_training_logs(train_losses, val_losses, current_training_details, model_save_path, net, epoch, i, opts, optimizer, param_num, train_dataloader, es):
     if val_losses['Validation ACC']/opts.val_iters > current_training_details['best_val_ACC']:
         current_training_details['best_val_ACC'] = val_losses['Validation ACC']/opts.val_iters
@@ -83,7 +79,6 @@ def update_training_logs(train_losses, val_losses, current_training_details, mod
     if val_losses['Validation Loss']/opts.val_iters < current_training_details['best_loss']:
                     
         current_training_details['best_loss'] = val_losses['Validation Loss']/opts.val_iters
-        
         torch.save(net.state_dict(), os.path.join(model_save_path, 'best_model.pth'))
         torch.save(optimizer.state_dict(), os.path.join(model_save_path, 'best_optim.pth'))
 
@@ -137,54 +132,7 @@ def fixel_accuracy(fix_est, gt_fixel):
     return val_acc
 
 
-class EarlyStopping():
-    def __init__(self, opts, epoch_length):
-        self.early_stopping_counter = 0
-        self.best_loss = math.inf
-        self.best_loss_iter = 0
-        
-        
-        self.highest_counter = 0
-        self.highest_counter_iter = 0
-        
-        
-        self.lr_scheduler_count = 0
-        
-        self.opts = opts
-        self.epoch_length = epoch_length
 
-    def early_stopping_update(self,current_training_details,epoch,i, optimizer):
-      
-        if self.opts.early_stopping == True:
-            current_loss = current_training_details['best_loss']
-            current_iter = (self.epoch_length*epoch)+i
-
-            if current_loss < self.best_loss:
-                self.best_loss = current_loss
-                self.early_stopping_counter = 0
-                self.best_loss_iter = current_iter
-            else:
-                self.early_stopping_counter += 1
-
-
-            if self.early_stopping_counter >= self.opts.early_stopping_threshold:
-                
-                if self.lr_scheduler_count >= self.opts.lr_decay_limit:
-                    print(f'Training stopped at epoch {current_training_details["global_epochs"]+epoch} due to Early stopping and minibatch {i}, the best validation loss achieved is: {current_training_details["best_loss"]}')
-                    sys.exit()
-                else:
-                    self.early_stopping_counter = 0
-                    self.highest_counter = 0
-                    self.lr_scheduler_count += 1
-                    
-                    for g in optimizer.param_groups:
-                        g['lr'] = g['lr']*self.opts.lr_decay_factor
-            
-            elif self.early_stopping_counter > self.highest_counter:
-                self.highest_counter = self.early_stopping_counter
-                self.highest_counter_iter = current_iter
-
-        return optimizer 
 
 
 class RuntimeTracker():

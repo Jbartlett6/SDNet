@@ -8,3 +8,5 @@ checkpoints/*
 scripts/hcp_processing_loop.py
 scripts/*
 
+*tmp*
+

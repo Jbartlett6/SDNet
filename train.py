@@ -1,8 +1,10 @@
 import utils.data as data
+import utils.EarlyStopping as EarlyStopping
 from models import Convcsdcfrnet
 import options
 from utils import tracker
 from fixel_loss import network
+
 
 import os 
 
@@ -43,7 +45,8 @@ class NetworkTrainer():
         #Initialising trackers
         self.loss_tracker = tracker.LossTracker(self.criterion)    
         self.visualiser = tracker.Vis(self.opts, self.train_dataloader)
-        self.es = tracker.EarlyStopping(self.opts, len(self.train_dataloader))
+       
+        self.es = EarlyStopping(self.opts, len(self.train_dataloader))
         self.init_runtime_trackers(runtime_mem = 5)
 
         #Initialising the classification network:

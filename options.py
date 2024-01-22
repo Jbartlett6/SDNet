@@ -26,7 +26,7 @@ class network_options():
         self.val_iters = 10                 # How many iterations of validation data to loop through when the validation loop is called.
 
         self.lr_decay_limit = 10            # The number of times to decay the learning rate 
-        self.lr_decay_factor = 0.5          # The learning rate decay factor
+        self.lr_decay_factor = 1          # The learning rate decay factor
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # **General**
         self.train_workers = 8            # Number of workers used for the training dataloader.
@@ -67,6 +67,28 @@ class network_options():
                     # '103414',
                     # '103515',
                     # '103818']
+
+        self.train_subject_list = ['113821',
+                    '523032',
+                    '130518',
+                    '151021',
+                    '130417',
+                    '130720',
+                    '202113',
+                    '188751',
+                    '118225',
+                    '284646',
+                    '120111',
+                    '123824',
+                    '268850',
+                    '123117',
+                    '368753',
+                    '161327',
+                    '176845',
+                    '159441',
+                    '559457',
+                    '115017']
+        
         #102109 has been removed from the test list due to the fixel directory - can be readded providing the fixles are correct.
         self.val_subject_list = ['104012',  # Subjects to be used for validation
                     '104416',

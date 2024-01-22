@@ -177,7 +177,7 @@ def init_network(opts):
         with open(os.path.join(model_save_path,'training_details.yml'), 'r') as file:
             training_details = yaml.load(file, yaml.loader.SafeLoader)
 
-        #Refactor this code so it is only one line (possible cidctionary comprehension)
+        #Refactor this code so it is only one line (possible dictionary comprehension)
         current_training_details['plot_offset'] = training_details['plot_step']
         current_training_details['best_loss'] = training_details['best loss']
         current_training_details['previous_loss'] = training_details['best loss']

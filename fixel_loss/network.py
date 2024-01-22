@@ -2,28 +2,6 @@ import torch.nn as nn
 import torch
 
 
-# class FixelNet(nn.Module):
-#     """Cascade Layer"""
-
-#     def __init__(self):
-#         super().__init__()
-#         self.casc = nn.Sequential(nn.Linear(47, 512),
-#                                   nn.BatchNorm1d(512),  
-#                                   nn.ReLU(inplace=True),  
-#                                   nn.Linear(512,256),
-#                                   nn.BatchNorm1d(256),
-#                                   nn.ReLU(inplace=True),
-#                                   nn.Linear(256,128),
-#                                   nn.BatchNorm1d(128),  
-#                                   nn.ReLU(inplace=True),
-#                                   nn.Linear(128,64),
-#                                   nn.ReLU(inplace=True),
-#                                   nn.Linear(64,13))
-
-#     def forward(self, x):
-#         return self.casc(x)
-
-
 
 class FixelNet(nn.Module):
     """Cascade Layer"""

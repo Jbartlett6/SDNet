@@ -1,4 +1,5 @@
 import torch
+import math
 
 #with open(os.path.join('config', 'fodnet_config.yml')) as f:
      #config = yaml.load(f, yaml.loader.SafeLoader)
@@ -21,12 +22,15 @@ class network_options():
         self.warmup_factor = 1              # When the network is warming up the effective learning rate is set to warmup_factor*lr
         self.warmup_iter = 5000             # Number of iterations after which the network stops warming up.
         self.batch_size = 256               # Training batch_size.
-        self.epochs = 100                   # Maxium number of epochs
+        
         self.val_freq = 100                 # How often (iterations) to run the validation loop inside the training loop
         self.val_iters = 10                 # How many iterations of validation data to loop through when the validation loop is called.
-
-        self.lr_decay_limit = 10            # The number of times to decay the learning rate 
-        self.lr_decay_factor = 1          # The learning rate decay factor
+        
+        # Stopping Conditions
+        self.epochs = 100                   # Maxium number of epochs
+        self.iteration_limit = math.inf     # Maximum number of iterations (training updates)
+        self.lr_decay_limit = math.inf      # The number of times to decay the learning rate 
+        self.lr_decay_factor = 1            # The learning rate decay factor
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # **General**
         self.train_workers = 8            # Number of workers used for the training dataloader.

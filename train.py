@@ -7,6 +7,7 @@ from fixel_loss import network
 
 
 import os 
+import sys
 
 import torch 
 import torch.optim.lr_scheduler 
@@ -45,6 +46,7 @@ class NetworkTrainer():
         #Initialising trackers
         self.loss_tracker = tracker.LossTracker(self.criterion)    
         self.visualiser = tracker.Vis(self.opts, self.train_dataloader)
+        self.iterations = 0
        
         self.es = EarlyStopping(self.opts, len(self.train_dataloader))
         self.init_runtime_trackers(runtime_mem = 5)
@@ -65,6 +67,11 @@ class NetworkTrainer():
             #The training loop
             for i, data_list in enumerate(tqdm(self.train_dataloader)):
                 
+                #Stopping training if the number of iterations exceeds the iteration limit.
+                if self.iterations>=opts.iteration_limit:
+                    print('Stopped training due to reaching the iteration limit')
+                    sys.exit()
+
                 self.rttracker.stop_timer('training dataload')
                 # Checking whether leraning rate warm up has ended
                 self.rttracker.start_timer('training iter')
@@ -109,6 +116,7 @@ class NetworkTrainer():
                 
                 self.rttracker.write_runtimes()
                 self.rttracker.start_timer('training dataload')
+                self.iterations += 1
                 
             self.loss_tracker.reset_losses()
             # self.current_training_details['previous_loss'] = self.es.early_stopping_update(self.current_training_details,self.opts,epoch,i)

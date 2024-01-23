@@ -8,14 +8,14 @@ import math
 class network_options():
     def __init__(self):
         ### General ###
-        self.experiment_name = 'SDNet'  # Directory name to be stored in the checkpoint directory. **General**
+        self.experiment_name = 'test_2023_01_23'  # Directory name to be stored in the checkpoint directory. **General**
         self.model_name = 'best_model.pth'  # Working model name - will be stored within the experiment name directory found within the ** General **
                                             # checkpoints directory. 
         self.save_freq = 1000               # How many iterations to save the model weights after.
         self.continue_training = False      # Whether to continue training using existing model weights
 
-        self.inference=True
-        self.perform_inference=True
+        self.inference=False
+        self.perform_inference=False
 
         ### Training Options ###
         self.lr = 1e-3                      # Learning rate - set to this value post learning rate warmup. 

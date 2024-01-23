@@ -18,9 +18,9 @@ class network_options():
         self.perform_inference=False
 
         ### Training Options ###
-        self.lr = 1e-3                      # Learning rate - set to this value post learning rate warmup. 
-        self.warmup_factor = 1              # When the network is warming up the effective learning rate is set to warmup_factor*lr
-        self.warmup_iter = 5000             # Number of iterations after which the network stops warming up.
+        self.lr = 1e-4                      # Learning rate - set to this value post learning rate warmup. 
+        self.warmup_factor = 1e-2              # When the network is warming up the effective learning rate is set to warmup_factor*lr
+        self.warmup_iter = 10000             # Number of iterations after which the network stops warming up.
         self.batch_size = 256               # Training batch_size.
         
         self.val_freq = 100                 # How often (iterations) to run the validation loop inside the training loop

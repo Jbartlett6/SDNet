@@ -178,6 +178,7 @@ def init_network(opts):
             training_details = yaml.load(file, yaml.loader.SafeLoader)
 
         #Refactor this code so it is only one line (possible dictionary comprehension)
+        # Shouldn't have current_training_details and training_details as two seperate objects.
         current_training_details['plot_offset'] = training_details['plot_step']
         current_training_details['best_loss'] = training_details['best loss']
         current_training_details['previous_loss'] = training_details['best loss']
@@ -189,6 +190,7 @@ def init_network(opts):
         
         
     else:
+        # This code is related to training, not the model - should be in train.py or othe code.
         assert not os.path.isdir(os.path.join('checkpoints', opts.experiment_name)), f'The experiment {opts.experiment_name} already exists, please select another experiment name'
         os.mkdir(os.path.join('checkpoints', opts.experiment_name))
         os.mkdir(os.path.join('checkpoints', opts.experiment_name, 'models'))

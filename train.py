@@ -40,7 +40,7 @@ class NetworkTrainer():
         #Initialising SDNet, criterion and optimiser.
         self.criterion = torch.nn.MSELoss(reduction='mean')
         self.net, self.P, self.param_num, self.current_training_details, self.model_save_path = Convcsdcfrnet.init_network(opts)
-        self.optimizer = torch.optim.Adam(self.net.parameters(), lr = self.opts.warmup_factor*self.opts.lr, betas = (0.9,0.999), eps = 1e-8)
+        self.optimizer = init_network_optimizer(self.net.parameters(), opts.continue_training, self.opts.warmup_factor*self.opts.lr)
         
         #Initialising trackers
         self.loss_tracker = tracker.LossTracker(self.criterion)    
@@ -199,6 +199,20 @@ class NetworkTrainer():
         self.rttracker.add_runtime_tracker('fix forward pass')
         self.rttracker.add_runtime_tracker('grad and step')
         self.rttracker.add_runtime_tracker('training dataload')
+
+def init_network_optimizer(params, continue_training_bool, initial_lr):
+    '''
+    Function to load the initial optimiser. If training is continuing from a pre-trained value, 
+    the optimiser's state is loaded fom that which was saved when training was paused. 
+    '''
+    optimizer = torch.optim.Adam(params, lr = initial_lr, betas = (0.9,0.999), eps = 1e-8)
+
+    # If continuing training load the best optimiser from the model_dict.
+    if continue_training_bool:
+        model_save_path = os.path.join('checkpoints', opts.experiment_name, 'models')
+        optimizer.load_state_dict(torch.load(os.path.join(model_save_path,'best_optim.pth')))
+    
+    return optimizer
         
 
 if __name__ == '__main__':

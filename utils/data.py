@@ -41,8 +41,13 @@ class DWIPatchDataset(torch.utils.data.Dataset):
         self.training_voxels = training_voxels
         self.opts = opts
         
+        # Extracting the dimension of the images using a sample image.
+        sample_path = os.path.join(self.opts.data_dir, subject_list[0], 'T1w', 'T1w_acpc_dc_restore_1.25.nii.gz')
+        nifti = nib.load(sample_path)
+        image_dims = nifti.shape
+        self.spatial_resolution = [len(subject_list)] + list(image_dims)
+
         #Setting the padding tensor for the image - key if the brain mask is less than 9 voxels away from the edge of the image.
-        self.spatial_resolution = [len(subject_list),145,174,145]
         self.pad_tens = (0,0,5,5,5,5,5,5)
         
         #Initialising the tensors which the data will be stored in.

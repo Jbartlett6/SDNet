@@ -44,7 +44,7 @@ class EarlyStopping():
                 
                 if self.lr_scheduler_count >= self.opts.lr_decay_limit:
                     # If the limit has been passed more than self.opts.lr_decay_limit times then stop training
-                    print(f'Training stopped at epoch {current_training_details["global_epochs"]+epoch} due to Early stopping and minibatch {i}, the best validation loss achieved is: {current_training_details["best_loss"]}')
+                    print(f'Training stopped at epoch {current_training_details["global_epochs"]+current_iter} due to Early stopping and minibatch {i}, the best validation loss achieved is: {current_training_details["best_loss"]}')
                     sys.exit()
                 else:
                     # Else, decay the learning rate and restart the counter

@@ -11,7 +11,6 @@ class network_options():
         self.experiment_name = 'train_init_add_test_1'  # Directory name to be stored in the checkpoint directory. **General**
         self.model_name = 'best_model.pth'  # Working model name - will be stored within the experiment name directory found within the ** General **
                                             # checkpoints directory. 
-        self.save_freq = 1000               # How many iterations to save the model weights after.
         self.continue_training = True      # Whether to continue training using existing model weights
 
         self.inference=False

@@ -183,15 +183,15 @@ class NetworkTrainer():
         #Resetting the losses for the next set of minibatches
         self.loss_tracker.reset_losses()
 
-        if i%self.opts.save_freq == self.opts.save_freq-1:
-            training_state_dict = {'net_state': self.net.state_dict(),
-             'optim_state': self.optimizer.state_dict(),
-             'earlystopping_state': self.es.state_dict(),
-             'epochs': epoch,
-             'iterations':self.iterations,
-             'opts': self.opts}
-            
-            torch.save(training_state_dict, os.path.join(self.model_save_path, 'most_recent_training.pth'))
+        
+        training_state_dict = {'net_state': self.net.state_dict(),
+            'optim_state': self.optimizer.state_dict(),
+            'earlystopping_state': self.es.state_dict(),
+            'epochs': epoch,
+            'iterations':self.iterations,
+            'opts': self.opts}
+        
+        torch.save(training_state_dict, os.path.join(self.model_save_path, 'most_recent_training.pth'))
 
         self.rttracker.stop_timer('post val steps')
 

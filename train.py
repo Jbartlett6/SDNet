@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 class NetworkTrainer():
+    
     '''
     Description:    Class to carry out network training accoridng to the configuration options 
                     defined in options.py as well as the various pytorch modules required within the class such as
@@ -26,12 +27,12 @@ class NetworkTrainer():
                                 the performance of the network on the validation subjects as specified in the
                                 options.py script.
     '''
-    def __init__(self, opts):
+    def __init__(self, opts: options.NetworkOptions):
         '''
         Description:    Initialising the torch modules which are key for training the network. The dataloaders,
                         SDNet and fixel classification networks are all initialised using this method. 
         '''
-        
+        # Loading the network state if specified in network options
         if opts.continue_training == True:
             model_save_path = os.path.join('checkpoints', opts.experiment_name, 'models')
             train_dict = torch.load(os.path.join(model_save_path, 'most_recent_training.pth'))
@@ -51,10 +52,9 @@ class NetworkTrainer():
         #Initialising SDNet, criterion and optimiser.
         self.criterion = torch.nn.MSELoss(reduction='mean') 
         
-        #Initialising trackers
+        #Trackers
         self.loss_tracker = tracker.LossTracker(self.criterion)    
         self.visualiser = tracker.Vis(self.opts, self.train_dataloader)
-        
         self.init_runtime_trackers(runtime_mem = 5)
 
         #Initialising the classification network:
@@ -81,7 +81,7 @@ class NetworkTrainer():
                 self.rttracker.stop_timer('training dataload')
                 # Checking whether leraning rate warm up has ended
                 self.rttracker.start_timer('training iter')
-                self.lr_warmup_check(epoch, i)
+                self.lr_warmup_check(self.iterations)
                 
                 #Loading data to GPUs
                 inputs, labels, AQ, gt_fixel, _ = data_list
@@ -137,11 +137,6 @@ class NetworkTrainer():
                         options.py script. 
         '''
         with torch.no_grad():
-
-            #Forward pass for calculating validation loss
-            # self.rttracker.start_timer('val dataloader step')
-            # val_temp_dataloader = iter(self.val_dataloader)
-            # self.rttracker.stop_timer('val dataloader step')
             
             for j in range(self.opts.val_iters):
                 
@@ -196,14 +191,14 @@ class NetworkTrainer():
         self.rttracker.stop_timer('post val steps')
 
 
-    def lr_warmup_check(self, epoch, i):
+    def lr_warmup_check(self, iteration):
         '''
         Description:    Checking whether the learning rate warm up period has ended. Initially the learning rate 
                         will be set to the warmup factor*learning rate. Once the network has been training for 
                         opts.warmup_iter iterations the learning rate will increase to its final value. 
         '''
 
-        if i+(epoch*len(self.train_dataloader))> opts.warmup_iter:
+        if iteration> opts.warmup_iter:
             for g in self.optimizer.param_groups:
                 g['lr'] = self.opts.lr
 
@@ -266,6 +261,6 @@ def init_from_train_dict(train_dict):
 
 if __name__ == '__main__':
     plt.switch_backend('agg')
-    opts = options.network_options()
+    opts = options.NetworkOptions()
     NT = NetworkTrainer(opts)
     NT.training_loop()

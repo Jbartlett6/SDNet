@@ -124,6 +124,6 @@ def load_data(current_subject, opts):
 
 
 if __name__ == '__main__':
-    opts = options.network_options()
+    opts = options.NetworkOptions()
     inf_obj = InferenceClass(opts)
     inf_obj.inference_loop()

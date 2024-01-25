@@ -5,7 +5,7 @@ import math
      #config = yaml.load(f, yaml.loader.SafeLoader)
 #print(config)
 
-class network_options():
+class NetworkOptions():
     def __init__(self):
         ### General ###
         self.experiment_name = 'train_init_add_test_1'  # Directory name to be stored in the checkpoint directory. **General**

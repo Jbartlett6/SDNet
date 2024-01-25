@@ -76,6 +76,7 @@ def update_training_logs(train_losses, val_losses, current_training_details, mod
     
     if val_losses['Validation ACC']/opts.val_iters > current_training_details['best_val_ACC']:
         current_training_details['best_val_ACC'] = val_losses['Validation ACC']/opts.val_iters
+        current_training_details['best_val_ACC_iter'] = iterations
 
     if val_losses['Validation Loss']/opts.val_iters < current_training_details['best_loss']:
                     
@@ -91,17 +92,17 @@ def update_training_logs(train_losses, val_losses, current_training_details, mod
         torch.save(training_state_dict, os.path.join(model_save_path, 'best_training.pth'))
 
 
-    training_details = {'epochs_count': epoch,
-                        'batch_size':opts.batch_size, 
-                        'minibatch': i, 
-                        'lr': optimizer.state_dict()['param_groups'][0]['lr'],
-                        'best loss': current_training_details['best_loss'],
-                        'best ACC': float(current_training_details['best_val_ACC']),
-                        'deep_reg': float(net.module.deep_reg),
-                        'neg_reg':float(net.module.neg_reg),
-                        'alpha':float(net.module.alpha),
-                        'learn_lambda':opts.learn_lambda,
-                        'Number of Parameters':param_num}
+    training_details = {'epochs_count': epoch, # Training state 
+                        'batch_size':opts.batch_size, # Config_option
+                        'minibatch': i, # Config option
+                        'lr': optimizer.state_dict()['param_groups'][0]['lr'], # Training state 
+                        'best loss': current_training_details['best_loss'], # Performance measure
+                        'best ACC': float(current_training_details['best_val_ACC']), # Performance measure 
+                        'deep_reg': float(net.module.deep_reg), # Training state
+                        'neg_reg':float(net.module.neg_reg), # Training state
+                        'alpha':float(net.module.alpha), # Training state
+                        'learn_lambda':opts.learn_lambda, # Config option
+                        'Number of Parameters':param_num} # Model property
         
     training_details_string = [f'{name}: {value} \n' for name, value in training_details.items()]
     train_log_path = os.path.join('checkpoints', opts.experiment_name, 'logs', 'training.log')

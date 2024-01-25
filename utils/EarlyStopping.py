@@ -11,7 +11,7 @@ class EarlyStopping():
         training is stopped. Otherwise the learning rate is decayed.
 
     '''
-    def __init__(self, opts, epoch_length):
+    def __init__(self, opts):
         self.early_stopping_counter = 0
         self.best_loss = math.inf
         self.best_loss_iter = 0
@@ -24,13 +24,11 @@ class EarlyStopping():
         self.lr_scheduler_count = 0
         
         self.opts = opts
-        self.epoch_length = epoch_length
 
-    def early_stopping_update(self,current_training_details,epoch,i, optimizer):
+    def early_stopping_update(self,current_training_details, current_iter, optimizer):
       
         if self.opts.early_stopping == True:
             current_loss = current_training_details['best_loss']
-            current_iter = (self.epoch_length*epoch)+i
 
             # Checking for improvement.
             if current_loss < self.best_loss:
@@ -63,18 +61,37 @@ class EarlyStopping():
 
         return optimizer 
     
-    # def state_dict():
-    #             self.early_stopping_counter = 0
-    #     self.best_loss = math.inf
-    #     self.best_loss_iter = 0
+    def state_dict(self):
+        """Returns the current state dict of the class.
+
+        The state dict of the EarlyStopping class contains:
+        * early_stopping_counter - how long since the loss has improved 
+        * best_loss - The best loss achieved by the model
+        * best_loss_iter - The iteration where the best loss occured
+        * highest_counter - The highest the early stopping counter has been
+        since being reset
+        * highest_counter_iter - The iteration thhat highesst_conter was 
+        recorded at 
+        * lr_scheduler_count - How many times the lr scheduler has updated
+        the lr
+
+        Returns:
+            dict: The state dict
+        """
+        state_dict = {'early_stopping_counter': self.early_stopping_counter,
+                      'best_loss': self.best_loss,
+                      'best_loss_iter': self.best_loss_iter,
+                      'highest_counter': self.highest_counter,
+                      'highest_counter_iter': self.highest_counter_iter,
+                      'lr_scheduler_count': self.lr_scheduler_count}
         
-        
-    #     self.highest_counter = 0
-    #     self.highest_counter_iter = 0
-        
-        
-    #     self.lr_scheduler_count = 0
-        
-    #     self.opts = opts
-    #     self.epoch_length = epoch_length
-    #     return {}
+        return state_dict
+    
+    def load_state_dict(self, state_dict):
+        """Loads a state dict
+
+        Args:
+            state_dict (dict): The state_dict to load 
+        """        
+        for key, val in state_dict.items():
+            setattr(self, key, val)

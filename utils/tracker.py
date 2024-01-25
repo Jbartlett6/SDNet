@@ -72,15 +72,24 @@ class LossTracker():
         self.train_loss_dict['Fixel Accuracy'] += fixel_accuracy.item()
         
 
-def update_training_logs(train_losses, val_losses, current_training_details, model_save_path, net, epoch, i, opts, optimizer, param_num, train_dataloader, es):
+def update_training_logs(train_losses, val_losses, current_training_details, model_save_path, net, epoch, i, opts, optimizer, param_num, train_dataloader, es, iterations):
+    
     if val_losses['Validation ACC']/opts.val_iters > current_training_details['best_val_ACC']:
         current_training_details['best_val_ACC'] = val_losses['Validation ACC']/opts.val_iters
 
     if val_losses['Validation Loss']/opts.val_iters < current_training_details['best_loss']:
                     
         current_training_details['best_loss'] = val_losses['Validation Loss']/opts.val_iters
-        torch.save(net.state_dict(), os.path.join(model_save_path, 'best_model.pth'))
-        torch.save(optimizer.state_dict(), os.path.join(model_save_path, 'best_optim.pth'))
+        
+        training_state_dict = {'net_state': net.state_dict(),
+        'optim_state': optimizer.state_dict(),
+        'earlystopping_state': es.state_dict(),
+        'epochs': epoch,
+        'iterations': iterations,
+        'opts': opts}
+                
+        torch.save(training_state_dict, os.path.join(model_save_path, 'best_training.pth'))
+
 
     training_details = {'epochs_count': epoch,
                         'batch_size':opts.batch_size, 

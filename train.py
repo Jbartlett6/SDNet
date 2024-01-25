@@ -5,7 +5,6 @@ import options
 from utils import tracker
 from fixel_loss import network
 
-
 import os 
 import sys
 
@@ -33,22 +32,27 @@ class NetworkTrainer():
                         SDNet and fixel classification networks are all initialised using this method. 
         '''
         
-        #Initialising configuration and dataloaders:
-        self.opts = opts
+        if self.opts.continue_training == True:
+            train_dict = torch.load(os.path.join(opts.model_save_path, 'most_recent_training.pth'))
+            self.opts, self.iterations, self.es, net_tuple, self.optimizer = self.init_from_train_dict(train_dict)
+            self.net, self.P, self.param_num, self.current_training_details, self.model_save_path = net_tuple
+        else:
+            self.opts = opts # cont
+            self.es = EarlyStopping(self.opts) # cont
+            self.net, self.P, self.param_num, self.current_training_details, self.model_save_path = Convcsdcfrnet.init_network(opts) # cont 
+            self.optimizer = init_network_optimizer(self.net.parameters(), opts.continue_training, self.opts.warmup_factor*self.opts.lr) # cont
+            self.iterations = 0 # cont
+        
         self.train_dataloader, self.val_dataloader = data.init_dataloaders(self.opts)
-        self.val_temp_dataloader = iter(self.val_dataloader)
+        self.val_temp_dataloader = iter(self.val_dataloader) 
         
         #Initialising SDNet, criterion and optimiser.
-        self.criterion = torch.nn.MSELoss(reduction='mean')
-        self.net, self.P, self.param_num, self.current_training_details, self.model_save_path = Convcsdcfrnet.init_network(opts)
-        self.optimizer = init_network_optimizer(self.net.parameters(), opts.continue_training, self.opts.warmup_factor*self.opts.lr)
+        self.criterion = torch.nn.MSELoss(reduction='mean') 
         
         #Initialising trackers
         self.loss_tracker = tracker.LossTracker(self.criterion)    
         self.visualiser = tracker.Vis(self.opts, self.train_dataloader)
-        self.iterations = 0
-       
-        self.es = EarlyStopping(self.opts, len(self.train_dataloader))
+        
         self.init_runtime_trackers(runtime_mem = 5)
 
         #Initialising the classification network:
@@ -112,14 +116,14 @@ class NetworkTrainer():
                     self.rttracker.start_timer('validation loop')
                     self.validation_loop(epoch, i)
                     self.rttracker.stop_timer('validation loop')
-                    self.optimizer = self.es.early_stopping_update(self.current_training_details, epoch,i, self.optimizer)
+                    self.optimizer = self.es.early_stopping_update(self.current_training_details, self.iterations, self.optimizer)
                 
                 self.rttracker.write_runtimes()
                 self.rttracker.start_timer('training dataload')
                 self.iterations += 1
                 
             self.loss_tracker.reset_losses()
-            # self.current_training_details['previous_loss'] = self.es.early_stopping_update(self.current_training_details,self.opts,epoch,i)
+            
                     
         print('Finished Training')
 
@@ -172,19 +176,20 @@ class NetworkTrainer():
 
         #Updating the training details.
         self.current_training_details = tracker.update_training_logs(self.loss_tracker.train_loss_dict, self.loss_tracker.val_loss_dict, self.current_training_details, self.model_save_path,
-                                                    self.net, epoch, i, self.opts, self.optimizer, self.param_num, self.train_dataloader, self.es)        
+                                                    self.net, epoch, i, self.opts, self.optimizer, self.param_num, self.train_dataloader, self.es, self.iterations)        
         
         #Resetting the losses for the next set of minibatches
         self.loss_tracker.reset_losses()
 
         if i%self.opts.save_freq == self.opts.save_freq-1:
-            {'net_state': self.net.state_dict(),
+            training_state_dict = {'net_state': self.net.state_dict(),
              'optim_state': self.optimizer.state_dict(),
-             'earlystopping_state': 
-             'epochs': epoch
-             'iterations':}
-            # torch.save(self.net.state_dict(), os.path.join(self.model_save_path, 'most_recent_model.pth'))
-            # torch.save(self.optimizer.state_dict(), os.path.join(self.model_save_path, 'most_recent_optim.pth'))
+             'earlystopping_state': self.es.state_dict(),
+             'epochs': epoch,
+             'iterations':self.iterations,
+             'opts': self.opts}
+            
+            torch.save(training_state_dict, os.path.join(self.model_save_path, 'most_recent_training.pth'))
 
         self.rttracker.stop_timer('post val steps')
 
@@ -226,6 +231,33 @@ def init_network_optimizer(params, continue_training_bool, initial_lr):
         optimizer.load_state_dict(torch.load(os.path.join(model_save_path,'best_optim.pth')))
     
     return optimizer
+
+def init_from_train_dict(self, train_dict):
+    """Initialise attributes of the training loop from train_dict 
+
+    Given a train_dict, the attributes which are dependent on the 
+    contents of the dictionary are loaded. Those attributes are:
+    * self.opts
+    * self.iterations
+    * self.es
+    * net_tuple (net and other related attributes)
+     
+
+    Args:
+        train_dict (dict): the training state dict as saved from a 
+        previous training run
+    """    
+    opts = train_dict['opts']
+    iterations = train_dict['iterations']
+
+    es = EarlyStopping(self.opts)
+    es.load_state_dict(train_dict['earlystopping_state'])  
+
+    net_tuple = Convcsdcfrnet.init_network(opts) # cont 
+
+    optimizer = init_network_optimizer(net_tuple[0].parameters(), True, opts.lr) # cont
+
+    return opts, iterations, es, net_tuple, optimizer
         
 
 if __name__ == '__main__':

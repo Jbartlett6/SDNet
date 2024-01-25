@@ -32,16 +32,18 @@ class NetworkTrainer():
                         SDNet and fixel classification networks are all initialised using this method. 
         '''
         
-        if self.opts.continue_training == True:
-            train_dict = torch.load(os.path.join(opts.model_save_path, 'most_recent_training.pth'))
-            self.opts, self.iterations, self.es, net_tuple, self.optimizer = self.init_from_train_dict(train_dict)
+        if opts.continue_training == True:
+            model_save_path = os.path.join('checkpoints', opts.experiment_name, 'models')
+            train_dict = torch.load(os.path.join(model_save_path, 'most_recent_training.pth'))
+            self.opts, self.iterations, self.epochs, self.es, net_tuple, self.optimizer = init_from_train_dict(train_dict)
             self.net, self.P, self.param_num, self.current_training_details, self.model_save_path = net_tuple
         else:
             self.opts = opts # cont
-            self.es = EarlyStopping(self.opts) # cont
+            self.es = EarlyStopping.EarlyStopping(self.opts) # cont
             self.net, self.P, self.param_num, self.current_training_details, self.model_save_path = Convcsdcfrnet.init_network(opts) # cont 
             self.optimizer = init_network_optimizer(self.net.parameters(), opts.continue_training, self.opts.warmup_factor*self.opts.lr) # cont
             self.iterations = 0 # cont
+            self.epochs = 0
         
         self.train_dataloader, self.val_dataloader = data.init_dataloaders(self.opts)
         self.val_temp_dataloader = iter(self.val_dataloader) 
@@ -66,7 +68,7 @@ class NetworkTrainer():
         '''
         Description:    The training loop
         '''
-        for epoch in range(self.opts.epochs):  # loop over the dataset multiple times
+        for epoch in range(self.epochs, self.opts.epochs):  # loop over the dataset multiple times
 
             #The training loop
             for i, data_list in enumerate(tqdm(self.train_dataloader)):
@@ -168,7 +170,7 @@ class NetworkTrainer():
 
         self.rttracker.start_timer('post val steps')        
         #Plotting the results using tensorboard using the visualiser class.
-        self.visualiser.add_scalars(self.loss_tracker.train_loss_dict, self.loss_tracker.val_loss_dict, self.current_training_details, i, epoch)
+        self.visualiser.add_scalars(self.loss_tracker.train_loss_dict, self.loss_tracker.val_loss_dict, self.current_training_details, epoch, self.iterations)
 
         #Printing the current best validation loss, and the early stopping counter
         print('Best Loss', self.current_training_details['best_loss'])
@@ -228,11 +230,11 @@ def init_network_optimizer(params, continue_training_bool, initial_lr):
     # If continuing training load the best optimiser from the model_dict.
     if continue_training_bool:
         model_save_path = os.path.join('checkpoints', opts.experiment_name, 'models')
-        optimizer.load_state_dict(torch.load(os.path.join(model_save_path,'best_optim.pth')))
+        optimizer.load_state_dict(torch.load(os.path.join(model_save_path,'best_training.pth'))['optim_state'])
     
     return optimizer
 
-def init_from_train_dict(self, train_dict):
+def init_from_train_dict(train_dict):
     """Initialise attributes of the training loop from train_dict 
 
     Given a train_dict, the attributes which are dependent on the 
@@ -248,16 +250,18 @@ def init_from_train_dict(self, train_dict):
         previous training run
     """    
     opts = train_dict['opts']
+    opts.continue_training=True
     iterations = train_dict['iterations']
+    epochs = train_dict['epochs']
 
-    es = EarlyStopping(self.opts)
+    es = EarlyStopping.EarlyStopping(opts)
     es.load_state_dict(train_dict['earlystopping_state'])  
 
     net_tuple = Convcsdcfrnet.init_network(opts) # cont 
 
     optimizer = init_network_optimizer(net_tuple[0].parameters(), True, opts.lr) # cont
 
-    return opts, iterations, es, net_tuple, optimizer
+    return opts, iterations, epochs, es, net_tuple, optimizer
         
 
 if __name__ == '__main__':

@@ -24,8 +24,8 @@ class Vis():
         self.train_losses = ['Training Loss', 'FOD Loss', 'Fixel Loss', 'Fixel Accuracy']
         self.val_losses = ['Validation Loss', 'Validation ACC', 'Validation Fixel Loss', 'Validation Fixel Accuracy']
         
-    def add_scalars(self, train_losses, val_losses, current_training_details, i, epoch):
-        step = (self.dataloader_length*epoch)+i+current_training_details['plot_offset']
+    def add_scalars(self, train_losses, val_losses, current_training_details, epoch, iterations):
+        step = iterations
 
         #Training loss and its decomposition :
         for loss_name, loss_value in train_losses.items():
@@ -36,7 +36,7 @@ class Vis():
             self.writer.add_scalar(loss_name, loss_value/self.opts.val_iters, step)
  
         # #self.writer.add_scalar('Deep Regularisation Lambda', net.module.deep_reg, step)
-        print(f'[{current_training_details["global_epochs"]+epoch + 1}, {i + 1:5d}] training loss: {train_losses["Training Loss"]/self.opts.val_freq:.7f} training fod loss {train_losses["FOD Loss"]/self.opts.val_freq:.7f}')
+        print(f'[{current_training_details["global_epochs"]+epoch + 1}, {iterations} total iterations] training loss: {train_losses["Training Loss"]/self.opts.val_freq:.7f} training fod loss {train_losses["FOD Loss"]/self.opts.val_freq:.7f}')
         
 
 class LossTracker():
@@ -97,7 +97,6 @@ def update_training_logs(train_losses, val_losses, current_training_details, mod
                         'lr': optimizer.state_dict()['param_groups'][0]['lr'],
                         'best loss': current_training_details['best_loss'],
                         'best ACC': float(current_training_details['best_val_ACC']),
-                        'plot_step':(len(train_dataloader)*epoch)+i+current_training_details['plot_offset'],
                         'deep_reg': float(net.module.deep_reg),
                         'neg_reg':float(net.module.neg_reg),
                         'alpha':float(net.module.alpha),
@@ -112,7 +111,6 @@ def update_training_logs(train_losses, val_losses, current_training_details, mod
         trainlog.write('\n\nEarly stopping statistics \n')
         trainlog.write(f'Current early stopping counter: {es.early_stopping_counter}/{opts.early_stopping_threshold}\n')
         trainlog.write(f'Current best validation loss: {round(es.best_loss*1000,3)} x 10^-4 at iteration: {es.best_loss_iter}\n')
-        trainlog.write(f'Current iteration: {epoch*es.epoch_length + i}, best loss occured {(epoch*es.epoch_length + i)-es.best_loss_iter} iterations ago\n')
         trainlog.write(f'Highest early stopping counter: {es.highest_counter}/{opts.early_stopping_threshold}, which occured at iteration: {es.highest_counter_iter}\n')
         trainlog.write(f'Number of Learning rate decays: {es.lr_scheduler_count}')
 

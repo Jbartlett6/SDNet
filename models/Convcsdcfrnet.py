@@ -172,21 +172,19 @@ def init_network(opts):
                                                                             Either change continue training flag to create another experiment, or change the experiment name
                                                                             to load an existing experiment'''
 
-        net.load_state_dict(torch.load(os.path.join(model_save_path,'best_model.pth')))
+        net.load_state_dict(torch.load(os.path.join(model_save_path,'best_training.pth'))['net_state'])
         
         with open(os.path.join(model_save_path,'training_details.yml'), 'r') as file:
             training_details = yaml.load(file, yaml.loader.SafeLoader)
 
         #Refactor this code so it is only one line (possible dictionary comprehension)
         # Shouldn't have current_training_details and training_details as two seperate objects.
-        current_training_details['plot_offset'] = training_details['plot_step']
         current_training_details['best_loss'] = training_details['best loss']
         current_training_details['previous_loss'] = training_details['best loss']
         current_training_details['best_val_ACC'] = training_details['best ACC']
         current_training_details['global_epochs'] = training_details['epochs_count']
-        current_training_details['plot_offset'] = training_details['plot_step']
 
-        print('Plot offset is:'+str(current_training_details['plot_offset']))
+        
         
         
     else:

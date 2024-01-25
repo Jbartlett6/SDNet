@@ -8,11 +8,11 @@ import math
 class network_options():
     def __init__(self):
         ### General ###
-        self.experiment_name = 'test_2023_01_23'  # Directory name to be stored in the checkpoint directory. **General**
+        self.experiment_name = 'train_init_add_test_1'  # Directory name to be stored in the checkpoint directory. **General**
         self.model_name = 'best_model.pth'  # Working model name - will be stored within the experiment name directory found within the ** General **
                                             # checkpoints directory. 
         self.save_freq = 1000               # How many iterations to save the model weights after.
-        self.continue_training = False      # Whether to continue training using existing model weights
+        self.continue_training = True      # Whether to continue training using existing model weights
 
         self.inference=False
         self.perform_inference=False
@@ -50,7 +50,9 @@ class network_options():
         self.activation = 'prelu'           # {'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
 
         ### Data ###
-        self.data_dir = '/media/duanj/F/joe/hcp_2' # Data directory see github repo for more details.
+        # self.data_dir = '/media/duanj/F/joe/hcp_2' # Data directory see github repo for more details.
+        self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp'
+
         self.train_subject_list = ['100206'] #, # Subjects to be used for training
                     # '100307',
                     # '100408',
@@ -72,26 +74,26 @@ class network_options():
                     # '103515',
                     # '103818']
 
-        self.train_subject_list = ['113821',
-                    '523032',
-                    '130518',
-                    '151021',
-                    '130417',
-                    '130720',
-                    '202113',
-                    '188751',
-                    '118225',
-                    '284646',
-                    '120111',
-                    '123824',
-                    '268850',
-                    '123117',
-                    '368753',
-                    '161327',
-                    '176845',
-                    '159441',
-                    '559457',
-                    '115017']
+        # self.train_subject_list = ['113821',
+        #             '523032',
+        #             '130518',
+        #             '151021',
+        #             '130417',
+        #             '130720',
+        #             '202113',
+        #             '188751',
+        #             '118225',
+        #             '284646',
+        #             '120111',
+        #             '123824',
+        #             '268850',
+        #             '123117',
+        #             '368753',
+        #             '161327',
+        #             '176845',
+        #             '159441',
+        #             '559457',
+        #             '115017']
         
         #102109 has been removed from the test list due to the fixel directory - can be readded providing the fixles are correct.
         self.val_subject_list = ['104012',  # Subjects to be used for validation

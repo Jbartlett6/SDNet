@@ -8,10 +8,12 @@ import math
 class NetworkOptions():
     def __init__(self):
         ### General ###
-        self.experiment_name = 'train_init_add_test_1'  # Directory name to be stored in the checkpoint directory. **General**
+        self.experiment_name = 'debugging'  # Directory name to be stored in the checkpoint directory. **General** 
+                                            # set to debugging to avoid checking the checkpoint directory doesn't exist.
+                                
         self.model_name = 'best_model.pth'  # Working model name - will be stored within the experiment name directory found within the ** General **
                                             # checkpoints directory. 
-        self.continue_training = True      # Whether to continue training using existing model weights
+        self.continue_training = False      # Whether to continue training using existing model weights
 
         self.inference=False
         self.perform_inference=False

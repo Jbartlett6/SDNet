@@ -72,7 +72,7 @@ class LossTracker():
         self.train_loss_dict['Fixel Accuracy'] += fixel_accuracy.item()
         
 
-def update_training_logs(train_losses, val_losses, current_training_details, model_save_path, net, epoch, i, opts, optimizer, param_num, train_dataloader, es, iterations):
+def update_training_logs(train_losses, val_losses, current_training_details, model_save_path, net, epoch, opts, optimizer, param_num, train_dataloader, es, iterations):
     
     if val_losses['Validation ACC']/opts.val_iters > current_training_details['best_val_ACC']:
         current_training_details['best_val_ACC'] = val_losses['Validation ACC']/opts.val_iters
@@ -92,31 +92,37 @@ def update_training_logs(train_losses, val_losses, current_training_details, mod
         torch.save(training_state_dict, os.path.join(model_save_path, 'best_training.pth'))
 
 
-    training_details = {'epochs_count': epoch, # Training state 
-                        'batch_size':opts.batch_size, # Config_option
-                        'minibatch': i, # Config option
-                        'lr': optimizer.state_dict()['param_groups'][0]['lr'], # Training state 
-                        'best loss': current_training_details['best_loss'], # Performance measure
-                        'best ACC': float(current_training_details['best_val_ACC']), # Performance measure 
+    training_state = {'epochs_count': epoch, # Training state 
+                        'iterations': iterations, # Training state
+                        'lr': optimizer.state_dict()['param_groups'][0]['lr'], # Training state
                         'deep_reg': float(net.module.deep_reg), # Training state
                         'neg_reg':float(net.module.neg_reg), # Training state
-                        'alpha':float(net.module.alpha), # Training state
-                        'learn_lambda':opts.learn_lambda, # Config option
-                        'Number of Parameters':param_num} # Model property
-        
-    training_details_string = [f'{name}: {value} \n' for name, value in training_details.items()]
-    train_log_path = os.path.join('checkpoints', opts.experiment_name, 'logs', 'training.log')
+                        'alpha':float(net.module.alpha),
+                        'Number of Parameters':param_num} # Training state
 
-    with open(train_log_path, 'w') as trainlog:
-        [trainlog.write(entry) for entry in training_details_string]
-        trainlog.write('\n\nEarly stopping statistics \n')
-        trainlog.write(f'Current early stopping counter: {es.early_stopping_counter}/{opts.early_stopping_threshold}\n')
-        trainlog.write(f'Current best validation loss: {round(es.best_loss*1000,3)} x 10^-4 at iteration: {es.best_loss_iter}\n')
-        trainlog.write(f'Highest early stopping counter: {es.highest_counter}/{opts.early_stopping_threshold}, which occured at iteration: {es.highest_counter_iter}\n')
-        trainlog.write(f'Number of Learning rate decays: {es.lr_scheduler_count}')
+    stopping_criteria = {'epochs_count': epoch,
+                         'epoch_limit': opts.epochs,
+                         'iterations': iterations,
+                         'iterations limit': opts.iteration_limit,
+                         'early stopping counter': es.early_stopping_counter,
+                         'early stopping threshold': opts.early_stopping_threshold,
+                         'early stopping best loss': es.best_loss,
+                         'early stopping best iteration': es.best_loss_iter,
+                         'early stopping highest count': es.highest_counter,
+                         'early stopping lr sched count': es.lr_scheduler_count  
+                         }
 
+    config = {'batch_size':opts.batch_size, # Config_option
+                'learn_lambda':opts.learn_lambda} # Config option
+
+    performance = {'best loss': current_training_details['best_loss'], # Performance measure
+                'best ACC': float(current_training_details['best_val_ACC'])} # Performance measure }
+
+    training_details = {**training_state, **stopping_criteria, **config, **performance}
+                    
     with open(os.path.join(model_save_path,'training_details.yml'), 'w') as file:
         documents = yaml.dump(training_details, file)
+        
 
     return current_training_details
 

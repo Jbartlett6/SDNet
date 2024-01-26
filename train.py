@@ -118,6 +118,10 @@ class NetworkTrainer():
                     self.rttracker.start_timer('validation loop')
                     self.validation_loop(epoch, i)
                     self.rttracker.stop_timer('validation loop')
+                    
+                    #Updating the training details.
+                    self.current_training_details = tracker.update_training_logs(self.loss_tracker.train_loss_dict, self.loss_tracker.val_loss_dict, self.current_training_details, self.model_save_path,
+                                                    self.net, epoch, self.opts, self.optimizer, self.param_num, self.train_dataloader, self.es, self.iterations)   
                     self.optimizer = self.es.early_stopping_update(self.current_training_details, self.iterations, self.optimizer)
                 
                 self.rttracker.write_runtimes()
@@ -169,11 +173,7 @@ class NetworkTrainer():
 
         #Printing the current best validation loss, and the early stopping counter
         print('Best Loss', self.current_training_details['best_loss'])
-        print('Early stopping counter', self.es.early_stopping_counter)
-
-        #Updating the training details.
-        self.current_training_details = tracker.update_training_logs(self.loss_tracker.train_loss_dict, self.loss_tracker.val_loss_dict, self.current_training_details, self.model_save_path,
-                                                    self.net, epoch, i, self.opts, self.optimizer, self.param_num, self.train_dataloader, self.es, self.iterations)        
+        print('Early stopping counter', self.es.early_stopping_counter)     
         
         #Resetting the losses for the next set of minibatches
         self.loss_tracker.reset_losses()

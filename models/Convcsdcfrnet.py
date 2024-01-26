@@ -184,12 +184,10 @@ def init_network(opts):
         current_training_details['best_val_ACC'] = training_details['best ACC']
         current_training_details['global_epochs'] = training_details['epochs_count']
 
-        
-        
-        
     else:
         # This code is related to training, not the model - should be in train.py or othe code.
-        assert not os.path.isdir(os.path.join('checkpoints', opts.experiment_name)), f'The experiment {opts.experiment_name} already exists, please select another experiment name'
+        if opts.experiment_name != 'debugging':
+            assert not os.path.isdir(os.path.join('checkpoints', opts.experiment_name)), f'The experiment {opts.experiment_name} already exists, please select another experiment name'
         os.mkdir(os.path.join('checkpoints', opts.experiment_name))
         os.mkdir(os.path.join('checkpoints', opts.experiment_name, 'models'))
         os.mkdir(os.path.join('checkpoints', opts.experiment_name, 'logs'))

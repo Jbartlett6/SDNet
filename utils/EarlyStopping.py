@@ -25,14 +25,14 @@ class EarlyStopping():
         
         self.opts = opts
 
-    def early_stopping_update(self,current_training_details, current_iter, optimizer):
+    def early_stopping_update(self,current_best_loss, epoch, current_iter, optimizer):
       
         if self.opts.early_stopping == True:
-            current_loss = current_training_details['best_loss']
+            
 
             # Checking for improvement.
-            if current_loss < self.best_loss:
-                self.best_loss = current_loss
+            if current_best_loss < self.best_loss:
+                self.best_loss = current_best_loss
                 self.early_stopping_counter = 0
                 self.best_loss_iter = current_iter
             else:
@@ -44,7 +44,7 @@ class EarlyStopping():
                 
                 if self.lr_scheduler_count >= self.opts.lr_decay_limit:
                     # If the limit has been passed more than self.opts.lr_decay_limit times then stop training
-                    print(f'Training stopped at epoch {current_training_details["global_epochs"]+current_iter} due to Early stopping and minibatch {i}, the best validation loss achieved is: {current_training_details["best_loss"]}')
+                    print(f'Training stopped at epoch {epoch}, total iteration {current_iter} due to , the best validation loss achieved is: {current_best_loss}')
                     sys.exit()
                 else:
                     # Else, decay the learning rate and restart the counter

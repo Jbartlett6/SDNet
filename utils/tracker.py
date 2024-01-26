@@ -24,7 +24,7 @@ class Vis():
         self.train_losses = ['Training Loss', 'FOD Loss', 'Fixel Loss', 'Fixel Accuracy']
         self.val_losses = ['Validation Loss', 'Validation ACC', 'Validation Fixel Loss', 'Validation Fixel Accuracy']
         
-    def add_scalars(self, train_losses, val_losses, current_training_details, epoch, iterations):
+    def add_scalars(self, train_losses, val_losses, epoch, iterations):
         step = iterations
 
         #Training loss and its decomposition :
@@ -36,7 +36,7 @@ class Vis():
             self.writer.add_scalar(loss_name, loss_value/self.opts.val_iters, step)
  
         # #self.writer.add_scalar('Deep Regularisation Lambda', net.module.deep_reg, step)
-        print(f'[{current_training_details["global_epochs"]+epoch + 1}, {iterations} total iterations] training loss: {train_losses["Training Loss"]/self.opts.val_freq:.7f} training fod loss {train_losses["FOD Loss"]/self.opts.val_freq:.7f}')
+        print(f'[{epoch + 1}, {iterations} total iterations] training loss: {train_losses["Training Loss"]/self.opts.val_freq:.7f} training fod loss {train_losses["FOD Loss"]/self.opts.val_freq:.7f}')
         
 
 class LossTracker():
@@ -71,60 +71,69 @@ class LossTracker():
         self.train_loss_dict['Fixel Loss'] += fixel_loss.item()
         self.train_loss_dict['Fixel Accuracy'] += fixel_accuracy.item()
         
-
-def update_training_logs(train_losses, val_losses, current_training_details, model_save_path, net, epoch, opts, optimizer, param_num, train_dataloader, es, iterations):
+class TrainingLogger():
     
-    if val_losses['Validation ACC']/opts.val_iters > current_training_details['best_val_ACC']:
-        current_training_details['best_val_ACC'] = val_losses['Validation ACC']/opts.val_iters
-        current_training_details['best_val_ACC_iter'] = iterations
-
-    if val_losses['Validation Loss']/opts.val_iters < current_training_details['best_loss']:
-                    
-        current_training_details['best_loss'] = val_losses['Validation Loss']/opts.val_iters
+    def __init__(self, model_save_path, param_num, opts):
+        self.model_save_path = model_save_path
+        self.param_num = param_num
+        self.opts = opts
+    
+    def update_training_logs(self, train_losses, val_losses, current_training_details, 
+                            net, epoch, optimizer, es, iterations):
         
-        training_state_dict = {'net_state': net.state_dict(),
-        'optim_state': optimizer.state_dict(),
-        'earlystopping_state': es.state_dict(),
-        'epochs': epoch,
-        'iterations': iterations,
-        'opts': opts}
-                
-        torch.save(training_state_dict, os.path.join(model_save_path, 'best_training.pth'))
+        if val_losses['Validation ACC']/self.opts.val_iters > current_training_details['best_val_ACC']:
 
+            current_training_details['best_val_ACC'] = val_losses['Validation ACC']/self.opts.val_iters
 
-    training_state = {'epochs_count': epoch, # Training state 
-                        'iterations': iterations, # Training state
-                        'lr': optimizer.state_dict()['param_groups'][0]['lr'], # Training state
-                        'deep_reg': float(net.module.deep_reg), # Training state
-                        'neg_reg':float(net.module.neg_reg), # Training state
-                        'alpha':float(net.module.alpha),
-                        'Number of Parameters':param_num} # Training state
-
-    stopping_criteria = {'epochs_count': epoch,
-                         'epoch_limit': opts.epochs,
-                         'iterations': iterations,
-                         'iterations limit': opts.iteration_limit,
-                         'early stopping counter': es.early_stopping_counter,
-                         'early stopping threshold': opts.early_stopping_threshold,
-                         'early stopping best loss': es.best_loss,
-                         'early stopping best iteration': es.best_loss_iter,
-                         'early stopping highest count': es.highest_counter,
-                         'early stopping lr sched count': es.lr_scheduler_count  
-                         }
-
-    config = {'batch_size':opts.batch_size, # Config_option
-                'learn_lambda':opts.learn_lambda} # Config option
-
-    performance = {'best loss': current_training_details['best_loss'], # Performance measure
-                'best ACC': float(current_training_details['best_val_ACC'])} # Performance measure }
-
-    training_details = {**training_state, **stopping_criteria, **config, **performance}
+        if val_losses['Validation Loss']/self.opts.val_iters < current_training_details['best_loss']:
+                        
+            current_training_details['best_loss'] = val_losses['Validation Loss']/self.opts.val_iters
+            
+            training_state_dict = {'net_state': net.state_dict(),
+            'optim_state': optimizer.state_dict(),
+            'earlystopping_state': es.state_dict(),
+            'epochs': epoch,
+            'iterations': iterations,
+            'opts': self.opts,
+            'current_training_details': current_training_details}
                     
-    with open(os.path.join(model_save_path,'training_details.yml'), 'w') as file:
-        documents = yaml.dump(training_details, file)
-        
+            torch.save(training_state_dict, os.path.join(self.model_save_path, 'best_training.pth'))
 
-    return current_training_details
+
+        training_state = {'epochs_count': epoch, # Training state 
+                            'iterations': iterations, # Training state
+                            'lr': optimizer.state_dict()['param_groups'][0]['lr'], # Training state
+                            'deep_reg': float(net.module.deep_reg), # Training state
+                            'neg_reg':float(net.module.neg_reg), # Training state
+                            'alpha':float(net.module.alpha),
+                            'Number of Parameters':self.param_num} # Training state
+
+        stopping_criteria = {'epochs_count': epoch,
+                            'epoch_limit': self.opts.epochs,
+                            'iterations': iterations,
+                            'iterations limit': self.opts.iteration_limit,
+                            'early stopping counter': es.early_stopping_counter,
+                            'early stopping threshold': self.opts.early_stopping_threshold,
+                            'early stopping best loss': es.best_loss,
+                            'early stopping best iteration': es.best_loss_iter,
+                            'early stopping highest count': es.highest_counter,
+                            'early stopping lr sched count': es.lr_scheduler_count  
+                            }
+
+        config = self.opts.__dict__
+
+        training_performance = train_losses
+
+        performance = {'best loss': current_training_details['best_loss'], # Performance measure
+                    'best ACC': float(current_training_details['best_val_ACC'])} # Performance measure }
+
+        training_details = {**training_state, **stopping_criteria, **config, **performance}
+                        
+        with open(os.path.join(self.model_save_path,'training_details.yml'), 'w') as file:
+            yaml.dump(training_details, file)
+            
+
+        return current_training_details
 
 
 

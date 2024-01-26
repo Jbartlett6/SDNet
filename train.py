@@ -7,6 +7,7 @@ from fixel_loss import network
 
 import os 
 import sys
+import math
 
 import torch 
 import torch.optim.lr_scheduler 
@@ -33,18 +34,23 @@ class NetworkTrainer():
                         SDNet and fixel classification networks are all initialised using this method. 
         '''
         # Loading the network state if specified in network options
+        self.model_save_path = os.path.join('checkpoints', opts.experiment_name, 'models')
+
         if opts.continue_training == True:
-            model_save_path = os.path.join('checkpoints', opts.experiment_name, 'models')
-            train_dict = torch.load(os.path.join(model_save_path, 'most_recent_training.pth'))
-            self.opts, self.iterations, self.epochs, self.es, net_tuple, self.optimizer = init_from_train_dict(train_dict)
-            self.net, self.P, self.param_num, self.current_training_details, self.model_save_path = net_tuple
+            train_dict = torch.load(os.path.join(self.model_save_path, 'most_recent_training.pth'))
+            self.opts, self.iterations, self.epochs, self.es, net_tuple, self.optimizer, self.current_training_details = init_from_train_dict(train_dict)
+            self.net, self.P, param_num = net_tuple
+            
         else:
             self.opts = opts # cont
+            initialise_experiment_directory(self.opts.experiment_name)
             self.es = EarlyStopping.EarlyStopping(self.opts) # cont
-            self.net, self.P, self.param_num, self.current_training_details, self.model_save_path = Convcsdcfrnet.init_network(opts) # cont 
+            self.net, self.P, param_num = Convcsdcfrnet.init_network(opts) # cont 
             self.optimizer = init_network_optimizer(self.net.parameters(), opts.continue_training, self.opts.warmup_factor*self.opts.lr) # cont
             self.iterations = 0 # cont
             self.epochs = 0
+            self.current_training_details = {'best_loss':math.inf, 
+                                            'best_val_ACC':0}   
         
         self.train_dataloader, self.val_dataloader = data.init_dataloaders(self.opts)
         self.val_temp_dataloader = iter(self.val_dataloader) 
@@ -53,7 +59,8 @@ class NetworkTrainer():
         self.criterion = torch.nn.MSELoss(reduction='mean') 
         
         #Trackers
-        self.loss_tracker = tracker.LossTracker(self.criterion)    
+        self.loss_tracker = tracker.LossTracker(self.criterion)
+        self.train_logger = tracker.TrainingLogger(self.model_save_path, param_num, self.opts)    
         self.visualiser = tracker.Vis(self.opts, self.train_dataloader)
         self.init_runtime_trackers(runtime_mem = 5)
 
@@ -120,9 +127,9 @@ class NetworkTrainer():
                     self.rttracker.stop_timer('validation loop')
                     
                     #Updating the training details.
-                    self.current_training_details = tracker.update_training_logs(self.loss_tracker.train_loss_dict, self.loss_tracker.val_loss_dict, self.current_training_details, self.model_save_path,
-                                                    self.net, epoch, self.opts, self.optimizer, self.param_num, self.train_dataloader, self.es, self.iterations)   
-                    self.optimizer = self.es.early_stopping_update(self.current_training_details, self.iterations, self.optimizer)
+                    self.current_training_details = self.train_logger.update_training_logs(self.loss_tracker.train_loss_dict, self.loss_tracker.val_loss_dict, self.current_training_details,
+                                                    self.net, epoch, self.optimizer, self.es, self.iterations)   
+                    self.optimizer = self.es.early_stopping_update(self.current_training_details['best_loss'], epoch, self.iterations, self.optimizer)
                 
                 self.rttracker.write_runtimes()
                 self.rttracker.start_timer('training dataload')
@@ -169,7 +176,7 @@ class NetworkTrainer():
 
         self.rttracker.start_timer('post val steps')        
         #Plotting the results using tensorboard using the visualiser class.
-        self.visualiser.add_scalars(self.loss_tracker.train_loss_dict, self.loss_tracker.val_loss_dict, self.current_training_details, epoch, self.iterations)
+        self.visualiser.add_scalars(self.loss_tracker.train_loss_dict, self.loss_tracker.val_loss_dict, epoch, self.iterations)
 
         #Printing the current best validation loss, and the early stopping counter
         print('Best Loss', self.current_training_details['best_loss'])
@@ -184,7 +191,8 @@ class NetworkTrainer():
             'earlystopping_state': self.es.state_dict(),
             'epochs': epoch,
             'iterations':self.iterations,
-            'opts': self.opts}
+            'opts': self.opts,
+            'current_training_details': self.current_training_details}
         
         torch.save(training_state_dict, os.path.join(self.model_save_path, 'most_recent_training.pth'))
 
@@ -201,6 +209,7 @@ class NetworkTrainer():
         if iteration> opts.warmup_iter:
             for g in self.optimizer.param_groups:
                 g['lr'] = self.opts.lr
+    
 
     def init_runtime_trackers(self, runtime_mem):
         self.rttracker = tracker.RuntimeTracker(runtime_mem, os.path.join('checkpoints', opts.experiment_name , 'logs', 'runtime.log'), self.opts, len(self.train_dataloader))
@@ -257,6 +266,19 @@ def init_from_train_dict(train_dict):
     optimizer = init_network_optimizer(net_tuple[0].parameters(), True, opts.lr) # cont
 
     return opts, iterations, epochs, es, net_tuple, optimizer
+
+def initialise_experiment_directory(experiment_name):
+    
+    if experiment_name != 'debugging':
+        assert not os.path.isdir(os.path.join('checkpoints', experiment_name)), f'The experiment {experiment_name} already exists, please select another experiment name'
+        
+    def init_path(path):
+        if not os.path.exists(path):
+            os.mkdir(path)
+
+    init_path(os.path.join('checkpoints', experiment_name))
+    init_path(os.path.join('checkpoints', experiment_name, 'models'))
+    init_path(os.path.join('checkpoints', experiment_name, 'logs'))
         
 
 if __name__ == '__main__':

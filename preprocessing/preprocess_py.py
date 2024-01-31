@@ -19,8 +19,8 @@ that preprocessing has been run correctly.
 '''
 
 
-import preprocessing.dwi_undersample as dwiusamp
-import preprocessing.fixel_threshold as fixel_threshold
+import dwi_undersample as dwiusamp
+import fixel_threshold as fixel_threshold
 
 import subprocess 
 import os
@@ -43,29 +43,29 @@ def fully_sampled_FOD(path):
 
     return 0
 
-def undersampled_FOD(path):
+def undersampled_FOD(path, usamp_folder_name = 'undersampled_fod'):
     # If the undersampled_fod directory doesn't exist, make it
-    if os.path.exists(os.path.join(path, 'undersampled_fod')) == False:
-        os.mkdir(os.path.join(path, 'undersampled_fod'))
+    if os.path.exists(os.path.join(path, usamp_folder_name)) == False:
+        os.mkdir(os.path.join(path, usamp_folder_name))
 
     UspDset = dwiusamp.UndersampleDataset(path, os.path.join(path, 'undersampled_fod'))
     UspDset.all_save()
 
     #Normalising the already undersampled data so the maximum value is 1.
-    subprocess.run(['dwinormalise', 'individual', os.path.join(path, 'undersampled_fod', 'data.nii.gz'), 
-                    os.path.join(path, 'nodif_brain_mask.nii.gz'), os.path.join(path, 'undersampled_fod', 'normalised_data.nii.gz'), 
-                    '-fslgrad', os.path.join(path, 'undersampled_fod', 'bvecs'), os.path.join(path, 'undersampled_fod', 'bvals'),
+    subprocess.run(['dwinormalise', 'individual', os.path.join(path, usamp_folder_name, 'data.nii.gz'), 
+                    os.path.join(path, 'nodif_brain_mask.nii.gz'), os.path.join(path, usamp_folder_name, 'normalised_data.nii.gz'), 
+                    '-fslgrad', os.path.join(path, usamp_folder_name, 'bvecs'), os.path.join(path, usamp_folder_name, 'bvals'),
                     '-intensity', '1'])
     
     # Calculating the undersampled FODs
-    subprocess.run(['dwi2response', 'dhollander', os.path.join(path, 'undersampled_fod', 'normalised_data.nii.gz'), os.path.join(path, 'undersampled_fod', 'wm_response.txt'),
-                    os.path.join(path, 'undersampled_fod', 'gm_response.txt'), os.path.join(path, 'undersampled_fod', 'csf_response.txt'), '-fslgrad',
-                    os.path.join(path, 'undersampled_fod', 'bvecs'), os.path.join(path, 'undersampled_fod', 'bvals')])
+    subprocess.run(['dwi2response', 'dhollander', os.path.join(path, usamp_folder_name, 'normalised_data.nii.gz'), os.path.join(path, usamp_folder_name, 'wm_response.txt'),
+                    os.path.join(path, usamp_folder_name, 'gm_response.txt'), os.path.join(path, usamp_folder_name, 'csf_response.txt'), '-fslgrad',
+                    os.path.join(path, usamp_folder_name, 'bvecs'), os.path.join(path, usamp_folder_name, 'bvals')])
     
-    subprocess.run(['dwi2fod', '-fslgrad', os.path.join(path, 'undersampled_fod', 'bvecs'), os.path.join(path, 'undersampled_fod', 'bvals'),
-                 'msmt_csd', os.path.join(path, 'undersampled_fod', 'normalised_data.nii.gz'), os.path.join(path, 'undersampled_fod', 'wm_response.txt'),
-                 os.path.join(path, 'undersampled_fod', 'wm.nii.gz'), os.path.join(path, 'undersampled_fod', 'gm_response.txt'), os.path.join(path, 'undersampled_fod', 'gm.nii.gz'),
-                 os.path.join(path, 'undersampled_fod', 'csf_response.txt'), os.path.join(path, 'undersampled_fod', 'csf.nii.gz')])
+    subprocess.run(['dwi2fod', '-fslgrad', os.path.join(path, usamp_folder_name, 'bvecs'), os.path.join(path, usamp_folder_name, 'bvals'),
+                 'msmt_csd', os.path.join(path, usamp_folder_name, 'normalised_data.nii.gz'), os.path.join(path, usamp_folder_name, 'wm_response.txt'),
+                 os.path.join(path, usamp_folder_name, 'wm.nii.gz'), os.path.join(path, usamp_folder_name, 'gm_response.txt'), os.path.join(path, usamp_folder_name, 'gm.nii.gz'),
+                 os.path.join(path, usamp_folder_name, 'csf_response.txt'), os.path.join(path, usamp_folder_name, 'csf.nii.gz')])
     
     return 0
 
@@ -137,7 +137,7 @@ def fixels_and_masks(path):
 
     return 0
     
-def reset_HCP_dir(path):
+def reset_HCP_dir(path, usamp_folder_name = 'undersampled_fod'):
     '''
     A utility function for returning a HCP directory to its original state i.e. removing all 
     processing. This script is useful for testing the above processing functions.
@@ -159,8 +159,8 @@ def reset_HCP_dir(path):
     custom_rm(os.path.join(path, '..', '5ttgen.nii.gz'))
     custom_rm(os.path.join(path, '..', 'white_matter_mask.nii.gz'))
     
-    if os.path.exists(os.path.join(path, 'undersampled_fod')):
-        shutil.rmtree(os.path.join(path, 'undersampled_fod'))
+    if os.path.exists(os.path.join(path, usamp_folder_name)):
+        shutil.rmtree(os.path.join(path, usamp_folder_name))
 
     if os.path.exists(os.path.join(path, 'tractseg')):
         shutil.rmtree(os.path.join(path, 'tractseg'))
@@ -183,7 +183,7 @@ def HCP_download_test(path):
 
     return folders_present
 
-def preprocessing_test(path):
+def preprocessing_test(path, usamp_folder_name = 'undersampled_fod'):
     '''
     Function to test that pre-processing has been performed and all of the correct files have been created. 
     For the given path each folder is checked that it contains the files that should have been calculated 
@@ -214,18 +214,18 @@ def preprocessing_test(path):
                        and os.path.exists(os.path.join(path, 'fixel_directory', 'peak_amp_im.nii.gz'))
                        )
     
-    undersampled_fod_train_bool = (os.path.exists(os.path.join(path, 'undersampled_fod', 'bvals'))
-                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'bvecs'))
-                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'data.nii.gz'))
-                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'normalised_data.nii.gz'))
+    undersampled_fod_train_bool = (os.path.exists(os.path.join(path, usamp_folder_name, 'bvals'))
+                        and os.path.exists(os.path.join(path, usamp_folder_name, 'bvecs'))
+                        and os.path.exists(os.path.join(path, usamp_folder_name, 'data.nii.gz'))
+                        and os.path.exists(os.path.join(path, usamp_folder_name, 'normalised_data.nii.gz'))
                         )
     
-    undersampled_fod_test_bool = (os.path.exists(os.path.join(path, 'undersampled_fod', 'wm_response.txt'))
-                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'gm_response.txt'))
-                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'csf_response.txt'))
-                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'wm.nii.gz'))
-                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'gm.nii.gz'))
-                        and os.path.exists(os.path.join(path, 'undersampled_fod', 'csf.nii.gz'))
+    undersampled_fod_test_bool = (os.path.exists(os.path.join(path, usamp_folder_name, 'wm_response.txt'))
+                        and os.path.exists(os.path.join(path, usamp_folder_name, 'gm_response.txt'))
+                        and os.path.exists(os.path.join(path, usamp_folder_name, 'csf_response.txt'))
+                        and os.path.exists(os.path.join(path, usamp_folder_name, 'wm.nii.gz'))
+                        and os.path.exists(os.path.join(path, usamp_folder_name, 'gm.nii.gz'))
+                        and os.path.exists(os.path.join(path, usamp_folder_name, 'csf.nii.gz'))
                         )
 
     tractseg_bool = (os.path.exists(os.path.join(path, 'tractseg'))
@@ -260,11 +260,12 @@ def preprocessing_test(path):
     return training_bool, training_and_testing_bool
 
      	                
-# if __name__ == '__main__':
+if __name__ == '__main__':
 
-    # diffusion_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp/100206/T1w/Diffusion'
+    diffusion_dir = '/mnt/d/Diffusion_data/hcp/130821/T1w_tmp/Diffusion'
+    usamp_folder_name = 'undersampled_92'
     # preprocessing_test(diffusion_dir)
     # print(diffusion_dir)
     # fully_sampled_FOD(diffusion_dir)
     # fixels_and_masks(diffusion_dir)
-    # undersampled_FOD(diffusion_dir)
+    undersampled_FOD(diffusion_dir, usamp_folder_name)

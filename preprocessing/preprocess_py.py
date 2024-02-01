@@ -17,10 +17,11 @@ that preprocessing has been run correctly.
     preprocessing_test - Check that preprocessing has een performed correctly and that the data necessary to run 
     training and test are available. 
 '''
-
-
-import dwi_undersample as dwiusamp
-import fixel_threshold as fixel_threshold
+import sys 
+import os
+sys.path.append(os.path.join(sys.path[0],'..'))
+import preprocessing.dwi_undersample as dwiusamp
+import preprocessing.fixel_threshold as fixel_threshold
 
 import subprocess 
 import os

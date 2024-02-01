@@ -44,12 +44,12 @@ def fully_sampled_FOD(path):
 
     return 0
 
-def undersampled_FOD(path, usamp_folder_name = 'undersampled_fod'):
+def undersampled_FOD(path, usamp_folder_name = 'undersampled_fod', sampling_pattern = [3,9,9,9]):
     # If the undersampled_fod directory doesn't exist, make it
     if os.path.exists(os.path.join(path, usamp_folder_name)) == False:
         os.mkdir(os.path.join(path, usamp_folder_name))
 
-    UspDset = dwiusamp.UndersampleDataset(path, os.path.join(path, 'undersampled_fod'))
+    UspDset = dwiusamp.UndersampleDataset(path, os.path.join(path, usamp_folder_name), sampling_pattern = sampling_pattern)
     UspDset.all_save()
 
     #Normalising the already undersampled data so the maximum value is 1.
@@ -263,10 +263,10 @@ def preprocessing_test(path, usamp_folder_name = 'undersampled_fod'):
      	                
 if __name__ == '__main__':
 
-    diffusion_dir = '/mnt/d/Diffusion_data/hcp/130821/T1w_tmp/Diffusion'
+    diffusion_dir = '/mnt/d/Diffusion_data/Tong/Tong_as_HCP'
     usamp_folder_name = 'undersampled_92'
-    # preprocessing_test(diffusion_dir)
-    # print(diffusion_dir)
-    # fully_sampled_FOD(diffusion_dir)
-    # fixels_and_masks(diffusion_dir)
-    undersampled_FOD(diffusion_dir, usamp_folder_name)
+    preprocessing_test(diffusion_dir)
+    print(diffusion_dir)
+    fully_sampled_FOD(diffusion_dir)
+    fixels_and_masks(diffusion_dir)
+    undersampled_FOD(diffusion_dir, usamp_folder_name = usamp_folder_name, sampling_pattern=[6,30,30,30])

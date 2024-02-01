@@ -6,13 +6,13 @@ import nibabel as nib
 import sys 
 
 class UndersampleDataset(torch.utils.data.Dataset):
-    def __init__(self, data_path, save_dir):
+    def __init__(self, data_path, save_dir, sampling_pattern = [3,9,9,9]):
         
         #Initialising the parameters for the dataset class.
         self.data_path = data_path
         self.save_dir = save_dir
 
-        self.shell_samples_list = [6,30,30,30] # [#b0 samples, #b1000 samples, #b2000 samples, #b3000 samples]
+        self.shell_samples_list = sampling_pattern # [#b0 samples, #b1000 samples, #b2000 samples, #b3000 samples]
         self.save_folder='undersampled_fod'
 
         #Setting the field strength specific parameters
@@ -80,12 +80,6 @@ class UndersampleDataset(torch.utils.data.Dataset):
             elif 2980<self.bvals[i]<3020:
                 b3000_list.append(i)
 
-
-        
-        keep_list = torch.tensor([b1000_list[i]for i in range(self.shell_samples_list[1])] +
-                                [b2000_list[i]for i in range(self.shell_samples_list[2])] +
-                                [b3000_list[i]for i in range(self.shell_samples_list[3])] +
-                                b0_list[:3])
 
         keep_list = torch.tensor(b0_list[:self.shell_samples_list[0]] +
                                 b1000_list[:self.shell_samples_list[1]] +

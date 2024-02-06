@@ -4,7 +4,7 @@ import math
 class NetworkOptions():
     def __init__(self):
         ### General ###
-        self.experiment_name = 'tong_inference'  # Directory name to be stored in the checkpoint directory. **General**
+        self.experiment_name = 'tong_SDNet_1_25'  # Directory name to be stored in the checkpoint directory. **General**
         self.model_name = 'best_model.pth'  # Working model name - will be stored within the experiment name directory found within the ** General **
                                             # checkpoints directory. 
         self.continue_training = True      # Whether to continue training using existing model weights
@@ -46,7 +46,7 @@ class NetworkOptions():
 
         ### Data ###
         # self.data_dir = '/media/duanj/F/joe/hcp_2' # Data directory see github repo for more details.
-        self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/Tong_as_HCP'
+        self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/Tong_as_HCP_1_25'
 
         self.train_subject_list = ['113821',
                     '523032',

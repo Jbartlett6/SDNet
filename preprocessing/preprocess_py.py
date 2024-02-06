@@ -89,7 +89,7 @@ def fixels_and_masks(path):
     subprocess.run(['mrconvert', os.path.join(path, '..', '5ttgen.nii.gz'), '-coord', '3', '2', os.path.join(path,'..','white_matter_mask.nii.gz')])
 
     # FOD segmentation
-    subprocess.run(['fod2fixel', '-afd', 'afd.mif', '-peak_amp', 'peak_amp.mif', os.path.join(path, 'wmfod.nii.gz'), 
+    subprocess.run(['fod2fixel', '-afd', 'afd.mif', '-peak_amp', 'peak_amp.mif', os.path.join(path, 'wm.nii.gz'), 
                     os.path.join(path, 'fixel_directory')])
     
     # Converting the mif fixel files to nifti files

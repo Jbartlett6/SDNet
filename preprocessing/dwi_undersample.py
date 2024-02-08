@@ -1,3 +1,8 @@
+'''
+Code designed for undersampling diffusion data. 
+
+'''
+
 import torch
 import sys
 import os
@@ -6,7 +11,7 @@ import nibabel as nib
 import sys 
 
 class UndersampleDataset(torch.utils.data.Dataset):
-    def __init__(self, data_path, save_dir, sampling_pattern = [3,9,9,9]):
+    def __init__(self, data_path, save_dir, sampling_pattern = [3,9,9,9], bval_samples = [1000, 2000, 3000]):
         
         #Initialising the parameters for the dataset class.
         self.data_path = data_path
@@ -18,7 +23,7 @@ class UndersampleDataset(torch.utils.data.Dataset):
         #Setting the field strength specific parameters
         self.diffusion_dir = 'Diffusion'
         self.shell_number = 4
-        self.data_file = 'normalised_data.nii.gz'
+        self.bval_samples = bval_samples
 
         #Calculating the mask list and keep lists (using this function here will only work when a constant undersampling pattern is used)
         self.keep_list= self.sample_lists()
@@ -73,11 +78,11 @@ class UndersampleDataset(torch.utils.data.Dataset):
         for i in range(len(self.bvals)):
             if self.bvals[i] <20:
                 b0_list.append(i)
-            elif 980<self.bvals[i]<1020:
+            elif self.bval_samples[0] - 20 < self.bvals[i] < self.bval_samples[0] + 20:
                 b1000_list.append(i)
-            elif 1980<self.bvals[i]<2020:
+            elif self.bval_samples[1] - 20 < self.bvals[i] < self.bval_samples[1] + 20:
                 b2000_list.append(i)
-            elif 2980<self.bvals[i]<3020:
+            elif self.bval_samples[2] - 20 < self.bvals[i] < self.bval_samples[2] + 20:
                 b3000_list.append(i)
 
 
@@ -156,8 +161,8 @@ class UndersampleDataset(torch.utils.data.Dataset):
 
 if __name__ == '__main__':
     print('HW')
-    diffusion_dir = '/mnt/d/Diffusion_data/hcp/130821/T1w_tmp/Diffusion'
-    save_dir = '/mnt/d/Diffusion_data/hcp/130821/T1w_tmp/Diffusion/undersampled_92'
+    diffusion_dir = '/mnt/d/Diffusion_data/CDMD_sub25/sub_025/dwi'
+    save_dir = '/mnt/d/Diffusion_data/CDMD_sub25/sub_025/dwi/undersampled_fod'
     UspDset = UndersampleDataset(diffusion_dir, save_dir)
     UspDset.all_save()
     print('HW')

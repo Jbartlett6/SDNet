@@ -10,7 +10,7 @@ that preprocessing has been run correctly.
     as well as ensure only white matter and grey matter voxels are used in training. Tractseg is used in this 
     function. 
 
-    reset_HCP_dir - Removes the files and directories that are created in teh HCP subject's folder due to preprocessing. 
+    reset_HCP_dir - Removes the files and directories that are created in the HCP subject's folder due to preprocessing. 
 
     HCP_download_test - Tests that all of the files that are required to perform preprocessing can be found in the directory.
 
@@ -44,12 +44,13 @@ def fully_sampled_FOD(path):
 
     return 0
 
-def undersampled_FOD(path, usamp_folder_name = 'undersampled_fod', sampling_pattern = [3,9,9,9]):
+def undersampled_FOD(path, usamp_folder_name = 'undersampled_fod', sampling_pattern = [3,9,9,9], bval_samples = [1000, 2000, 3000]):
     # If the undersampled_fod directory doesn't exist, make it
     if os.path.exists(os.path.join(path, usamp_folder_name)) == False:
         os.mkdir(os.path.join(path, usamp_folder_name))
 
-    UspDset = dwiusamp.UndersampleDataset(path, os.path.join(path, usamp_folder_name), sampling_pattern = sampling_pattern)
+    UspDset = dwiusamp.UndersampleDataset(path, os.path.join(path, usamp_folder_name), 
+                                          sampling_pattern = sampling_pattern, bval_samples = bval_samples)
     UspDset.all_save()
 
     #Normalising the already undersampled data so the maximum value is 1.
@@ -70,6 +71,26 @@ def undersampled_FOD(path, usamp_folder_name = 'undersampled_fod', sampling_patt
     
     return 0
 
+def T1w_processing(path:str):
+    """Processing the T1w image to produce the 5ttgen mask and the white_matter_mask
+
+    This function can be called regardless of whether the size of the T1w image matches 
+    the size of the diffusion data. The images do however need to be co-registered. To run 
+    SDNet only the 5ttgen and white_matter_mask images are required.
+
+    Args:
+        path (_type_): Path to the diffusion directory that is going to be processed.
+    """    
+    subprocess.run(['5ttgen', 'fsl', os.path.join(path, '..', 'T1w_acpc_dc_restore_1.25.nii.gz'), 
+                    os.path.join(path, '..', '5ttgen_highres.nii.gz'), '-nocrop'])
+    
+    subprocess.run(['mrgrid', '-template', os.path.join(diffusion_dir, 'data.nii.gz'),
+                os.path.join(diffusion_dir, '..', '5ttgen_highres.nii.gz'), 'regrid',
+                os.path.join(diffusion_dir, '..', '5ttgen.nii.gz')])
+
+    subprocess.run(['mrconvert', os.path.join(path, '..', '5ttgen.nii.gz'),
+                     '-coord', '3', '2', os.path.join(path,'..','white_matter_mask.nii.gz')])
+
 def fixels_and_masks(path):
     
     def mif_to_nifti(mif_path):
@@ -83,10 +104,6 @@ def fixels_and_masks(path):
         os.remove(mif_path)
 
         return 0
-    
-    # 5 tissue segmentation
-    subprocess.run(['5ttgen', 'fsl', os.path.join(path, '..', 'T1w_acpc_dc_restore_1.25.nii.gz'), os.path.join(path, '..', '5ttgen.nii.gz'), '-nocrop'])
-    subprocess.run(['mrconvert', os.path.join(path, '..', '5ttgen.nii.gz'), '-coord', '3', '2', os.path.join(path,'..','white_matter_mask.nii.gz')])
 
     # FOD segmentation
     subprocess.run(['fod2fixel', '-afd', 'afd.mif', '-peak_amp', 'peak_amp.mif', os.path.join(path, 'wm.nii.gz'), 
@@ -263,10 +280,11 @@ def preprocessing_test(path, usamp_folder_name = 'undersampled_fod'):
      	                
 if __name__ == '__main__':
 
-    diffusion_dir = '/mnt/d/Diffusion_data/Tong/Tong_as_HCP'
-    usamp_folder_name = 'undersampled_92'
+    diffusion_dir = '/mnt/d/Diffusion_data/CDMD_sub25/CDMD_HCP/25/T1w/Diffusion'
+    usamp_folder_name = 'undersampled_fod'
     preprocessing_test(diffusion_dir)
-    print(diffusion_dir)
+    # print(diffusion_dir)
+    # T1w_processing(diffusion_dir)
     fully_sampled_FOD(diffusion_dir)
     fixels_and_masks(diffusion_dir)
-    undersampled_FOD(diffusion_dir, usamp_folder_name = usamp_folder_name, sampling_pattern=[6,30,30,30])
+    undersampled_FOD(diffusion_dir, usamp_folder_name = usamp_folder_name, sampling_pattern=[3,9,9,9], bval_samples = [800, 1500, 2400])

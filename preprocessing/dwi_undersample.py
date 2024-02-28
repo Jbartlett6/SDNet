@@ -1,3 +1,8 @@
+'''
+Code designed for undersampling diffusion data. 
+
+'''
+
 import torch
 import sys
 import os
@@ -6,22 +11,22 @@ import nibabel as nib
 import sys 
 
 class UndersampleDataset(torch.utils.data.Dataset):
-    def __init__(self, data_path, save_dir):
+    def __init__(self, data_path, save_dir, sampling_pattern = [3,9,9,9], bval_samples = [1000, 2000, 3000]):
         
         #Initialising the parameters for the dataset class.
         self.data_path = data_path
         self.save_dir = save_dir
 
-        self.undersample_val = 9
+        self.shell_samples_list = sampling_pattern # [#b0 samples, #b1000 samples, #b2000 samples, #b3000 samples]
         self.save_folder='undersampled_fod'
 
         #Setting the field strength specific parameters
         self.diffusion_dir = 'Diffusion'
         self.shell_number = 4
-        self.data_file = 'normalised_data.nii.gz'
+        self.bval_samples = bval_samples
 
         #Calculating the mask list and keep lists (using this function here will only work when a constant undersampling pattern is used)
-        self.mask_list, self.keep_list= self.sample_lists()
+        self.keep_list= self.sample_lists()
 
         #Creating the data path and the mask path.
         dwi_path = os.path.join(data_path, 'data.nii.gz')
@@ -73,31 +78,20 @@ class UndersampleDataset(torch.utils.data.Dataset):
         for i in range(len(self.bvals)):
             if self.bvals[i] <20:
                 b0_list.append(i)
-            elif 980<self.bvals[i]<1020:
+            elif self.bval_samples[0] - 20 < self.bvals[i] < self.bval_samples[0] + 20:
                 b1000_list.append(i)
-            elif 1980<self.bvals[i]<2020:
+            elif self.bval_samples[1] - 20 < self.bvals[i] < self.bval_samples[1] + 20:
                 b2000_list.append(i)
-            elif 2980<self.bvals[i]<3020:
+            elif self.bval_samples[2] - 20 < self.bvals[i] < self.bval_samples[2] + 20:
                 b3000_list.append(i)
 
-        mask_ind = []
-        keep_ind = []
-        for i in range(len(b1000_list)):
-            if i >= self.undersample_val:
-                mask_ind.append(i)
-            else:
-                keep_ind.append(i)
-        print(keep_ind)
 
-        #Uncomment this for the multi-shell version 
-        keep_list = torch.tensor([b1000_list[i]for i in keep_ind] +
-                                [b2000_list[i]for i in keep_ind] +
-                                [b3000_list[i]for i in keep_ind] +
-                                b0_list[:3])
-
-        mask_list = torch.tensor([])
-    
-        return mask_list, keep_list
+        keep_list = torch.tensor(b0_list[:self.shell_samples_list[0]] +
+                                b1000_list[:self.shell_samples_list[1]] +
+                                b2000_list[:self.shell_samples_list[2]] +
+                                b3000_list[:self.shell_samples_list[3]]
+                                )
+        return keep_list
     
     def bval_extract(self):
         '''
@@ -167,8 +161,8 @@ class UndersampleDataset(torch.utils.data.Dataset):
 
 if __name__ == '__main__':
     print('HW')
-    diffusion_dir = '/media/duanj/F/joe/hcp_2/100206_copy/T1w/Diffusion'
-    save_dir = '/media/duanj/F/joe/hcp_2/100206_copy/T1w/Diffusion/undersampled_fod'
+    diffusion_dir = '/mnt/d/Diffusion_data/CDMD_sub25/sub_025/dwi'
+    save_dir = '/mnt/d/Diffusion_data/CDMD_sub25/sub_025/dwi/undersampled_fod'
     UspDset = UndersampleDataset(diffusion_dir, save_dir)
     UspDset.all_save()
     print('HW')

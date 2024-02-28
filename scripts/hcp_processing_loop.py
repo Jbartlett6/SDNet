@@ -1,35 +1,42 @@
 '''
 hcp_processing_loop:
-Script to pre-process a list of HCP data (proc_subs)
+Script to pre-process a list of HCP data
 '''
 import sys 
-sys.path.append('/home/jxb1336/code/project_1/SDNet/SDNet')
+import os
+
+sys.path.append(os.path.join(sys.path[0],'..'))
 import preprocessing.preprocess_py as preproc
 
 import os
 
-proc_subs = ['145127']
+sys.path.append(os.path.join(sys.path[0],'..'))
+import preprocessing.preprocess_py as preproc
 
-hcp_dir = '/media/duanj/F/joe/hcp_2'
+# proc_subs = ['113821', '523032', '130518', '151021', '130417', '130720', '202113', '188751', '118225',
+# '284646', '120111', '123824', '268850', '123117', '368753', '161327', '176845', '159441', '559457', '115017']
 
-def list_incomplete_downloads(proc_subs):
-    checklist = []
-    for subject in proc_subs:
-        path = os.path.join('/bask/projects/d/duanj-ai-imaging/jxb1336/hcp', subject, 'T1w', 'Diffusion')
-        check_bool = preproc.folders_check(path)
-        if check_bool == False:
-            checklist.append(subject)
-    return checklist
+proc_subs = ['145127', #, # Subjects to be used for testing. **Inference**
+            '147737',
+            '174437',
+            '178849',
+            '318637',
+            '581450',
+            '130821']
+
+hcp_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/hcp_96'
+
+usamp_folder_name = 'undersampled_fod'
+
+sampling_pattern = [3,9,9,9]
+
 
 if __name__ == '__main__':
-
     for subject in proc_subs:
-        print(subject)
-        path = os.path.join(hcp_dir, subject, 'T1w', 'Diffusion')
         
-        # preproc.reset_HCP_dir(path)
-        # preproc.fully_sampled_FOD(path)
-        # preproc.fixels_and_masks(path)
-        # preproc.undersampled_FOD(path)
-        preproc.preprocessing_test(path)
-        # preproc.HCP_download_test(path)
+        path = os.path.join(hcp_dir, subject, 'T1w', 'Diffusion')
+        preproc.fully_sampled_FOD(path)
+        preproc.fixels_and_masks(path)
+        preproc.undersampled_FOD(path, usamp_folder_name = usamp_folder_name, sampling_pattern = sampling_pattern)
+        preproc.reset_HCP_dir(path)
+

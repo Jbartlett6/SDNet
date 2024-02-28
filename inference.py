@@ -58,7 +58,8 @@ class InferenceClass():
             os.mkdir(save_dir)
 
         # Path where the model weights are loaded from
-        model_path = os.path.join('checkpoints', self.experiment_name, 'models', self.model_name)
+        # model_path = os.path.join('checkpoints', self.experiment_name, 'models', 'best_training.pth')
+        model_path = os.path.join('checkpoints', self.experiment_name, 'models', 'best_model.pth')
 
         return save_dir, model_path
         
@@ -67,7 +68,10 @@ class InferenceClass():
         print('Loading the network and the correct state')
         net = Convcsdcfrnet.CSDNet(self.opts)
         net = nn.DataParallel(net)
+
+        # net.load_state_dict(torch.load(self.model_path)['net_state'])
         net.load_state_dict(torch.load(self.model_path))
+        
 
         net = net.to(self.device)
         net = net.eval()
@@ -77,8 +81,9 @@ class InferenceClass():
     def perform_inference(self, dataloader):
         #Initialising the output
         print('Initialising the output image')
-        out = F.pad(torch.zeros((145,174,145,47)),(0,0,5,5,5,5,5,5), mode='constant').to(self.device)
         
+        # Determining the size of the output tensor using the input dataloader
+        out = F.pad(torch.zeros(dataloader.dataset.spatial_resolution[1:] + [47]), dataloader.dataset.pad_tens, mode='constant').to(self.device)
         
         with torch.no_grad():
             print(f'Performing the inference loop for subject {self.current_subject}')
@@ -106,7 +111,7 @@ class InferenceClass():
             self.current_subject = subject
             dataset_affine, dataloader = load_data(subject, self.opts)
             FOD = self.perform_inference(dataloader)
-            self.save_FOD(self.save_dir, subject, FOD, dataset_affine)
+            self.save_FOD(FOD, dataset_affine)
 
 
 def load_data(current_subject, opts):
@@ -124,6 +129,6 @@ def load_data(current_subject, opts):
 
 
 if __name__ == '__main__':
-    opts = options.network_options()
+    opts = options.NetworkOptions()
     inf_obj = InferenceClass(opts)
     inf_obj.inference_loop()

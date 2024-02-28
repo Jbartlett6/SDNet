@@ -1,9 +1,7 @@
 import utils.util as util
 
 import time
-import math
 import yaml
-import sys
 import os
 
 from torch.utils.tensorboard import SummaryWriter
@@ -26,8 +24,8 @@ class Vis():
         self.train_losses = ['Training Loss', 'FOD Loss', 'Fixel Loss', 'Fixel Accuracy']
         self.val_losses = ['Validation Loss', 'Validation ACC', 'Validation Fixel Loss', 'Validation Fixel Accuracy']
         
-    def add_scalars(self, train_losses, val_losses, current_training_details, i, epoch):
-        step = (self.dataloader_length*epoch)+i+current_training_details['plot_offset']
+    def add_scalars(self, train_losses, val_losses, current_training_details, epoch, iterations):
+        step = iterations
 
         #Training loss and its decomposition :
         for loss_name, loss_value in train_losses.items():
@@ -38,7 +36,7 @@ class Vis():
             self.writer.add_scalar(loss_name, loss_value/self.opts.val_iters, step)
  
         # #self.writer.add_scalar('Deep Regularisation Lambda', net.module.deep_reg, step)
-        print(f'[{current_training_details["global_epochs"]+epoch + 1}, {i + 1:5d}] training loss: {train_losses["Training Loss"]/self.opts.val_freq:.7f} training fod loss {train_losses["FOD Loss"]/self.opts.val_freq:.7f}')
+        print(f'[{current_training_details["global_epochs"]+epoch + 1}, {iterations} total iterations] training loss: {train_losses["Training Loss"]/self.opts.val_freq:.7f} training fod loss {train_losses["FOD Loss"]/self.opts.val_freq:.7f}')
         
 
 class LossTracker():
@@ -74,31 +72,37 @@ class LossTracker():
         self.train_loss_dict['Fixel Accuracy'] += fixel_accuracy.item()
         
 
-
-
-def update_training_logs(train_losses, val_losses, current_training_details, model_save_path, net, epoch, i, opts, optimizer, param_num, train_dataloader, es):
+def update_training_logs(train_losses, val_losses, current_training_details, model_save_path, net, epoch, i, opts, optimizer, param_num, train_dataloader, es, iterations):
+    
     if val_losses['Validation ACC']/opts.val_iters > current_training_details['best_val_ACC']:
         current_training_details['best_val_ACC'] = val_losses['Validation ACC']/opts.val_iters
+        current_training_details['best_val_ACC_iter'] = iterations
 
     if val_losses['Validation Loss']/opts.val_iters < current_training_details['best_loss']:
                     
         current_training_details['best_loss'] = val_losses['Validation Loss']/opts.val_iters
         
-        torch.save(net.state_dict(), os.path.join(model_save_path, 'best_model.pth'))
-        torch.save(optimizer.state_dict(), os.path.join(model_save_path, 'best_optim.pth'))
+        training_state_dict = {'net_state': net.state_dict(),
+        'optim_state': optimizer.state_dict(),
+        'earlystopping_state': es.state_dict(),
+        'epochs': epoch,
+        'iterations': iterations,
+        'opts': opts}
+                
+        torch.save(training_state_dict, os.path.join(model_save_path, 'best_training.pth'))
 
-    training_details = {'epochs_count': epoch,
-                        'batch_size':opts.batch_size, 
-                        'minibatch': i, 
-                        'lr': optimizer.state_dict()['param_groups'][0]['lr'],
-                        'best loss': current_training_details['best_loss'],
-                        'best ACC': float(current_training_details['best_val_ACC']),
-                        'plot_step':(len(train_dataloader)*epoch)+i+current_training_details['plot_offset'],
-                        'deep_reg': float(net.module.deep_reg),
-                        'neg_reg':float(net.module.neg_reg),
-                        'alpha':float(net.module.alpha),
-                        'learn_lambda':opts.learn_lambda,
-                        'Number of Parameters':param_num}
+
+    training_details = {'epochs_count': epoch, # Training state 
+                        'batch_size':opts.batch_size, # Config_option
+                        'minibatch': i, # Config option
+                        'lr': optimizer.state_dict()['param_groups'][0]['lr'], # Training state 
+                        'best loss': current_training_details['best_loss'], # Performance measure
+                        'best ACC': float(current_training_details['best_val_ACC']), # Performance measure 
+                        'deep_reg': float(net.module.deep_reg), # Training state
+                        'neg_reg':float(net.module.neg_reg), # Training state
+                        'alpha':float(net.module.alpha), # Training state
+                        'learn_lambda':opts.learn_lambda, # Config option
+                        'Number of Parameters':param_num} # Model property
         
     training_details_string = [f'{name}: {value} \n' for name, value in training_details.items()]
     train_log_path = os.path.join('checkpoints', opts.experiment_name, 'logs', 'training.log')
@@ -108,7 +112,6 @@ def update_training_logs(train_losses, val_losses, current_training_details, mod
         trainlog.write('\n\nEarly stopping statistics \n')
         trainlog.write(f'Current early stopping counter: {es.early_stopping_counter}/{opts.early_stopping_threshold}\n')
         trainlog.write(f'Current best validation loss: {round(es.best_loss*1000,3)} x 10^-4 at iteration: {es.best_loss_iter}\n')
-        trainlog.write(f'Current iteration: {epoch*es.epoch_length + i}, best loss occured {(epoch*es.epoch_length + i)-es.best_loss_iter} iterations ago\n')
         trainlog.write(f'Highest early stopping counter: {es.highest_counter}/{opts.early_stopping_threshold}, which occured at iteration: {es.highest_counter_iter}\n')
         trainlog.write(f'Number of Learning rate decays: {es.lr_scheduler_count}')
 
@@ -137,54 +140,7 @@ def fixel_accuracy(fix_est, gt_fixel):
     return val_acc
 
 
-class EarlyStopping():
-    def __init__(self, opts, epoch_length):
-        self.early_stopping_counter = 0
-        self.best_loss = math.inf
-        self.best_loss_iter = 0
-        
-        
-        self.highest_counter = 0
-        self.highest_counter_iter = 0
-        
-        
-        self.lr_scheduler_count = 0
-        
-        self.opts = opts
-        self.epoch_length = epoch_length
 
-    def early_stopping_update(self,current_training_details,epoch,i, optimizer):
-      
-        if self.opts.early_stopping == True:
-            current_loss = current_training_details['best_loss']
-            current_iter = (self.epoch_length*epoch)+i
-
-            if current_loss < self.best_loss:
-                self.best_loss = current_loss
-                self.early_stopping_counter = 0
-                self.best_loss_iter = current_iter
-            else:
-                self.early_stopping_counter += 1
-
-
-            if self.early_stopping_counter >= self.opts.early_stopping_threshold:
-                
-                if self.lr_scheduler_count >= self.opts.lr_decay_limit:
-                    print(f'Training stopped at epoch {current_training_details["global_epochs"]+epoch} due to Early stopping and minibatch {i}, the best validation loss achieved is: {current_training_details["best_loss"]}')
-                    sys.exit()
-                else:
-                    self.early_stopping_counter = 0
-                    self.highest_counter = 0
-                    self.lr_scheduler_count += 1
-                    
-                    for g in optimizer.param_groups:
-                        g['lr'] = g['lr']*self.opts.lr_decay_factor
-            
-            elif self.early_stopping_counter > self.highest_counter:
-                self.highest_counter = self.early_stopping_counter
-                self.highest_counter_iter = current_iter
-
-        return optimizer 
 
 
 class RuntimeTracker():

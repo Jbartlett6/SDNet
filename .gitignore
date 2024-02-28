@@ -8,3 +8,5 @@ checkpoints/*
 scripts/hcp_processing_loop.py
 scripts/*
 
+nohup_infer.txt
+.gitignore

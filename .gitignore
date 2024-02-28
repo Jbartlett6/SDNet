@@ -5,7 +5,6 @@ to_sort/*
 dwi2response-tmp*
 fixel_loss/checkpoints/sh-bignet/model_dict.pt
 checkpoints/*
-scripts/hcp_processing_loop.py
 scripts/*
 
 nohup_infer.txt

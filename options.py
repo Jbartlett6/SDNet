@@ -4,7 +4,8 @@ import math
 class NetworkOptions():
     def __init__(self):
         ### General ###
-        self.experiment_name = 'tong_SDNet_1_25'  # Directory name to be stored in the checkpoint directory. **General**
+        #TO SET
+        # self.experiment_name =   # Directory name to be stored in the checkpoint directory. **General**
         self.model_name = 'best_model.pth'  # Working model name - will be stored within the experiment name directory found within the ** General **
                                             # checkpoints directory. 
         self.continue_training = True      # Whether to continue training using existing model weights
@@ -23,7 +24,7 @@ class NetworkOptions():
         
         # Stopping Conditions
         self.epochs = 100                   # Maxium number of epochs
-        self.iteration_limit = 202505     # Maximum number of iterations (training updates)
+        self.iteration_limit = math.inf      # Maximum number of iterations (training updates)
         self.lr_decay_limit = math.inf      # The number of times to decay the learning rate 
         self.lr_decay_factor = 1            # The learning rate decay factor
 
@@ -45,34 +46,12 @@ class NetworkOptions():
         self.activation = 'prelu'           # {'relu', 'tanh', 'sigmoid', 'leaky_relu', 'prelu'}
 
         ### Data ###
-        # self.data_dir = '/media/duanj/F/joe/hcp_2' # Data directory see github repo for more details.
-        self.data_dir = '/bask/projects/d/duanj-ai-imaging/jxb1336/Tong_as_HCP_1_25'
-
-        self.train_subject_list = ['113821',
-                    '523032',
-                    '130518',
-                    '151021',
-                    '130417',
-                    '130720',
-                    '202113',
-                    '188751',
-                    '118225',
-                    '284646',
-                    '120111',
-                    '123824',
-                    '268850',
-                    '123117',
-                    '368753',
-                    '161327',
-                    '176845',
-                    '159441',
-                    '559457',
-                    '115017']
+        # TO SET
+        self.data_dir = 
+        self.train_subject_list = 
         
-        #102109 has been removed from the test list due to the fixel directory - can be readded providing the fixles are correct.
-        self.val_subject_list = ['104012',  # Subjects to be used for validation
-                    '104416',
-                    '104820']
+        #TO SET
+        # self.val_subject_list = 
 
         self.diffusion_dir = 'Diffusion'
         self.shell_number = 4
@@ -81,13 +60,7 @@ class NetworkOptions():
         self.dwi_folder_name = 'undersampled_fod'
 
         ### Inference ###
-        # self.test_subject_list = ['145127', # Subjects to be used for testing. **Inference**
-        #     '147737',
-        #     '174437',
-        #     '178849',
-        #     '318637',
-        #     '581450',
-        #     '130821']
-        self.test_subject_list = ['1', '2', '3']
+        # TO SET
+        # self.test_subject_list = 
 
         print(self.__dict__)

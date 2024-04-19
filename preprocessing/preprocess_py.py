@@ -37,7 +37,7 @@ def fully_sampled_FOD(path):
     
     subprocess.run(['dwi2fod', '-fslgrad', os.path.join(path, 'bvecs'), os.path.join(path, 'bvals'),
                     'msmt_csd', os.path.join(path, 'data.nii.gz'), os.path.join(path, 'wm_response.txt'),
-                    os.path.join(path, 'wmfod.nii.gz'), os.path.join(path, 'gm_response.txt'), os.path.join(path, 'gm.nii.gz'), 
+                    os.path.join(path, 'wm.nii.gz'), os.path.join(path, 'gm_response.txt'), os.path.join(path, 'gm.nii.gz'), 
                     os.path.join(path, 'csf_response.txt'), os.path.join(path, 'csf.nii.gz')])
 
     subprocess.run(['mrcat', '-axis', '3', os.path.join(path, 'wmfod.nii.gz'), os.path.join(path, 'gm.nii.gz'), os.path.join(path, 'csf.nii.gz'), os.path.join(path, 'gt_fod.nii.gz')])
@@ -81,12 +81,12 @@ def T1w_processing(path:str):
     Args:
         path (_type_): Path to the diffusion directory that is going to be processed.
     """    
-    subprocess.run(['5ttgen', 'fsl', os.path.join(path, '..', 'T1w_acpc_dc_restore_1.25.nii.gz'), 
+    subprocess.run(['5ttgen', 'fsl', os.path.join(path, '..', 'T1w_highres.nii.gz'), 
                     os.path.join(path, '..', '5ttgen_highres.nii.gz'), '-nocrop'])
     
-    subprocess.run(['mrgrid', '-template', os.path.join(diffusion_dir, 'data.nii.gz'),
-                os.path.join(diffusion_dir, '..', '5ttgen_highres.nii.gz'), 'regrid',
-                os.path.join(diffusion_dir, '..', '5ttgen.nii.gz')])
+    subprocess.run(['mrgrid', '-template', os.path.join(path, 'data.nii.gz'),
+                os.path.join(path, '..', '5ttgen_highres.nii.gz'), 'regrid',
+                os.path.join(path, '..', '5ttgen.nii.gz')])
 
     subprocess.run(['mrconvert', os.path.join(path, '..', '5ttgen.nii.gz'),
                      '-coord', '3', '2', os.path.join(path,'..','white_matter_mask.nii.gz')])
@@ -283,8 +283,8 @@ if __name__ == '__main__':
     diffusion_dir = '/mnt/d/Diffusion_data/CDMD_sub25/CDMD_HCP/25/T1w/Diffusion'
     usamp_folder_name = 'undersampled_fod'
     preprocessing_test(diffusion_dir)
-    # print(diffusion_dir)
-    # T1w_processing(diffusion_dir)
+    print(diffusion_dir)
+    T1w_processing(diffusion_dir)
     fully_sampled_FOD(diffusion_dir)
     fixels_and_masks(diffusion_dir)
-    undersampled_FOD(diffusion_dir, usamp_folder_name = usamp_folder_name, sampling_pattern=[3,9,9,9], bval_samples = [800, 1500, 2400])
+    undersampled_FOD(diffusion_dir, usamp_folder_name = usamp_folder_name, sampling_pattern=[3,9,9,9], bval_samples = [1000, 2000, 3000])
